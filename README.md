@@ -1,6 +1,6 @@
 # Bitcoin Dashboard
 
-A free, privacy-first Bitcoin app for macOS, Windows, iOS, Android, and Linux.
+A privacy-first Bitcoin app for macOS, Windows, iOS, Android, and Linux.
 
 > **No login. No tracking. No ads. Open source.**
 
