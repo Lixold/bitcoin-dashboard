@@ -70,13 +70,62 @@ Live data (price, fees, Fear & Greed) is fetched **directly** by the app from pu
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.41+)
 - Dart 3.11+
 
-### Run the app
+Verify your setup before the first run:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/bitcoin-dashboard.git
+flutter doctor
+```
+
+### Clone & install
+
+```bash
+git clone https://github.com/Lixold/bitcoin-dashboard.git
 cd bitcoin-dashboard
 flutter pub get
-flutter run
+```
+
+`flutter pub get` also (re)generates the localisation classes under
+`lib/l10n/generated/` via `gen-l10n` — no extra step needed.
+
+### Run in a browser (Chrome) — fastest path
+
+No Xcode or Android SDK required. This is the recommended way to try the
+app or iterate on UI changes; it works on any host that has Chrome.
+
+```bash
+flutter run -d chrome
+```
+
+The dev build hot-reloads on save (press `r` in the terminal for a hot
+reload, `R` for a hot restart). To produce a release build that you can
+serve from any static host:
+
+```bash
+flutter build web --release
+# Output: build/web/  — point any static webserver at this directory
+```
+
+> Web is supported as a **development and preview target**. The shipped
+> product is the native app (macOS / Windows / iOS / Android / Linux);
+> see [Supported Platforms](#supported-platforms) above.
+
+### Run on native targets
+
+Each native target needs its own platform toolchain in working order —
+`flutter doctor` will tell you which ones are ready:
+
+```bash
+flutter run -d macos        # requires a working Xcode + CocoaPods
+flutter run -d ios          # requires Xcode + an iOS simulator or device
+flutter run -d android      # requires Android Studio + an emulator or device
+flutter run -d windows      # Windows host only
+flutter run -d linux        # Linux host only
+```
+
+List the devices/targets that Flutter currently sees:
+
+```bash
+flutter devices
 ```
 
 ---
