@@ -1,0 +1,28 @@
+{
+  "@@locale": "de",
+
+  "appTitle": "Bitcoin Dashboard",
+
+  "navPrice": "Preis",
+  "navOnChain": "On-Chain",
+  "navNews": "News",
+  "navSettings": "Einstellungen",
+
+  "priceLive": "Live-Preis",
+  "priceLastUpdated": "Aktualisiert {time}",
+  "priceSourceBinance": "Quelle: Binance Public API",
+  "priceLoading": "Preis wird geladen…",
+  "priceError": "Preis konnte nicht geladen werden",
+  "priceRetry": "Erneut versuchen",
+
+  "comingSoon": "In Kürze verfügbar",
+
+  "settingsTitle": "Einstellungen",
+  "settingsLanguage": "Sprache",
+  "settingsCurrency": "Währung",
+  "settingsTheme": "Erscheinungsbild",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Hell",
+  "settingsThemeDark": "Dunkel",
+  "settingsAbout": "Über"
+}
