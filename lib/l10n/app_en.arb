@@ -1,0 +1,42 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Bitcoin Dashboard",
+  "@appTitle": {
+    "description": "Application title shown in the app bar and on splash."
+  },
+
+  "navPrice": "Price",
+  "@navPrice": {
+    "description": "Navigation tab: live price overview."
+  },
+  "navOnChain": "On-Chain",
+  "navNews": "News",
+  "navSettings": "Settings",
+
+  "priceLive": "Live price",
+  "priceLastUpdated": "Last updated {time}",
+  "@priceLastUpdated": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "priceSourceBinance": "Source: Binance public API",
+  "priceLoading": "Loading price…",
+  "priceError": "Could not fetch price",
+  "priceRetry": "Retry",
+
+  "comingSoon": "Coming soon",
+  "@comingSoon": {
+    "description": "Placeholder for screens that are not yet implemented."
+  },
+
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "settingsCurrency": "Currency",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsAbout": "About"
+}
