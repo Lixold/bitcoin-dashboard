@@ -44,14 +44,17 @@ COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 
 # Mapping from the user-facing range names (used in the JSON file names and in
 # the Flutter `historyProvider(range)`) to CoinGecko's `days` parameter.
-# `max` returns the full available history (back to 2013-04-28 for Bitcoin).
+#
+# Note: an "ALL" range mapping to `days=max` would require the CoinGecko Pro
+# tier — the Demo tier returns 401 for anything beyond 365 days. Long-term
+# history will be backfilled from a different source (planned: one-off seed
+# from Yahoo Finance + daily incremental update written to R2 directly).
 RANGE_TO_DAYS: dict[str, str] = {
     "1D": "1",
     "1W": "7",
     "1M": "30",
     "3M": "90",
     "1Y": "365",
-    "ALL": "max",
 }
 
 log = logging.getLogger(__name__)
@@ -137,22 +140,47 @@ def main() -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    # 1) History per range — six independent CoinGecko calls. We keep them
-    #    sequential rather than parallel because the Demo tier is rate
-    #    limited (30 req/min) and 6 calls plus 2 market calls fit easily
-    #    within that budget once every 15 minutes.
+    # Per-task error isolation: a transient upstream hiccup on one range
+    # (e.g. a 5xx burst at CoinGecko, or a future endpoint deprecation)
+    # should not lose the data we already have for the others. Each
+    # fetch+upload runs in its own try/except. The HTTP retry policy in
+    # `utils.http_client` has already done its work by the time we land
+    # in the except branch, so logging is the right action here.
+    successes = 0
+    failures: list[str] = []
+
+    # 1) History per range — independent CoinGecko calls. Kept sequential
+    #    because the Demo tier is rate limited (30 req/min); 5 history
+    #    calls + 2 market calls fit easily within that budget at 15 min.
     for range_key in RANGE_TO_DAYS:
-        log.info("Fetching history range=%s", range_key)
-        history = fetch_history(range_key)
-        upload_json(f"data/history-{range_key}.json", history)
+        try:
+            log.info("Fetching history range=%s", range_key)
+            history = fetch_history(range_key)
+            upload_json(f"data/history-{range_key}.json", history)
+            successes += 1
+        except Exception as exc:  # noqa: BLE001 — log everything, continue
+            failures.append(f"history-{range_key}: {exc}")
+            log.error("Range %s failed: %s", range_key, exc)
 
     # 2) Market snapshot
-    log.info("Fetching market snapshot")
-    market = fetch_market()
-    upload_json("data/market.json", market)
+    try:
+        log.info("Fetching market snapshot")
+        market = fetch_market()
+        upload_json("data/market.json", market)
+        successes += 1
+    except Exception as exc:  # noqa: BLE001
+        failures.append(f"market: {exc}")
+        log.error("Market snapshot failed: %s", exc)
 
-    log.info("Done.")
-    return 0
+    log.info("Done. successes=%d failures=%d", successes, len(failures))
+    if failures:
+        log.warning("Failed tasks: %s", "; ".join(failures))
+
+    # Exit non-zero only if literally nothing succeeded — that signals a
+    # real outage (credentials wrong, CoinGecko down) and should page us
+    # via GitHub's failed-workflow notifications. Partial successes are
+    # logged but treated as success so the next cron tick has a chance.
+    return 0 if successes > 0 else 1
 
 
 if __name__ == "__main__":
