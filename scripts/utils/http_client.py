@@ -111,3 +111,30 @@ def get_text(
     response = session.get(url, params=params, headers=headers, timeout=timeout)
     response.raise_for_status()
     return response.text
+
+
+def get_bytes(
+    url: str,
+    *,
+    params: Optional[Mapping[str, Any]] = None,
+    headers: Optional[Mapping[str, str]] = None,
+    timeout: tuple[float, float] = DEFAULT_TIMEOUT,
+) -> bytes:
+    """
+    GET `url` and return the raw response body as bytes.
+
+    Preferred over `get_text` when the consumer parses encoding from the
+    payload itself — e.g. feedparser inspects the XML declaration
+    (`<?xml version="1.0" encoding="..."?>`) and would otherwise be fed
+    text already decoded under whatever charset `requests` guessed.
+
+    Raises:
+        requests.HTTPError:        For non-2xx responses after retries are exhausted.
+        requests.RequestException: For network-level failures.
+    """
+    session = _build_session()
+    log.debug("GET %s params=%s (bytes)", url, params)
+
+    response = session.get(url, params=params, headers=headers, timeout=timeout)
+    response.raise_for_status()
+    return response.content
