@@ -20,7 +20,9 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.0'
+          # 3.41.9 ships Dart 3.11.5; pubspec.yaml requires `sdk: ^3.11.5`,
+          # so anything older (e.g. 3.41.0 → Dart 3.11.0) fails resolution.
+          flutter-version: '3.41.9'
           channel: 'stable'
           cache: true
 
