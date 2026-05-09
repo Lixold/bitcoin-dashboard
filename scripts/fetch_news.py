@@ -105,7 +105,12 @@ LANGUAGES: dict[str, dict[str, Any]] = {
             ("Bitcoin Magazine", "https://bitcoinmagazine.com/feed"),
             ("Cointelegraph", "https://cointelegraph.com/rss"),
             ("The Block", "https://www.theblock.co/rss.xml"),
-            ("NewsBTC", "https://www.newsbtc.com/category/bitcoin/feed/"),
+            # Use the root /feed/ rather than /category/bitcoin/feed/ —
+            # the category feed is currently empty, while the root feed
+            # carries ~10 fresh items per cycle. Off-topic altcoin items
+            # are removed downstream by the BTC keyword filter (typical
+            # ratio ~80 % of root feed survives).
+            ("NewsBTC", "https://www.newsbtc.com/feed/"),
             (
                 "CoinDesk",
                 "https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml",
