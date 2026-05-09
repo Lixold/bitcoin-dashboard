@@ -237,9 +237,7 @@ def fetch_mining_pools() -> list[dict[str, Any]]:
         share = round(block_count / total_blocks * 100, 2)
         out.append({
             "name": p.get("name") or "Unknown",
-            # snake_case here matches the spec; rest of payload is
-            # camelCase — flagged in the PR for follow-up alignment.
-            "hashrate_percent": share,
+            "hashratePercent": share,
             "blockCount": block_count,
             "alert": share > POOL_ALERT_PCT,
         })
@@ -248,7 +246,7 @@ def fetch_mining_pools() -> list[dict[str, Any]]:
         "Mempool: %d pools, total %d blocks in 24h, top share %.2f %% (%s)",
         len(pools_in),
         total_blocks,
-        out[0]["hashrate_percent"],
+        out[0]["hashratePercent"],
         out[0]["name"],
     )
     return out
@@ -338,7 +336,7 @@ def main() -> int:
     pools_payload = mining_pools if mining_pools is not None else []
 
     max_pool_pct = (
-        max((p["hashrate_percent"] for p in pools_payload), default=None)
+        max((p["hashratePercent"] for p in pools_payload), default=None)
         if pools_payload
         else None
     )
