@@ -85,3 +85,29 @@ def get_json(
     response = session.get(url, params=params, headers=headers, timeout=timeout)
     response.raise_for_status()
     return response.json()
+
+
+def get_text(
+    url: str,
+    *,
+    params: Optional[Mapping[str, Any]] = None,
+    headers: Optional[Mapping[str, str]] = None,
+    timeout: tuple[float, float] = DEFAULT_TIMEOUT,
+) -> str:
+    """
+    GET `url` and return the response body as decoded text.
+
+    Used for non-JSON sources (ECB XML feed, RSS feeds, …). The retry policy
+    is identical to `get_json`; only the body decoding differs — `requests`
+    derives the encoding from the `Content-Type` header (with a UTF-8 default).
+
+    Raises:
+        requests.HTTPError:        For non-2xx responses after retries are exhausted.
+        requests.RequestException: For network-level failures.
+    """
+    session = _build_session()
+    log.debug("GET %s params=%s (text)", url, params)
+
+    response = session.get(url, params=params, headers=headers, timeout=timeout)
+    response.raise_for_status()
+    return response.text
