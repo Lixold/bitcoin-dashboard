@@ -1,16 +1,20 @@
 name: Fetch ECB FX rates
 
-# Daily at 16:15 UTC. The ECB publishes the eurofxref-daily feed around
+# Daily at 16:23 UTC. The ECB publishes the eurofxref-daily feed around
 # 16:00 CET on TARGET2 banking days, i.e. 15:00 UTC in summer (CEST) and
-# 14:00 UTC in winter (CET). 16:15 UTC is therefore comfortably after
+# 14:00 UTC in winter (CET). 16:23 UTC is therefore comfortably after
 # publish year-round, with a small buffer for delayed updates.
+#
+# Off-beat minute (:23 instead of :00/:15/:30/:45) avoids the global
+# GitHub Actions cron spike — those round-quarter marks are heavily
+# congested and routinely drop scheduled runs.
 #
 # On weekends / ECB holidays the feed still serves the previous day's
 # rates — the daily run is a no-op upgrade in that case (same content
 # re-uploaded), which is intentional and cheaper than special-casing.
 on:
   schedule:
-    - cron: "15 16 * * *"
+    - cron: "23 16 * * *"
   workflow_dispatch:
 
 # Read-only token — this workflow does not push back to the repository.

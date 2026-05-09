@@ -2,9 +2,15 @@ name: Fetch Bitcoin history & market data
 
 # Runs every 15 minutes (and on demand) to refresh the static JSON files
 # served via the CDN. See `scripts/fetch_history.py` for the data layout.
+#
+# Off-beat schedule (xx:07/22/37/52 instead of xx:00/15/30/45) avoids the
+# global GitHub Actions cron spike. `schedule` is best-effort on GitHub:
+# millions of workflows fire on the round-quarter marks simultaneously
+# and many get queued or dropped during the spike. A +7 min offset rides
+# the trough and significantly improves real-world hit rate.
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
 
 # Read-only token — this workflow does not push back to the repository.
