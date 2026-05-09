@@ -1,0 +1,55 @@
+name: Fetch Bitcoin news (RSS)
+
+# Runs every 15 minutes (and on demand) to refresh the per-language
+# news JSON files served via the CDN. See `scripts/fetch_news.py` for
+# the data layout and feed list.
+#
+# Off-beat schedule (xx:07/22/37/52 instead of xx:00/15/30/45) avoids
+# the global GitHub Actions cron spike — same rationale as
+# fetch_history.yml. Both workflows fire at the same off-beat minutes
+# intentionally: they hit different upstreams (RSS vs CoinGecko) and
+# write to different R2 keys, so concurrency is harmless.
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+# Read-only token — this workflow does not push back to the repository.
+permissions:
+  contents: read
+
+# Avoid overlapping runs in case a manual dispatch lands on a cron tick.
+concurrency:
+  group: fetch-news
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    name: Fetch & upload to R2
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ubuntu-latest ships a recent Python 3 on PATH as `python3`;
+      # we skip actions/setup-python for the same reasons documented
+      # in fetch_history.yml. `feedparser` is the new dependency for
+      # this workflow on top of the shared `requests` + `boto3`.
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install requests boto3 feedparser
+
+      - name: Run fetch_news.py
+        env:
+          # Cloudflare R2 credentials — see ADR-003.
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # Make `from utils.* import ...` work when the script is run
+          # from the repo root. PYTHONPATH=scripts puts the package on
+          # sys.path.
+          PYTHONPATH: scripts
+        run: python3 scripts/fetch_news.py
