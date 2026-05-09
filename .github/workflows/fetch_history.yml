@@ -27,16 +27,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
+      # ubuntu-latest ships Python 3.11 preinstalled, so we skip
+      # actions/setup-python@v5 entirely — fewer dependencies and no need
+      # to extend the repository's Actions allowlist.
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install requests boto3
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install requests boto3
 
       - name: Run fetch_history.py
         env:
@@ -49,4 +46,4 @@ jobs:
           # Make `from utils.* import ...` work when the script is run from
           # the repo root. PYTHONPATH=scripts puts the package on sys.path.
           PYTHONPATH: scripts
-        run: python scripts/fetch_history.py
+        run: python3.11 scripts/fetch_history.py
