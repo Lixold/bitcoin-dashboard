@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# ARCHIVED: replaced by Cloudflare Worker in workers/cron-history/
+# Kept as reference for data shapes and business logic.
 # MIT License
 #
 # Copyright (c) 2026 Daniel Nagel

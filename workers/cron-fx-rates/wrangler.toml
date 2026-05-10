@@ -1,0 +1,26 @@
+name = "bitcoin-dashboard-cron-fx-rates"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Disable the public *.workers.dev URL and per-deploy preview URLs — these
+# Workers expose only a `scheduled` handler, so a public route would just
+# leak the cron topology without serving anything useful.
+workers_dev = false
+preview_urls = false
+
+# ECB daily euro reference rates -> cross-rate matrix at data/fx-rates.json.
+# Runs once per day at 16:15 UTC — safely after the ECB publish window
+# (~16:00 CET = 14:00 UTC winter / 15:00 UTC summer) in both seasons.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "bitcoin-dashboard-data"
+
+[triggers]
+crons = ["15 16 * * *"]
+
+# Workers Observability — sample 100 % of invocations. The Worker fires
+# once per day; full sampling is essentially free and lets us diagnose
+# ECB feed regressions from the CF dashboard.
+[observability]
+enabled = true
+head_sampling_rate = 1
