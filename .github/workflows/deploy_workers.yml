@@ -1,0 +1,87 @@
+name: Deploy Cloudflare Workers
+
+# Manual CD pipeline. Pick a target in the "Run workflow" dropdown on the
+# GitHub Actions tab; the selected Worker (or all five) is deployed to
+# Cloudflare via wrangler-action. No local terminal needed.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN
+#       Token created from the "Edit Cloudflare Workers" template, plus the
+#       "Workers R2 Storage: Edit" permission (the R2 binding requires it).
+#       Scope it to the bitcoin-dashboard account only.
+#   CLOUDFLARE_ACCOUNT_ID
+#       Visible in the Cloudflare dashboard right sidebar of any Worker.
+#
+# Worker-side secrets (e.g. COINGECKO_API_KEY for cron-history) are NOT
+# rotated by this workflow — set them once with:
+#   wrangler secret put COINGECKO_API_KEY \
+#     --name bitcoin-dashboard-cron-history
+# They survive subsequent `wrangler deploy` calls.
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: "Which Worker to deploy"
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - cron-history
+          - cron-news-en
+          - cron-news-de
+          - cron-fx-rates
+          - cron-network-stats
+
+permissions:
+  contents: read
+
+# Serialise deploys against the same target so two manual runs cannot
+# race each other through the CF API. We do NOT cancel in progress —
+# letting the running deploy finish is safer than aborting mid-upload.
+concurrency:
+  group: deploy-workers-${{ github.event.inputs.worker }}
+  cancel-in-progress: false
+
+jobs:
+  # Resolve the dropdown selection into a JSON array the matrix can consume.
+  # "all" expands to every Worker; a single name passes through unchanged.
+  # Doing it in a setup job (rather than per-step `if`) keeps the matrix
+  # dashboard view clean — only the jobs that actually run show up.
+  setup:
+    name: Resolve targets
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - id: matrix
+        run: |
+          if [ "${{ inputs.worker }}" = "all" ]; then
+            echo 'matrix=["cron-history","cron-news-en","cron-news-de","cron-fx-rates","cron-network-stats"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix=["${{ inputs.worker }}"]' >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    name: Deploy ${{ matrix.worker }}
+    needs: setup
+    runs-on: ubuntu-latest
+    # fail-fast: false — one Worker failing must not abort the others when
+    # the user selected "all". Each Worker stands on its own; partial
+    # success is the right outcome on a transient CF API hiccup.
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: ${{ fromJson(needs.setup.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/${{ matrix.worker }}
+          command: deploy

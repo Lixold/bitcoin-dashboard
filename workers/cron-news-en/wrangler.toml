@@ -1,0 +1,26 @@
+name = "bitcoin-dashboard-cron-news-en"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Disable the public *.workers.dev URL and per-deploy preview URLs — these
+# Workers expose only a `scheduled` handler, so a public route would just
+# leak the cron topology without serving anything useful.
+workers_dev = false
+preview_urls = false
+
+# EN news feeds — Bitcoin Magazine, Cointelegraph, The Block, NewsBTC,
+# CoinDesk. Aggregated, filtered, classified, written to data/news-en.json.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "bitcoin-dashboard-data"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Workers Observability — sample 100 % of invocations. Volume is tiny
+# (~96/day per 15-min Worker) so full sampling has no cost concern, and
+# the per-feed status logs are only useful if we can actually read them
+# in the CF dashboard.
+[observability]
+enabled = true
+head_sampling_rate = 1

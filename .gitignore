@@ -164,3 +164,16 @@ dist/
 *.log
 coverage/
 lcov.info
+
+# ============================================================
+# Cloudflare Workers (Wrangler)
+# ============================================================
+# Local dev / build cache — contains account ID, auth state, and tmp output.
+.wrangler/
+**/.wrangler/
+# Worker dependencies (we keep Workers self-contained, but stay safe).
+node_modules/
+**/node_modules/
+# Local-only secret overrides for `wrangler dev`.
+.dev.vars
+**/.dev.vars

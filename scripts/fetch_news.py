@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# ARCHIVED: replaced by Cloudflare Workers in workers/cron-news-en/ and
+# workers/cron-news-de/. Kept as reference for data shapes and business logic.
 # MIT License
 #
 # Copyright (c) 2026 Daniel Nagel
