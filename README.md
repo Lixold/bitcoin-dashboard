@@ -1,10 +1,10 @@
 # Bitcoin Dashboard
 
-A privacy-first Bitcoin app for macOS, Windows, iOS, Android, and Linux.
+Live BTC prices, on-chain metrics, multilingual news, and price models for macOS, Windows, iOS, Android, and Linux.
 
 > **No login. No tracking. No ads. Open source.**
 
-Bitcoin Dashboard gives you live Bitcoin market data, on-chain metrics, multilingual news, sentiment indicators, and price models — all without sending any personal data to a server.
+Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news directly on your device — no account, no analytics, no server holding your data.
 
 ---
 
@@ -12,13 +12,15 @@ Bitcoin Dashboard gives you live Bitcoin market data, on-chain metrics, multilin
 
 - **Live Price** — Real-time BTC price via Binance public API, ~30 currencies supported
 - **On-Chain Metrics** — Mempool, fees, hashrate, difficulty via mempool.space
+- **Network Health** — Reachable node count (Bitnodes) and chain tip status (mempool.space)
 - **Fear & Greed Index** — Daily sentiment score via alternative.me
-- **Price History** — Charts for 1D / 7D / 30D / 90D / 1Y / ALL timeframes
-- **Prognosis Models** — Stock-to-Flow (S2F) and other models
-- **Multilingual News** — RSS-based news in 10 languages (EN, DE, ES, PT-BR, FR, IT, JA, KO, ZH, TR)
-- **Currency Conversion** — ~30 fiat currencies via ECB exchange rates
+- **Price History** — Charts for 1D / 1W / 1M / 3M / 1Y timeframes
+- **Market Snapshot** — Market cap, 24 h volume, supply, and 24 h change
+- **Multilingual News** — RSS-based news; EN and DE available today, 13 more languages planned (ES, PT-BR, FR, IT, JA, KO, ZH, TR, …)
+- **Currency Conversion** — ~30 fiat currencies via daily ECB reference rates
+- **Prognosis Models** — Stock-to-Flow and additional valuation models *(roadmap)*
 - **Dark & Light Mode** — Native theme support on all platforms
-- **Privacy First** — No account, no tracking, no analytics, fully local
+- **Privacy First** — No account, no tracking, no analytics; settings stay on device
 
 ---
 
@@ -30,6 +32,8 @@ Bitcoin Dashboard gives you live Bitcoin market data, on-chain metrics, multilin
 
 ## Tech Stack
 
+### Application
+
 | Area | Technology |
 |---|---|
 | Framework | Flutter / Dart 3 |
@@ -38,16 +42,16 @@ Bitcoin Dashboard gives you live Bitcoin market data, on-chain metrics, multilin
 | Local Cache | Hive |
 | State Management | Riverpod |
 
-### Backend (Zero-Cost, No Server)
+### Backend (Serverless, no origin server)
 
-| Component | Technology | Cost |
-|---|---|---|
-| Data pipelines | GitHub Actions (Python cron jobs) | Free |
-| Storage | Cloudflare R2 (static JSON) | Free tier |
-| Delivery | Cloudflare CDN | Free |
-| **Total** | | **~0 EUR/month** |
+| Component | Technology |
+|---|---|
+| Batch data pipelines | Cloudflare Workers (JS cron triggers) |
+| Storage | Cloudflare R2 (static JSON objects) |
+| Delivery | Cloudflare CDN (`data.bitcoin-dashboard.app`) |
+| Deploy automation | GitHub Actions → Wrangler |
 
-Live data (price, fees, Fear & Greed) is fetched **directly** by the app from public APIs — no backend required.
+Live data (price, mempool, fees, sentiment) is fetched **directly** by the app from public APIs — there is no API server in between. Aggregated and rate-limited sources (price history, FX rates, news, network stats) are produced by Cloudflare Workers on a cron schedule and published as static JSON to R2.
 
 ---
 
@@ -134,15 +138,20 @@ flutter devices
 
 ```
 bitcoin-dashboard/
-├── lib/                    # Flutter app source
-│   ├── features/           # Feature modules (price, news, on-chain, …)
-│   ├── core/               # Shared providers, models, utilities
+├── lib/                       # Flutter app source
+│   ├── features/              # Feature modules (price, settings, shell, …)
+│   ├── core/                  # Shared HTTP client, theme, utilities
+│   ├── l10n/                  # ARB localisation files + generated classes
 │   └── main.dart
-├── scripts/                # Python data pipeline scripts
-├── .github/
-│   └── workflows/          # GitHub Actions workflow definitions
-├── test/                   # Unit & widget tests
-└── docs/                   # Architecture Decision Records (ADRs)
+├── workers/                   # Cloudflare Workers (cron-triggered fetchers)
+│   ├── cron-history/          # CoinGecko → history-*.json + market.json
+│   ├── cron-fx-rates/         # ECB → fx-rates.json (daily)
+│   ├── cron-news-en/          # RSS EN → news-en.json
+│   ├── cron-news-de/          # RSS DE → news-de.json
+│   └── cron-network-stats/    # Bitnodes + mempool.space → network-stats.json
+├── scripts/                   # Archived Python pipeline scripts (reference)
+├── .github/workflows/         # CI (Flutter analyze/test) + Worker deploys
+└── test/                      # Unit & widget tests
 ```
 
 ---
@@ -154,27 +163,14 @@ bitcoin-dashboard/
 | Live BTC Price | Binance Public API | App fetches directly |
 | Mempool / Fees / Hashrate | mempool.space | App fetches directly |
 | Fear & Greed Index | alternative.me | App fetches directly |
-| Price History | CDN `/data/history-{range}.json` | GitHub Actions → CoinGecko |
-| FX Rates (~30 currencies) | CDN `/data/fx-rates.json` | GitHub Actions → ECB XML |
-| News (10 languages) | CDN `/data/news-{lang}.json` | GitHub Actions → RSS |
-| Prognosis Models | CDN `/data/prognosis-{model}.json` | GitHub Actions Python |
-| Market Data | CDN `/data/market.json` | GitHub Actions → CoinGecko |
+| Price History | CDN `/data/history-{range}.json` | Cloudflare Worker → CoinGecko |
+| Market Snapshot | CDN `/data/market.json` | Cloudflare Worker → CoinGecko |
+| FX Rates (~30 currencies) | CDN `/data/fx-rates.json` | Cloudflare Worker → ECB XML |
+| News (EN, DE today) | CDN `/data/news-{lang}.json` | Cloudflare Worker → RSS |
+| Network Stats | CDN `/data/network-stats.json` | Cloudflare Worker → Bitnodes + mempool.space |
+| Prognosis Models *(roadmap)* | CDN `/data/prognosis-{model}.json` | Cloudflare Worker |
 
 Currency conversion is performed **client-side**: `price_local = price_usd × fx_rates["EUR"]`
-
----
-
-## Architecture Decisions
-
-All major decisions are documented as Architecture Decision Records in [`docs/adr/`](docs/adr/):
-
-| ADR | Decision | Status |
-|---|---|---|
-| ADR-001 | Flutter as cross-platform framework | ✅ Accepted |
-| ADR-002 | Data sources & APIs | ✅ Accepted |
-| ADR-003 | GitHub Actions + Cloudflare R2 + CDN (no server) | ✅ Accepted |
-| ADR-004 | Riverpod for state management | ✅ Accepted |
-| ADR-005 | Static JSON files via CDN (no API server) | ✅ Accepted |
 
 ---
 
