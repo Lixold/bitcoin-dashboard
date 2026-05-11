@@ -31,7 +31,7 @@ Use one of the following private channels instead:
    [Open a private advisory](https://github.com/Lixold/bitcoin-dashboard/security/advisories/new)
    on the repository. This keeps the report confidential and lets us
    coordinate a fix and disclosure timeline through GitHub.
-2. **Alternative — Email:** `dev@finhood.de`
+2. **Alternative — Email:** `security@finhood.de`
    Please use the subject prefix `[SECURITY]` and, where possible,
    include a proof of concept, affected version/commit, platform, and
    any logs or stack traces. PGP is not required.
