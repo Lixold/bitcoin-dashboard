@@ -1,6 +1,6 @@
 name = "bitcoin-dashboard-cron-fx-rates"
 main = "src/index.js"
-compatibility_date = "2025-01-01"
+compatibility_date = "2026-05-12"
 
 # Disable the public *.workers.dev URL and per-deploy preview URLs — these
 # Workers expose only a `scheduled` handler, so a public route would just
