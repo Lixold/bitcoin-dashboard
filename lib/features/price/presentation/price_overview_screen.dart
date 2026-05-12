@@ -73,10 +73,7 @@ class _PriceCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              l10n.priceLastUpdated(time),
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(l10n.priceLastUpdated(time), style: theme.textTheme.bodySmall),
           ],
         ),
       ),

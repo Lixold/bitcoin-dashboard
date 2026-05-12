@@ -25,7 +25,8 @@ class SettingsController extends Notifier<AppSettings> {
     return AppSettings(
       locale: _readLocale() ?? defaults.locale,
       themeMode: _readThemeMode() ?? defaults.themeMode,
-      fiatCurrency: (_box.get(_kFiatCurrency) as String?) ?? defaults.fiatCurrency,
+      fiatCurrency:
+          (_box.get(_kFiatCurrency) as String?) ?? defaults.fiatCurrency,
     );
   }
 
