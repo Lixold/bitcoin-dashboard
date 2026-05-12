@@ -49,7 +49,7 @@ function roundTo(n, decimals) {
 // concern is enough — no DOM tree needed (and DOMParser isn't available
 // in the workerd runtime anyway).
 function parseEcbXml(xmlText) {
-  const dateMatch = xmlText.match(/time\s*=\s*"(\d{4}-\d{2}-\d{2})"/);
+  const dateMatch = xmlText.match(/time\s*=\s*["'](\d{4}-\d{2}-\d{2})["']/);
   if (!dateMatch) {
     throw new Error("ECB feed: missing dated <Cube time=...> element");
   }
@@ -62,7 +62,7 @@ function parseEcbXml(xmlText) {
   // Single sweep over the body picks up every (currency, rate) pair. The
   // order of the two attributes is consistent in the ECB feed (currency
   // first), so a strict pattern is fine here.
-  const cubeRe = /currency\s*=\s*"([A-Z]+)"\s+rate\s*=\s*"([\d.]+)"/g;
+  const cubeRe = /currency\s*=\s*["']([A-Z]+)["']\s+rate\s*=\s*["']([\d.]+)["']/g;
   let m;
   while ((m = cubeRe.exec(xmlText)) !== null) {
     const currency = m[1];
