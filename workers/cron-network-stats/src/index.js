@@ -67,18 +67,28 @@ function trendLabel(pct) {
   return "stable";
 }
 
-async function getJson(url) {
-  const res = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent":
-        "Mozilla/5.0 (compatible; BitcoinDashboardBot/1.0; +https://bitcoin-dashboard.app)",
-    },
-  });
-  if (!res.ok) {
+const FETCH_HEADERS = {
+  Accept: "application/json",
+  "User-Agent":
+    "Mozilla/5.0 (compatible; BitcoinDashboardBot/1.0; +https://bitcoin-dashboard.app)",
+};
+
+// Retries once after a short delay on transient 5xx responses. A single
+// retry is enough to survive brief Cloudflare / origin hiccups (e.g. HTTP
+// 530 "origin unreachable") without burning significant wall-clock time.
+async function getJson(url, retries = 1) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, { headers: FETCH_HEADERS });
+    if (res.ok) return res.json();
+
+    const isTransient = res.status >= 500;
+    if (isTransient && attempt < retries) {
+      console.warn(`GET ${url} → HTTP ${res.status}, retrying (${attempt + 1}/${retries})…`);
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
+    }
     throw new Error(`GET ${url} failed: HTTP ${res.status}`);
   }
-  return res.json();
 }
 
 // === Bitnodes: full-node count + 24h trend ================================
