@@ -372,7 +372,12 @@ async function runAll(env) {
     const [name] = FEEDS[idx];
     if (res.status === "rejected") {
       failureCount += 1;
-      console.error(`[${LANG}] ${name} FAIL:`, res.reason);
+      // 429 = upstream rate-limiting; non-fatal, downgraded to warn.
+      if (/429/.test(String(res.reason))) {
+        console.warn(`[${LANG}] ${name} SKIP (rate-limited):`, res.reason);
+      } else {
+        console.error(`[${LANG}] ${name} FAIL:`, res.reason);
+      }
       return;
     }
     const { kept, inCount } = res.value;
