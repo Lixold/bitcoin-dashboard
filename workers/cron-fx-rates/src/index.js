@@ -12,6 +12,8 @@
 // returns the previous day's rates with the previous day's `time=` attribute;
 // that's the behaviour we want, so no special-casing.
 
+import { getText, isoUtcSeconds, putJson, roundTo } from "../../_shared/lib.js";
+
 const ECB_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
 
 // Cross rates derived from 4-decimal ECB inputs do not justify arbitrary
@@ -22,15 +24,6 @@ const ECB_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
 const RATE_DECIMALS = 8;
 
 const FX_CACHE_CONTROL = "public, max-age=86400";
-
-function isoUtcSeconds(d) {
-  return d.toISOString().replace(/\.\d{3}Z$/, "+00:00");
-}
-
-function roundTo(n, decimals) {
-  const f = Math.pow(10, decimals);
-  return Math.round(n * f) / f;
-}
 
 // Parse the ECB XML and return { date, rates } where `rates` maps each
 // currency code (including EUR=1.0) to its rate against EUR.
@@ -59,10 +52,11 @@ function parseEcbXml(xmlText) {
   // it explicitly so the cross-rate matrix treats it uniformly.
   const rates = { EUR: 1.0 };
 
-  // Single sweep over the body picks up every (currency, rate) pair. The
-  // order of the two attributes is consistent in the ECB feed (currency
-  // first), so a strict pattern is fine here.
-  const cubeRe = /currency\s*=\s*["']([A-Z]+)["']\s+rate\s*=\s*["']([\d.]+)["']/g;
+  // Single sweep over the body picks up every (currency, rate) pair. ECB
+  // historically used double-quoted attributes but has occasionally shipped
+  // single-quoted variants — accept both (see PR #17).
+  const cubeRe =
+    /currency\s*=\s*["']([A-Z]+)["']\s+rate\s*=\s*["']([\d.]+)["']/g;
   let m;
   while ((m = cubeRe.exec(xmlText)) !== null) {
     const currency = m[1];
@@ -103,13 +97,9 @@ async function runAll(env) {
   // failure the previous fx-rates.json on R2 stays in place, and the next
   // daily cron tick refreshes it.
   console.log(`Fetching ECB daily reference rates from ${ECB_URL}`);
-  const res = await fetch(ECB_URL, {
-    headers: { Accept: "application/xml, text/xml;q=0.9, */*;q=0.5" },
+  const xmlText = await getText(ECB_URL, {
+    Accept: "application/xml, text/xml;q=0.9, */*;q=0.5",
   });
-  if (!res.ok) {
-    throw new Error(`ECB HTTP ${res.status}`);
-  }
-  const xmlText = await res.text();
 
   const { date, rates } = parseEcbXml(xmlText);
   console.log(
@@ -128,13 +118,7 @@ async function runAll(env) {
     ...cross,
   };
 
-  await env.BUCKET.put("data/fx-rates.json", JSON.stringify(payload), {
-    httpMetadata: {
-      contentType: "application/json",
-      cacheControl: FX_CACHE_CONTROL,
-    },
-  });
-
+  await putJson(env, "data/fx-rates.json", payload, FX_CACHE_CONTROL);
   console.log(`FX rates uploaded successfully (date=${date})`);
 }
 

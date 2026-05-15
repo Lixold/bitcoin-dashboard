@@ -19,6 +19,8 @@
 // (and vice versa). The Worker only throws when both upstreams fail —
 // the previous network-health.json on R2 then remains as fallback.
 
+import { getJson, isoUtcSeconds, putJson } from "../../_shared/lib.js";
+
 const BITNODES_SNAPSHOTS_URL = "https://bitnodes.io/api/v1/snapshots/";
 const MEMPOOL_POOLS_24H_URL = "https://mempool.space/api/v1/mining/pools/24h";
 
@@ -57,38 +59,10 @@ const NETWORK_CACHE_CONTROL = "public, max-age=86400";
 
 // === Helpers ==============================================================
 
-function isoUtcSeconds(d) {
-  return d.toISOString().replace(/\.\d{3}Z$/, "+00:00");
-}
-
 function trendLabel(pct) {
   if (pct > TREND_FLAT_THRESHOLD_PCT) return "up";
   if (pct < -TREND_FLAT_THRESHOLD_PCT) return "down";
   return "stable";
-}
-
-const FETCH_HEADERS = {
-  Accept: "application/json",
-  "User-Agent":
-    "Mozilla/5.0 (compatible; BitcoinDashboardBot/1.0; +https://bitcoin-dashboard.app)",
-};
-
-// Retries once after a short delay on transient 5xx responses. A single
-// retry is enough to survive brief Cloudflare / origin hiccups (e.g. HTTP
-// 530 "origin unreachable") without burning significant wall-clock time.
-async function getJson(url, retries = 1) {
-  for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, { headers: FETCH_HEADERS });
-    if (res.ok) return res.json();
-
-    const isTransient = res.status >= 500;
-    if (isTransient && attempt < retries) {
-      console.warn(`GET ${url} → HTTP ${res.status}, retrying (${attempt + 1}/${retries})…`);
-      await new Promise((r) => setTimeout(r, 2000));
-      continue;
-    }
-    throw new Error(`GET ${url} failed: HTTP ${res.status}`);
-  }
 }
 
 // === Bitnodes: full-node count + 24h trend ================================
@@ -298,12 +272,7 @@ async function runAll(env) {
     aggregatedHealth: health,
   };
 
-  await env.BUCKET.put("data/network-health.json", JSON.stringify(payload), {
-    httpMetadata: {
-      contentType: "application/json",
-      cacheControl: NETWORK_CACHE_CONTROL,
-    },
-  });
+  await putJson(env, "data/network-health.json", payload, NETWORK_CACHE_CONTROL);
 
   console.log(
     `Uploaded network-health.json: nodes=${fullNodes ? "ok" : "missing"} ` +

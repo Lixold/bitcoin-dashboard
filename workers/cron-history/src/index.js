@@ -14,6 +14,8 @@
 // (if set as a Worker secret) raises the limit and is sent as the
 // `x-cg-demo-api-key` header.
 
+import { getJson, isoUtcSeconds, putJson } from "../../_shared/lib.js";
+
 const COINGECKO_BASE = "https://api.coingecko.com/api/v3";
 
 // Range -> CoinGecko `days` parameter. The Demo tier rejects anything beyond
@@ -39,31 +41,12 @@ function authHeaders(env) {
     : {};
 }
 
-async function getJson(url, env) {
-  const res = await fetch(url, {
-    headers: { Accept: "application/json", ...authHeaders(env) },
-  });
-  if (!res.ok) {
-    throw new Error(`GET ${url} failed: HTTP ${res.status}`);
-  }
-  return res.json();
-}
-
-async function putJson(env, key, payload, cacheControl) {
-  await env.BUCKET.put(key, JSON.stringify(payload), {
-    httpMetadata: {
-      contentType: "application/json",
-      cacheControl,
-    },
-  });
-}
-
 async function fetchHistory(rangeKey, env) {
   const days = RANGE_TO_DAYS[rangeKey];
   const url =
     `${COINGECKO_BASE}/coins/bitcoin/market_chart` +
     `?vs_currency=usd&days=${days}`;
-  const raw = await getJson(url, env);
+  const raw = await getJson(url, authHeaders(env));
 
   // CoinGecko returns parallel [ts_ms, price] pairs; we flatten to two arrays
   // so the JSON stays small and fl_chart can consume it without remapping.
@@ -74,7 +57,7 @@ async function fetchHistory(rangeKey, env) {
   return {
     range: rangeKey,
     currency: "usd",
-    fetchedAt: new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00"),
+    fetchedAt: isoUtcSeconds(new Date()),
     timestamps,
     prices: priceValues,
   };
@@ -90,8 +73,8 @@ async function fetchMarket(env) {
   const globalUrl = `${COINGECKO_BASE}/global`;
 
   const [coin, glob] = await Promise.all([
-    getJson(coinUrl, env),
-    getJson(globalUrl, env),
+    getJson(coinUrl, authHeaders(env)),
+    getJson(globalUrl, authHeaders(env)),
   ]);
 
   const md = coin.market_data || {};
@@ -99,7 +82,7 @@ async function fetchMarket(env) {
     (glob.data && glob.data.market_cap_percentage) || {};
 
   return {
-    fetchedAt: new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00"),
+    fetchedAt: isoUtcSeconds(new Date()),
     currency: "usd",
     marketCap: md.market_cap ? md.market_cap.usd : null,
     volume24h: md.total_volume ? md.total_volume.usd : null,

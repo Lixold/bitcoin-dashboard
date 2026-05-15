@@ -144,6 +144,7 @@ bitcoin-dashboard/
 │   ├── l10n/                  # ARB localisation files + generated classes
 │   └── main.dart
 ├── workers/                   # Cloudflare Workers (cron-triggered fetchers)
+│   ├── _shared/               # Shared helpers (lib.js, news_pipeline.js)
 │   ├── cron-history/          # CoinGecko → history-*.json + market.json
 │   ├── cron-fx-rates/         # ECB → fx-rates.json (daily)
 │   ├── cron-news-en/          # RSS EN → news-en.json
