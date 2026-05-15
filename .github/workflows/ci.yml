@@ -169,3 +169,54 @@ jobs:
         with:
           comment-summary-in-pr: always
           fail-on-severity: moderate
+
+  # -------------------------------------------------------------------------
+  # 7. Workers lint + dry-run bundle (audit finding #5)
+  #    `node --check` catches JS syntax errors; `wrangler deploy --dry-run`
+  #    additionally validates wrangler.toml, resolves imports against the
+  #    shared _shared/ modules, and produces the deployment bundle without
+  #    talking to the Cloudflare API. No CLOUDFLARE_API_TOKEN required.
+  # -------------------------------------------------------------------------
+  workers:
+    name: Workers Lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        worker:
+          - cron-history
+          - cron-fx-rates
+          - cron-network-stats
+          - cron-news-en
+          - cron-news-de
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install workers dependencies
+        # Only runs if workers/package.json exists (introduced for finding
+        # #7). The `--prefer-offline` keeps cold installs fast on CI.
+        run: |
+          if [ -f workers/package.json ]; then
+            npm --prefix workers ci --prefer-offline --no-audit --no-fund
+          fi
+
+      - name: node --check on Worker entrypoint
+        run: node --check "workers/${{ matrix.worker }}/src/index.js"
+
+      - name: node --check on shared modules
+        run: |
+          for f in workers/_shared/*.js; do
+            node --check "$f"
+          done
+
+      - name: wrangler deploy --dry-run
+        # Bundles the Worker against its wrangler.toml without performing
+        # any remote API call. Surfaces import errors, malformed config,
+        # and missing bindings before deploy time.
+        working-directory: workers/${{ matrix.worker }}
+        run: npx -y wrangler@3 deploy --dry-run --outdir /tmp/bundle
