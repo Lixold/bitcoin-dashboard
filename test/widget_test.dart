@@ -16,7 +16,7 @@ void main() {
     // Hive.init keeps tests free of path_provider; one tmp dir per run.
     tempDir = Directory.systemTemp.createTempSync('bd_test_hive_');
     Hive.init(tempDir.path);
-    await Hive.openBox<dynamic>(SettingsController.boxName);
+    await Hive.openBox<String>(SettingsController.boxName);
   });
 
   tearDownAll(() async {

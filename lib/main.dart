@@ -11,7 +11,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
-  await Hive.openBox<dynamic>(SettingsController.boxName);
+  await Hive.openBox<String>(SettingsController.boxName);
 
   runApp(const ProviderScope(child: BitcoinDashboardApp()));
 }
