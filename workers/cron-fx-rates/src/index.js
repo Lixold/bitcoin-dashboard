@@ -41,7 +41,7 @@ const FX_CACHE_CONTROL = "public, max-age=86400";
 // The feed has a fixed, predictable structure, so a single regex pass per
 // concern is enough — no DOM tree needed (and DOMParser isn't available
 // in the workerd runtime anyway).
-function parseEcbXml(xmlText) {
+export function parseEcbXml(xmlText) {
   const dateMatch = xmlText.match(/time\s*=\s*["'](\d{4}-\d{2}-\d{2})["']/);
   if (!dateMatch) {
     throw new Error("ECB feed: missing dated <Cube time=...> element");
@@ -79,7 +79,7 @@ function parseEcbXml(xmlText) {
 // Build the full base -> quote matrix. For any pair (A, B):
 //   rate(A -> B) = eur_rates[B] / eur_rates[A]
 // because eur_rates[X] expresses "1 EUR = X units of currency X".
-function computeCrossRates(eurRates) {
+export function computeCrossRates(eurRates) {
   const cross = {};
   for (const [base, baseRate] of Object.entries(eurRates)) {
     const row = {};

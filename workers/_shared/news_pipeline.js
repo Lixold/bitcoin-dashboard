@@ -68,7 +68,7 @@ const _xmlParser = new XMLParser({
     /\.(item|entry|link)$/.test(jpath),
 });
 
-function asText(node) {
+export function asText(node) {
   // fast-xml-parser collapses CDATA to text by default. A field may still
   // arrive as an object when the source feed wraps it (e.g. an empty tag
   // with attributes), in which case `#text` carries the body.
@@ -81,7 +81,7 @@ function asText(node) {
   return "";
 }
 
-function atomLinkHref(links) {
+export function atomLinkHref(links) {
   // Atom: prefer rel="alternate" (or rel absent). Self-links sometimes
   // arrive first; without this we'd surface the feed URL rather than the
   // article URL.
@@ -96,7 +96,7 @@ function atomLinkHref(links) {
   return links[0]?.["@_href"] ?? "";
 }
 
-function rssLink(link) {
+export function rssLink(link) {
   // RSS: usually a plain string. Because the parser is configured to
   // coerce every `link` field to an array (for Atom feeds with multiple
   // entry-links), a plain RSS `<link>` arrives here as `["https://..."]`.
@@ -116,7 +116,7 @@ function rssLink(link) {
   return "";
 }
 
-function parseDate(s) {
+export function parseDate(s) {
   if (!s) return null;
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? null : d;
@@ -131,7 +131,7 @@ function parseDate(s) {
  * accordingly. Item-level field issues are handled lazily in the caller
  * by checking for empty title/url and skipping.
  */
-function parseFeed(xmlText) {
+export function parseFeed(xmlText) {
   let doc;
   try {
     doc = _xmlParser.parse(xmlText);

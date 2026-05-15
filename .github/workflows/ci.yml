@@ -220,3 +220,27 @@ jobs:
         # and missing bindings before deploy time.
         working-directory: workers/${{ matrix.worker }}
         run: npx -y wrangler@3 deploy --dry-run --outdir /tmp/bundle
+
+  # -------------------------------------------------------------------------
+  # 8. Workers unit tests (audit finding #4 – first slice)
+  #    Runs the Node-native test runner against the shared modules and the
+  #    per-Worker pure functions (parseEcbXml, aggregateHealth, trendLabel,
+  #    parseFeed, …). Independent of the matrix job above so the same
+  #    test suite runs exactly once.
+  # -------------------------------------------------------------------------
+  workers-test:
+    name: Workers Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install workers dependencies
+        run: npm --prefix workers ci --prefer-offline --no-audit --no-fund
+
+      - name: Run tests
+        run: npm --prefix workers test
