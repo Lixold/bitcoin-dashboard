@@ -59,7 +59,7 @@ const NETWORK_CACHE_CONTROL = "public, max-age=86400";
 
 // === Helpers ==============================================================
 
-function trendLabel(pct) {
+export function trendLabel(pct) {
   if (pct > TREND_FLAT_THRESHOLD_PCT) return "up";
   if (pct < -TREND_FLAT_THRESHOLD_PCT) return "down";
   return "stable";
@@ -187,7 +187,7 @@ async function fetchMiningPools() {
 
 // === Aggregated health signal =============================================
 
-function aggregateHealth(nodesPctChange, maxPoolPct) {
+export function aggregateHealth(nodesPctChange, maxPoolPct) {
   let critical = false;
   let warning = false;
 
