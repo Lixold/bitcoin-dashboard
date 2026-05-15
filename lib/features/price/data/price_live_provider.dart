@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/price_tick.dart';
@@ -29,9 +30,10 @@ const Duration _maxInterval = Duration(minutes: 5);
 /// Compute the wait until the next tick given the current failure streak.
 ///
 /// `failureStreak == 0` → base interval. `failureStreak == n > 0` →
-/// `base × 2^(n-1)`, capped at [_maxInterval]. Visible by tests via the
-/// `@visibleForTesting` annotation in a follow-up; kept internal here.
-Duration _nextInterval(int failureStreak) {
+/// `base × 2^(n-1)`, capped at [_maxInterval]. Exposed for testing via
+/// `@visibleForTesting`; treat as private from production code.
+@visibleForTesting
+Duration nextInterval(int failureStreak) {
   if (failureStreak <= 0) return _baseInterval;
   // 1 << (n-1) for n in [1, 30] is safe; we cap long before that.
   final multiplier = 1 << math.min(failureStreak - 1, 30);
@@ -61,7 +63,7 @@ final priceLiveProvider = StreamProvider.autoDispose<PriceTick>((ref) {
     // Schedule the next tick relative to *completion* of this one, not
     // a fixed wall-clock cadence. This avoids stacking overlapping
     // requests when an upstream call takes longer than the interval.
-    timer = Timer(_nextInterval(failureStreak), tick);
+    timer = Timer(nextInterval(failureStreak), tick);
   }
 
   // Fire-and-forget initial fetch.
