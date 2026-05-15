@@ -10,10 +10,19 @@
 // per-language Workers as thin configuration shells while preserving the
 // "one Worker per language" deployment topology required by the
 // Cloudflare Free-Tier 10 ms CPU budget (see ADR-0003).
+//
+// XML parsing uses fast-xml-parser (see workers/package.json). The
+// regex-based parser that used to live in this file was ~100 LOC of
+// hand-rolled CDATA / tag / atom-link extraction; fast-xml-parser is
+// bundle-clean in the workerd runtime, covers more feed shapes out of
+// the box, and removes a long tail of feed-specific failure modes.
+
+import { XMLParser } from "fast-xml-parser";
 
 import {
   compileAlternation,
   countMatches,
+  decodeEntities,
   fold,
   isoUtcSeconds,
   putJson,
@@ -33,127 +42,141 @@ const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const DESC_MAX_CHARS = 150;
 const NEWS_CACHE_CONTROL = "public, max-age=900";
 
-// === XML parsing (regex-based, no DOMParser) ===============================
+// === XML parsing (fast-xml-parser) =========================================
 //
-// The workerd runtime does not ship a DOMParser. The feeds in our curated
-// list are well-formed RSS or Atom; a tight set of regexes is more than
-// enough and avoids pulling in an XML library. Each helper is non-greedy
-// and uses `[\s\S]` in place of the `s` flag for portability.
+// A single parser instance is reused across feeds — fast-xml-parser is
+// stateless once constructed, so this is purely a startup optimisation.
+//
+// Options of note:
+//   * `ignoreAttributes: false`  — Atom <link href="..."/> only lives
+//                                   in attributes; we need them.
+//   * `attributeNamePrefix: "@_"` — fast-xml-parser default; keeps
+//                                   attributes namespaced apart from
+//                                   child elements.
+//   * `isArray`                  — RSS items/Atom entries/Atom links can
+//                                   appear once or many times; forcing
+//                                   array shape removes a long if/else
+//                                   spiral downstream.
+//   * `trimValues: true`         — feed bodies are noisy with whitespace
+//                                   we have no use for.
 
-const CDATA_RE = /<!\[CDATA\[([\s\S]*?)\]\]>/g;
+const _xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+  trimValues: true,
+  isArray: (_name, jpath) =>
+    /\.(item|entry|link)$/.test(jpath),
+});
 
-function stripCdata(s) {
-  return s.replace(CDATA_RE, "$1");
-}
-
-function escTagName(tag) {
-  // RSS uses prefixed tags like `content:encoded` / `dc:date`. The colon is
-  // not a regex metacharacter, but escape defensively anyway in case the
-  // caller passes something exotic.
-  return tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function extractTag(block, tag) {
-  const t = escTagName(tag);
-  const re = new RegExp(`<${t}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${t}>`, "i");
-  const m = block.match(re);
-  if (!m) return "";
-  return stripCdata(m[1]).trim();
-}
-
-function atomLinkHref(block) {
-  // Atom: `<link rel="alternate" href="..."/>`. Prefer rel="alternate" or
-  // no rel attribute — otherwise we'd accidentally surface the feed's
-  // self-link instead of the article URL.
-  const linkRe = /<link\s+([^>]*?)\/?>/gi;
-  let m;
-  let fallback = "";
-  while ((m = linkRe.exec(block)) !== null) {
-    const attrs = m[1];
-    const hrefMatch = attrs.match(/href\s*=\s*"([^"]+)"/i);
-    if (!hrefMatch) continue;
-    const href = hrefMatch[1];
-    const relMatch = attrs.match(/rel\s*=\s*"([^"]+)"/i);
-    if (!relMatch || relMatch[1] === "alternate") return href;
-    if (!fallback) fallback = href;
+function asText(node) {
+  // fast-xml-parser collapses CDATA to text by default. A field may still
+  // arrive as an object when the source feed wraps it (e.g. an empty tag
+  // with attributes), in which case `#text` carries the body.
+  if (node === undefined || node === null) return "";
+  if (typeof node === "string") return node;
+  if (typeof node === "number" || typeof node === "boolean") return String(node);
+  if (typeof node === "object" && typeof node["#text"] === "string") {
+    return node["#text"];
   }
-  return fallback;
+  return "";
 }
 
-function getLink(block) {
-  // RSS first: `<link>URL</link>`. Atom feeds use self-closing
-  // `<link href="..."/>` with no text content, so the RSS extractor
-  // returns empty and we fall through to the Atom helper.
-  const rss = extractTag(block, "link");
-  if (rss) return rss;
-  return atomLinkHref(block);
-}
-
-function getDescription(block) {
-  // First non-empty wins. `content:encoded` carries the richest body in
-  // RSS but is also the most likely to contain markup; downstream
-  // `stripHtml` normalises any of these into clean plain text.
-  return (
-    extractTag(block, "description") ||
-    extractTag(block, "content:encoded") ||
-    extractTag(block, "summary") ||
-    extractTag(block, "content")
-  );
-}
-
-function getDate(block) {
-  return (
-    extractTag(block, "pubDate") ||
-    extractTag(block, "published") ||
-    extractTag(block, "updated") ||
-    extractTag(block, "dc:date")
-  );
-}
-
-function parseFeed(xmlText) {
-  // Returns a normalised array of `{ title, url, description, publishedAt }`
-  // entries regardless of RSS or Atom flavour. A regex failure on one
-  // block must not poison the others — each block is wrapped in
-  // try/catch so a single malformed item never blanks an entire feed.
-  const blocks = [];
-  let isAtom = false;
-
-  const itemRe = /<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi;
-  let m;
-  while ((m = itemRe.exec(xmlText)) !== null) {
-    blocks.push(m[1]);
+function atomLinkHref(links) {
+  // Atom: prefer rel="alternate" (or rel absent). Self-links sometimes
+  // arrive first; without this we'd surface the feed URL rather than the
+  // article URL.
+  if (!Array.isArray(links)) return "";
+  for (const l of links) {
+    if (!l || typeof l !== "object") continue;
+    const href = l["@_href"];
+    if (!href) continue;
+    const rel = l["@_rel"];
+    if (!rel || rel === "alternate") return href;
   }
-  if (blocks.length === 0) {
-    isAtom = true;
-    const entryRe = /<entry(?:\s[^>]*)?>([\s\S]*?)<\/entry>/gi;
-    while ((m = entryRe.exec(xmlText)) !== null) {
-      blocks.push(m[1]);
+  return links[0]?.["@_href"] ?? "";
+}
+
+function rssLink(link) {
+  // RSS: usually a plain string. Because the parser is configured to
+  // coerce every `link` field to an array (for Atom feeds with multiple
+  // entry-links), a plain RSS `<link>` arrives here as `["https://..."]`.
+  // First plain string wins; we fall through to atomLinkHref only when
+  // every entry is an object (Atom-style `<link rel="..." href="..."/>`
+  // smuggled into an RSS channel).
+  if (typeof link === "string") return link;
+  if (Array.isArray(link)) {
+    for (const l of link) {
+      if (typeof l === "string" && l) return l;
     }
+    return atomLinkHref(link);
+  }
+  if (link && typeof link === "object") {
+    return link["@_href"] || asText(link);
+  }
+  return "";
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Parse a feed XML body into a uniform `[{ title, url, description,
+ * publishedAt }]` shape across both RSS and Atom flavours.
+ *
+ * Returns an empty array (rather than throwing) when the XML is
+ * unrecognisable — the caller's per-feed isolation logic logs and skips
+ * accordingly. Item-level field issues are handled lazily in the caller
+ * by checking for empty title/url and skipping.
+ */
+function parseFeed(xmlText) {
+  let doc;
+  try {
+    doc = _xmlParser.parse(xmlText);
+  } catch (exc) {
+    console.warn(`Feed XML parse failed: ${exc}`);
+    return [];
   }
 
-  const out = [];
-  for (const block of blocks) {
-    try {
-      const title = extractTag(block, "title");
-      const url = isAtom
-        ? atomLinkHref(block) || extractTag(block, "link")
-        : getLink(block);
-      const description = getDescription(block);
-      const dateStr = getDate(block);
-      const d = dateStr ? new Date(dateStr) : null;
-      out.push({
+  // RSS 2.0
+  const channel = doc?.rss?.channel;
+  if (channel && Array.isArray(channel.item)) {
+    return channel.item.map((it) => {
+      const title = asText(it.title).trim();
+      const url = rssLink(it.link).trim();
+      const description = asText(
+        it["content:encoded"] ?? it.description ?? it.summary ?? it.content,
+      ).trim();
+      const dateStr = asText(it.pubDate ?? it["dc:date"]);
+      return {
         title,
         url,
         description,
-        publishedAt: d && !Number.isNaN(d.getTime()) ? d : null,
-      });
-    } catch (exc) {
-      // Defensive — regexes don't throw, but malformed input could still
-      // surprise us. Drop the block and continue.
-      console.warn("Skipping malformed item block:", exc);
-    }
+        publishedAt: parseDate(dateStr),
+      };
+    });
   }
-  return out;
+
+  // Atom 1.0
+  const entries = doc?.feed?.entry;
+  if (Array.isArray(entries)) {
+    return entries.map((it) => {
+      const title = asText(it.title).trim();
+      const url = atomLinkHref(it.link).trim();
+      const description = asText(it.summary ?? it.content).trim();
+      const dateStr = asText(it.published ?? it.updated);
+      return {
+        title,
+        url,
+        description,
+        publishedAt: parseDate(dateStr),
+      };
+    });
+  }
+
+  return [];
 }
 
 // === Per-feed processing ===================================================
@@ -183,13 +206,17 @@ async function processFeed(name, url, classifiers, cutoffMs) {
   const kept = [];
 
   for (const entry of entries.slice(0, MAX_ITEMS_PER_FEED)) {
-    const title = (entry.title || "").trim();
-    const link = (entry.url || "").trim();
+    const title = entry.title;
+    const link = entry.url;
     if (!title || !link) continue;
     if (!entry.publishedAt) continue;
     if (entry.publishedAt.getTime() < cutoffMs) continue;
 
-    const descriptionFull = stripHtml(entry.description || "");
+    // fast-xml-parser already unwraps CDATA and resolves the five basic
+    // XML entities (&amp; &lt; &gt; &quot; &apos;). Publisher feeds
+    // occasionally smuggle HTML markup or German named entities
+    // (&auml; …) inside the description — `stripHtml` handles both.
+    const descriptionFull = stripHtml(decodeEntities(entry.description || ""));
     const haystack = fold(title + " " + descriptionFull);
 
     if (!KEYWORD_FILTER.some((kw) => haystack.includes(kw))) continue;

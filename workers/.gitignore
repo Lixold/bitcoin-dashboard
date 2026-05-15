@@ -1,0 +1,5 @@
+# Worker-level dependencies installed by `npm ci` and bundled by Wrangler.
+node_modules/
+
+# npm logs
+npm-debug.log*
