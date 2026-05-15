@@ -14,7 +14,7 @@ void main() {
       expect(nextInterval(0), const Duration(seconds: 60));
     });
 
-    test('returns the base interval for negative input (defensive contract)', () {
+    test('negative input falls back to the base interval', () {
       // The provider always increments by 1 on failure so negative values
       // are not produced in normal code. Still, we contract for safety.
       expect(nextInterval(-1), const Duration(seconds: 60));
