@@ -17,7 +17,11 @@ class SettingsController extends Notifier<AppSettings> {
   static const String _kThemeMode = 'themeMode';
   static const String _kFiatCurrency = 'fiatCurrency';
 
-  Box<dynamic> get _box => Hive.box<dynamic>(boxName);
+  // All settings values are strings (language tag, theme mode name,
+  // currency code). Typing the box statically removes four `as String?`
+  // casts further down and lets the analyzer flag any accidental
+  // non-string write before runtime.
+  Box<String> get _box => Hive.box<String>(boxName);
 
   @override
   AppSettings build() {
@@ -25,8 +29,7 @@ class SettingsController extends Notifier<AppSettings> {
     return AppSettings(
       locale: _readLocale() ?? defaults.locale,
       themeMode: _readThemeMode() ?? defaults.themeMode,
-      fiatCurrency:
-          (_box.get(_kFiatCurrency) as String?) ?? defaults.fiatCurrency,
+      fiatCurrency: _box.get(_kFiatCurrency) ?? defaults.fiatCurrency,
     );
   }
 
@@ -50,14 +53,14 @@ class SettingsController extends Notifier<AppSettings> {
   // -- decoding helpers ----------------------------------------------------
 
   Locale? _readLocale() {
-    final raw = _box.get(_kLocale) as String?;
+    final raw = _box.get(_kLocale);
     if (raw == null || raw.isEmpty) return null;
     final parts = raw.split('-');
     return parts.length == 1 ? Locale(parts[0]) : Locale(parts[0], parts[1]);
   }
 
   ThemeMode? _readThemeMode() {
-    final raw = _box.get(_kThemeMode) as String?;
+    final raw = _box.get(_kThemeMode);
     return switch (raw) {
       'light' => ThemeMode.light,
       'dark' => ThemeMode.dark,
