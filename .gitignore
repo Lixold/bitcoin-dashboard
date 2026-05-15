@@ -5,7 +5,6 @@
 # Dependencies
 .dart_tool/
 .packages
-pubspec.lock
 
 # Build output
 build/
@@ -177,3 +176,4 @@ node_modules/
 # Local-only secret overrides for `wrangler dev`.
 .dev.vars
 **/.dev.vars
+.claude/
