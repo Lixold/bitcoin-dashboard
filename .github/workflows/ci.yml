@@ -101,24 +101,70 @@ jobs:
         run: sudo apt-get install -y lcov
 
       - name: Print coverage summary
+        # Quote $GITHUB_STEP_SUMMARY (shellcheck SC2086) and collapse the
+        # four append redirects into a single brace block (SC2129) so the
+        # step is actionlint-clean.
         run: |
           lcov --summary coverage/lcov.info 2>&1 | tee coverage_summary.txt
-          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat coverage_summary.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### Test Coverage"
+            echo '```'
+            cat coverage_summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # -------------------------------------------------------------------------
-  # 4. Build verification (Linux desktop)
-  #    Confirms the app compiles end-to-end — `flutter analyze` passing does
-  #    not guarantee a successful release build (codegen, asset pipeline, etc.)
+  # 4. Build verification (all release targets — audit finding #12)
+  #    Compile-only check across every release platform so a platform-specific
+  #    regression (Info.plist drift, Gradle bump, missing Pod, kaputter
+  #    Runner.rc) is caught at PR time instead of at first release.
+  #
+  #    Build flags by target:
+  #      * Desktop (linux/windows/macos): --release exercises tree-shaking
+  #        and strip steps that --debug skips.
+  #      * Android: --debug, because a release APK needs a signing keystore
+  #        that does not belong in a PR gate. The signed-release pipeline
+  #        will live in a separate workflow with secrets.
+  #      * iOS: --release --no-codesign, because there is no Apple
+  #        Developer cert in CI yet. Verifies the Xcode build graph and
+  #        Pod resolution without signing.
   # -------------------------------------------------------------------------
   build:
-    name: Flutter Build (Linux)
-    runs-on: ubuntu-latest
+    name: Flutter Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
     needs: analyze
+    # fail-fast: false — if iOS fails we still want to know whether Android
+    # built; the platforms are independent regressions.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux
+            os: ubuntu-latest
+            build: flutter build linux --release
+          - target: windows
+            os: windows-latest
+            build: flutter build windows --release
+          - target: macos
+            os: macos-latest
+            build: flutter build macos --release
+          - target: android
+            os: ubuntu-latest
+            build: flutter build apk --debug
+          - target: ios
+            os: macos-latest
+            build: flutter build ios --release --no-codesign
     steps:
       - uses: actions/checkout@v4
+
+      # Android needs JDK 17 for the modern Gradle 8 / AGP 8 toolchain.
+      # The other targets either don't need a JDK or ship Xcode's bundled JDK.
+      - name: Setup Java (Android only)
+        if: matrix.target == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -127,20 +173,28 @@ jobs:
           channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
+      # GTK + clang + cmake + ninja are needed for the Linux desktop
+      # embedder. Windows ships MSBuild / Visual Studio Build Tools on the
+      # runner image; macOS ships the full Xcode toolchain. So only Linux
+      # has an explicit apt step.
       - name: Install Linux desktop build dependencies
+        if: matrix.target == 'linux'
         run: |
           sudo apt-get update -q
           sudo apt-get install -y clang cmake ninja-build pkg-config \
             libgtk-3-dev liblzma-dev libstdc++-12-dev
 
-      - name: Enable Linux desktop
-        run: flutter config --enable-linux-desktop
+      # Desktop targets are gated by a per-project flag in Flutter's
+      # config. iOS and Android are enabled by default.
+      - name: Enable desktop target
+        if: matrix.target == 'linux' || matrix.target == 'windows' || matrix.target == 'macos'
+        run: flutter config --enable-${{ matrix.target }}-desktop
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Linux release
-        run: flutter build linux --release
+      - name: Build
+        run: ${{ matrix.build }}
 
   # -------------------------------------------------------------------------
   # 5. Dependency review (PRs only)
