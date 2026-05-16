@@ -110,7 +110,6 @@ lib/l10n/generated/
 !.vscode/settings.json
 
 # Xcode
-*.xcworkspace/
 xcuserdata/
 
 # ============================================================
