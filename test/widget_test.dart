@@ -23,7 +23,7 @@ void main() {
     tempDir.deleteSync(recursive: true);
   });
 
-  testWidgets('app boots and shows the Kurs screen with the floating pill',
+  testWidgets('app boots and shows the price screen with the floating pill',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(

@@ -6,11 +6,11 @@
     "description": "Application title shown in the app bar and on splash."
   },
 
-  "navKurs": "Price",
-  "@navKurs": { "description": "Floating-pill section: live price / Kurs." },
-  "navMarkt": "Market",
-  "navPrognose": "Forecast",
-  "navNetzwerk": "Network",
+  "navPrice": "Price",
+  "@navPrice": { "description": "Floating-pill section: live BTC price." },
+  "navMarket": "Market",
+  "navForecast": "Forecast",
+  "navNetwork": "Network",
   "navMiner": "Miner",
   "navNews": "News",
   "navOpenMenu": "Open navigation menu",

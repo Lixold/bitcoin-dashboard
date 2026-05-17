@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
 import '../../../l10n/generated/app_localizations.dart';
-import '../../price/presentation/kurs_screen.dart';
+import '../../price/presentation/price_screen.dart';
 import '../domain/nav_section.dart';
 import 'dynamic_nav_pill.dart';
 import 'nav_bottom_sheet.dart';
@@ -17,7 +17,7 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  NavSection _active = NavSection.kurs;
+  NavSection _active = NavSection.price;
 
   Future<void> _openMenu() async {
     await NavBottomSheet.show(
@@ -30,10 +30,10 @@ class _AppShellState extends State<AppShell> {
 
   Widget _bodyFor(NavSection section) {
     return switch (section) {
-      NavSection.kurs => const KursScreen(),
-      NavSection.markt ||
-      NavSection.prognose ||
-      NavSection.netzwerk ||
+      NavSection.price => const PriceScreen(),
+      NavSection.market ||
+      NavSection.forecast ||
+      NavSection.network ||
       NavSection.miner ||
       NavSection.news => _ComingSoon(section: section),
     };

@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/domain/price_tick.dart';
-import 'package:bitcoin_dashboard/features/price/presentation/kurs_screen.dart';
+import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -56,7 +56,7 @@ void main() {
   late Directory tempDir;
 
   setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_kurs_');
+    tempDir = Directory.systemTemp.createTempSync('bd_test_price_');
     Hive.init(tempDir.path);
     await Hive.openBox<String>(SettingsController.boxName);
   });
@@ -72,7 +72,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_harness(child: const KursScreen()));
+    await tester.pumpWidget(_harness(child: const PriceScreen()));
     await tester.pump();
 
     expect(find.text('Bitcoin Dashboard'), findsOneWidget);
@@ -90,7 +90,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_harness(child: const KursScreen()));
+    await tester.pumpWidget(_harness(child: const PriceScreen()));
     await tester.pump();
 
     expect(find.text('Market insights'), findsOneWidget);

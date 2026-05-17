@@ -3,15 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('NavSection.isVisibleInPhase3', () {
-    test('Kurs, Markt, Netzwerk, News are visible in Phase 3', () {
-      expect(NavSection.kurs.isVisibleInPhase3, isTrue);
-      expect(NavSection.markt.isVisibleInPhase3, isTrue);
-      expect(NavSection.netzwerk.isVisibleInPhase3, isTrue);
+    test('Price, Market, Network, News are visible in Phase 3', () {
+      expect(NavSection.price.isVisibleInPhase3, isTrue);
+      expect(NavSection.market.isVisibleInPhase3, isTrue);
+      expect(NavSection.network.isVisibleInPhase3, isTrue);
       expect(NavSection.news.isVisibleInPhase3, isTrue);
     });
 
-    test('Prognose and Miner are deferred (hidden) in Phase 3', () {
-      expect(NavSection.prognose.isVisibleInPhase3, isFalse);
+    test('Forecast and Miner are deferred (hidden) in Phase 3', () {
+      expect(NavSection.forecast.isVisibleInPhase3, isFalse);
       expect(NavSection.miner.isVisibleInPhase3, isFalse);
     });
   });
@@ -21,9 +21,9 @@ void main() {
       expect(
         NavSection.visible(),
         const <NavSection>[
-          NavSection.kurs,
-          NavSection.markt,
-          NavSection.netzwerk,
+          NavSection.price,
+          NavSection.market,
+          NavSection.network,
           NavSection.news,
         ],
       );

@@ -3,10 +3,10 @@
 
   "appTitle": "Bitcoin Dashboard",
 
-  "navKurs": "Kurs",
-  "navMarkt": "Markt",
-  "navPrognose": "Prognose",
-  "navNetzwerk": "Netzwerk",
+  "navPrice": "Kurs",
+  "navMarket": "Markt",
+  "navForecast": "Prognose",
+  "navNetwork": "Netzwerk",
   "navMiner": "Miner",
   "navNews": "News",
   "navOpenMenu": "Navigationsmenü öffnen",

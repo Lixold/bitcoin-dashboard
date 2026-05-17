@@ -5,24 +5,24 @@ import '../../../l10n/generated/app_localizations.dart';
 /// The enum carries all six future sections so the UI never has to learn
 /// new ids; sections not yet built simply opt out via [isVisibleInPhase3].
 enum NavSection {
-  kurs(
-    id: 'kurs',
-    asset: 'assets/icons/nav/kurs.svg',
+  price(
+    id: 'price',
+    asset: 'assets/icons/nav/price.svg',
     isVisibleInPhase3: true,
   ),
-  markt(
-    id: 'markt',
-    asset: 'assets/icons/nav/markt.svg',
+  market(
+    id: 'market',
+    asset: 'assets/icons/nav/market.svg',
     isVisibleInPhase3: true,
   ),
-  prognose(
-    id: 'prognose',
-    asset: 'assets/icons/nav/prognose.svg',
+  forecast(
+    id: 'forecast',
+    asset: 'assets/icons/nav/forecast.svg',
     isVisibleInPhase3: false,
   ),
-  netzwerk(
-    id: 'netzwerk',
-    asset: 'assets/icons/nav/netzwerk.svg',
+  network(
+    id: 'network',
+    asset: 'assets/icons/nav/network.svg',
     isVisibleInPhase3: true,
   ),
   miner(
@@ -49,10 +49,10 @@ enum NavSection {
   /// Localised label, looked up through [AppL10n]. Centralised here so the
   /// pill, sheet, and screen headers stay in lockstep.
   String label(AppL10n l10n) => switch (this) {
-    NavSection.kurs => l10n.navKurs,
-    NavSection.markt => l10n.navMarkt,
-    NavSection.prognose => l10n.navPrognose,
-    NavSection.netzwerk => l10n.navNetzwerk,
+    NavSection.price => l10n.navPrice,
+    NavSection.market => l10n.navMarket,
+    NavSection.forecast => l10n.navForecast,
+    NavSection.network => l10n.navNetwork,
     NavSection.miner => l10n.navMiner,
     NavSection.news => l10n.navNews,
   };

@@ -12,7 +12,7 @@ import '../../settings/data/settings_controller.dart';
 import '../data/price_live_provider.dart';
 import '../domain/price_tick.dart';
 
-/// Price overview ("Kurs") — main landing screen.
+/// Price overview — main landing screen (German label: "Kurs").
 ///
 /// Layout follows the Open Design `price-overview-final-3` mockup:
 ///
@@ -25,8 +25,8 @@ import '../domain/price_tick.dart';
 /// Live price comes from [priceLiveProvider]. Historical/market/ATH
 /// inputs are placeholders until the CDN-backed providers land in
 /// later Phase-3 sprints.
-class KursScreen extends ConsumerWidget {
-  const KursScreen({super.key});
+class PriceScreen extends ConsumerWidget {
+  const PriceScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
