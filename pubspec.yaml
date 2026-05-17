@@ -33,6 +33,9 @@ dependencies:
   # i18n / number formatting
   intl: ^0.20.2
 
+  # SVG rendering for nav icons + brand logos exported from Open Design.
+  flutter_svg: ^2.0.10
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -45,3 +48,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true                # enables flutter gen-l10n via l10n.yaml
+
+  assets:
+    - assets/icons/nav/
+    - assets/logos/

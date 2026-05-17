@@ -6,15 +6,25 @@
     "description": "Application title shown in the app bar and on splash."
   },
 
-  "navPrice": "Price",
-  "@navPrice": {
-    "description": "Navigation tab: live price overview."
-  },
-  "navOnChain": "On-Chain",
+  "navKurs": "Price",
+  "@navKurs": { "description": "Floating-pill section: live price / Kurs." },
+  "navMarkt": "Market",
+  "navPrognose": "Forecast",
+  "navNetzwerk": "Network",
+  "navMiner": "Miner",
   "navNews": "News",
-  "navSettings": "Settings",
+  "navOpenMenu": "Open navigation menu",
+  "@navOpenMenu": { "description": "Accessible label for the floating pill button." },
+  "navSectionsHeader": "Sections",
+  "@navSectionsHeader": { "description": "Header shown above the nav-sheet grid." },
 
   "priceLive": "Live price",
+  "priceHeroLabel": "Live price · {timestamp}",
+  "@priceHeroLabel": {
+    "placeholders": {
+      "timestamp": { "type": "String" }
+    }
+  },
   "priceLastUpdated": "Last updated {time}",
   "@priceLastUpdated": {
     "placeholders": {
@@ -25,6 +35,29 @@
   "priceLoading": "Loading price…",
   "priceError": "Could not fetch price",
   "priceRetry": "Retry",
+
+  "marketEvolution": "Market evolution",
+  "marketData": "Market data",
+  "marketDataInsightPlaceholder": "Volume vs market cap is calm today.",
+  "marketInsights": "Market insights",
+  "insightPlaceholderBullish": "Bullish signal placeholder — wired up in a later sprint.",
+  "insightPlaceholderVolatility": "Volatility insight placeholder — wired up in a later sprint.",
+  "insightPlaceholderDominance": "BTC dominance placeholder — wired up in a later sprint.",
+
+  "athTitle": "All-time high",
+  "athDistance": "Distance to ATH",
+  "athCurrent": "Current: {value}",
+  "@athCurrent": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "athTarget": "Target: {value}",
+  "@athTarget": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
 
   "comingSoon": "Coming soon",
   "@comingSoon": {
