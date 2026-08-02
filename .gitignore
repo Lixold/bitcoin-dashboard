@@ -175,4 +175,19 @@ node_modules/
 # Local-only secret overrides for `wrangler dev`.
 .dev.vars
 **/.dev.vars
-.claude/
+
+# ============================================================
+# Claude Code
+# ============================================================
+# Ignore the whole directory by default, then re-admit the parts that are
+# shared project configuration. Note: the pattern must be `.claude/*`, not
+# `.claude/`, because git does not descend into an excluded directory and
+# the negations below would never be evaluated.
+.claude/*
+# Shared skills and agent definitions belong to the repo.
+!.claude/skills/
+!.claude/agents/
+# Shared harness settings (permissions, hooks) belong to the repo.
+!.claude/settings.json
+# Machine-local overrides and credentials never do.
+.claude/settings.local.json
