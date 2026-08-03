@@ -73,6 +73,7 @@ Live data (price, mempool, fees, sentiment) is fetched **directly** by the app f
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.41+)
 - Dart 3.11+
+- Node.js 20+ — only if you work on the Cloudflare Workers in `workers/`
 
 Verify your setup before the first run:
 
@@ -150,10 +151,14 @@ bitcoin-dashboard/
 │   ├── cron-news-en/          # RSS EN → news-en.json
 │   ├── cron-news-de/          # RSS DE → news-de.json
 │   └── cron-network-stats/    # Bitnodes + mempool.space → network-stats.json
-├── scripts/                   # Archived Python pipeline scripts (reference)
-├── .github/workflows/         # CI (Flutter analyze/test) + Worker deploys
-└── test/                      # Unit & widget tests
+├── docs/adr/                  # Architecture Decision Records
+├── .github/workflows/         # CI (format, analyze, test, builds, workers)
+│                              # + manual Worker deploys
+└── test/                      # Unit & widget tests, mirroring lib/
 ```
+
+Contributor and coding-agent notes — conventions, workflow, and the
+checks a PR has to pass — live in [CLAUDE.md](CLAUDE.md).
 
 ---
 
@@ -179,11 +184,17 @@ Currency conversion is performed **client-side**: `price_local = price_usd × fx
 
 Contributions are welcome! Please open an issue first to discuss what you'd like to change.
 
+Read [CLAUDE.md](CLAUDE.md) before you start — it covers the project
+conventions, the vertical-slice workflow, and the checks every PR has
+to pass.
+
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a branch (`git checkout -b feat/amazing-feature`) — `main` is protected
+3. Run the pre-flight locally: `dart format .`, `flutter analyze`,
+   `flutter test` (plus `npm --prefix workers test` for Worker changes)
+4. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
+   (`git commit -m 'feat(price): add amazing feature'`)
+5. Push the branch and open a Pull Request; all required CI checks must be green
 
 ---
 
