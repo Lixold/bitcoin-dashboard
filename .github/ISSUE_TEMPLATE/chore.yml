@@ -1,0 +1,21 @@
+name: Chore
+description: Maintenance, dependency, CI or infrastructure task without user-visible change
+labels: ["chore"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What needs doing
+    validations:
+      required: true
+  - type: input
+    id: deadline
+    attributes:
+      label: Hard deadline
+      description: "Leave empty if none. Example: before 2026-09-16 (Node 24 deprecation)."
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+    validations:
+      required: true

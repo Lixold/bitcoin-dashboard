@@ -175,8 +175,9 @@ Order of work within a slice:
    in [ADR-0002](docs/adr/0002-data-sources-and-apis.md). If a Worker
    has to produce the data, that Worker change ships first or in the
    same PR.
-2. **Design.** Resolve layout, states, and tokens before writing
-   widgets. Every screen needs its loading, empty, and error states
+2. **Design.** A design for this slice exists and is linked in the
+   issue before any widget work starts. Resolve layout, states, and
+   tokens before writing widgets. Every screen needs its loading, empty, and error states
    defined up front — they are part of the slice, not a follow-up.
    Use the tokens in `lib/core/theme/`; do not hard-code colours,
    type, or spacing in widgets.
@@ -274,3 +275,59 @@ and no tests is incomplete.
   `type(scope): summary` — e.g. `feat(price): add ATH card`,
   `fix(cron-news-en): tolerate missing pubDate`. Imperative mood,
   lower case, no trailing period.
+
+---
+
+## 9. Where knowledge lives
+
+One subject, one canonical place. Everything else links to it.
+
+| Subject | Canonical location |
+|---|---|
+| Architecture decisions | `docs/adr/` |
+| Working rules, Definition of Done, conventions | this file |
+| Executable step sequences for agents | `.claude/skills/` |
+| Backlog, tasks, status | GitHub Issues and the project board |
+| Product strategy and roadmap | maintained outside this repository |
+
+**Precedence.** This repository is authoritative for how the project is built. If an
+external note, an earlier session, or a private document says otherwise, this file
+wins. Private local notes may add context; they never override anything here.
+
+---
+
+## 10. How work starts
+
+- **GitHub Issues and the project board are the only backlog.** No task lists in
+  markdown files, no work items living in a chat transcript.
+- A slice may start only when all four are true. Otherwise stop and open the
+  prerequisite issue (`needs-data`, `needs-design`) instead of improvising:
+  1. the data contract is verified against the live CDN, not assumed;
+  2. a design for this slice is linked in the issue;
+  3. the visible result is stated in one sentence;
+  4. the issue carries the Definition of Done checklist.
+- Branch `slice/<issue-number>-<short-topic>`; the PR body closes the issue.
+- `.claude/skills/slice/SKILL.md` is the enforced implementation sequence and
+  `.claude/skills/review/SKILL.md` the pre-merge check. Follow them rather than
+  improvising an order.
+- **Acceptance is human.** Someone runs the app and looks at the slice. When you finish,
+  summarise in two sentences what is now visible and what to look at when running it.
+
+---
+
+## 11. Repository hygiene
+
+- `pubspec.lock` and `workers/package-lock.json` are committed. Never add `*.lock` to
+  `.gitignore` — reproducible builds depend on both.
+- The architecture in ADR-0001 to ADR-0005 is settled: no VPS, no orchestration server,
+  no API server, no GitHub Actions cron for data. Do not renavigate without a new ADR.
+- Shared Worker logic lives in `workers/_shared/`. Never copy it into a Worker.
+
+---
+
+## 12. Scope of this repository
+
+This repository covers the Flutter app and the Cloudflare Workers that feed it.
+Commercial topics — pricing, positioning, market analysis, other products — are
+maintained elsewhere and are not discussed in code, documentation, or commit messages
+here.

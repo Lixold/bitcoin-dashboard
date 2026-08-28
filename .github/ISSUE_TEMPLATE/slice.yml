@@ -1,0 +1,55 @@
+name: Slice
+description: One visible improvement backed by real data
+labels: ["slice"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A slice is one visible improvement backed by real data. If you cannot fill in
+        the data contract, this is not a slice yet — open a Worker slice first.
+  - type: input
+    id: outcome
+    attributes:
+      label: Visible result
+      description: One sentence, in terms of what the user sees.
+      placeholder: The market cap and ATH card show real values from market.json.
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Data contract
+      description: Which JSON on data.bitcoin-dashboard.app, which fields, which units. Paste a sample if helpful.
+      placeholder: |
+        File: /data/market.json
+        Fields: market_cap_usd (number), ath_usd (number), ath_date (ISO 8601), generated_at (ISO 8601)
+    validations:
+      required: true
+  - type: input
+    id: design
+    attributes:
+      label: Design reference
+      description: Link to the design for this slice — mockup, spec, or a comment on this issue. Must exist before UI work starts.
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      options:
+        - S (under an hour)
+        - M (one session)
+        - L (too big — split it)
+    validations:
+      required: true
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of Done
+      options:
+        - label: Design exists and is linked
+        - label: Provider with loading, error and data states
+        - label: UI renders real data, no placeholders
+        - label: Strings in app_en.arb and app_de.arb
+        - label: Unit tests for pure logic
+        - label: Widget test with provider overrides (loading / error / data)
+        - label: All required checks green
+        - label: Docs updated in the same PR
