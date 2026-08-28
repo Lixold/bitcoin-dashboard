@@ -11,11 +11,7 @@ import '../domain/nav_section.dart';
 /// container shows the active section; tapping the pill is supposed to
 /// open the [NavBottomSheet].
 class DynamicNavPill extends StatelessWidget {
-  const DynamicNavPill({
-    super.key,
-    required this.active,
-    required this.onTap,
-  });
+  const DynamicNavPill({super.key, required this.active, required this.onTap});
 
   final NavSection active;
   final VoidCallback onTap;

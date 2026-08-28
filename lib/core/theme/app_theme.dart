@@ -54,16 +54,32 @@ class AppTheme {
         centerTitle: false,
       ),
       textTheme: base.textTheme.copyWith(
-        displayLarge: AppTypography.displayHero.copyWith(color: scheme.onSurface),
-        displayMedium: AppTypography.displayLarge.copyWith(color: scheme.onSurface),
-        displaySmall: AppTypography.displayMedium.copyWith(color: scheme.onSurface),
-        headlineMedium: AppTypography.displayLarge.copyWith(color: scheme.onSurface),
+        displayLarge: AppTypography.displayHero.copyWith(
+          color: scheme.onSurface,
+        ),
+        displayMedium: AppTypography.displayLarge.copyWith(
+          color: scheme.onSurface,
+        ),
+        displaySmall: AppTypography.displayMedium.copyWith(
+          color: scheme.onSurface,
+        ),
+        headlineMedium: AppTypography.displayLarge.copyWith(
+          color: scheme.onSurface,
+        ),
         bodyLarge: AppTypography.bodyLarge.copyWith(color: scheme.onSurface),
         bodyMedium: AppTypography.bodyMedium.copyWith(color: scheme.onSurface),
-        bodySmall: AppTypography.bodySmall.copyWith(color: scheme.onSurfaceVariant),
-        labelLarge: AppTypography.monoCaption.copyWith(color: scheme.onSurfaceVariant),
-        labelMedium: AppTypography.monoLabel.copyWith(color: scheme.onSurfaceVariant),
-        labelSmall: AppTypography.monoLabel.copyWith(color: scheme.onSurfaceVariant),
+        bodySmall: AppTypography.bodySmall.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        labelLarge: AppTypography.monoCaption.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        labelMedium: AppTypography.monoLabel.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        labelSmall: AppTypography.monoLabel.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
       ),
     );
   }

@@ -32,11 +32,10 @@ Widget _harness({
 }
 
 void main() {
-  testWidgets('renders the active section label and its SVG icon',
-      (tester) async {
-    await tester.pumpWidget(
-      _harness(active: NavSection.price, onTap: () {}),
-    );
+  testWidgets('renders the active section label and its SVG icon', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_harness(active: NavSection.price, onTap: () {}));
     await tester.pump();
 
     expect(find.text('Price'), findsOneWidget);
@@ -45,8 +44,9 @@ void main() {
     expect(svgString, contains('price.svg'));
   });
 
-  testWidgets('renders the localised label for the German locale',
-      (tester) async {
+  testWidgets('renders the localised label for the German locale', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _harness(
         active: NavSection.network,
@@ -73,15 +73,11 @@ void main() {
   });
 
   testWidgets('swaps label and icon when active changes', (tester) async {
-    await tester.pumpWidget(
-      _harness(active: NavSection.price, onTap: () {}),
-    );
+    await tester.pumpWidget(_harness(active: NavSection.price, onTap: () {}));
     await tester.pump();
     expect(find.text('Price'), findsOneWidget);
 
-    await tester.pumpWidget(
-      _harness(active: NavSection.market, onTap: () {}),
-    );
+    await tester.pumpWidget(_harness(active: NavSection.market, onTap: () {}));
     await tester.pump();
 
     expect(find.text('Price'), findsNothing);
@@ -90,18 +86,19 @@ void main() {
     expect(svg.bytesLoader.toString(), contains('market.svg'));
   });
 
-  testWidgets('declares an accessible button label on the pill',
-      (tester) async {
-    await tester.pumpWidget(
-      _harness(active: NavSection.price, onTap: () {}),
-    );
+  testWidgets('declares an accessible button label on the pill', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_harness(active: NavSection.price, onTap: () {}));
     await tester.pump();
 
     final pillSemantics = tester.widget<Semantics>(
-      find.descendant(
-        of: find.byType(DynamicNavPill),
-        matching: find.byType(Semantics),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(DynamicNavPill),
+            matching: find.byType(Semantics),
+          )
+          .first,
     );
     expect(pillSemantics.properties.button, isTrue);
     expect(pillSemantics.properties.label, 'Open navigation menu');

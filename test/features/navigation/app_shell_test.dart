@@ -55,8 +55,9 @@ void main() {
     tempDir.deleteSync(recursive: true);
   });
 
-  testWidgets('boots into the Price section with the pill labelled "Price"',
-      (tester) async {
+  testWidgets('boots into the Price section with the pill labelled "Price"', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -91,45 +92,47 @@ void main() {
   });
 
   testWidgets(
-      'selecting Network swaps the body, updates the pill, and closes the sheet',
-      (tester) async {
-    tester.view.physicalSize = const Size(900, 1600);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+    'selecting Network swaps the body, updates the pill, and closes the sheet',
+    (tester) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_harness());
-    await tester.pump();
+      await tester.pumpWidget(_harness());
+      await tester.pump();
 
-    await tester.tap(find.byType(DynamicNavPill));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byType(DynamicNavPill));
+      await tester.pumpAndSettle();
 
-    // The sheet tile for Network. Two "Network" texts can co-exist after
-    // selection (sheet during teardown, pill, body) — disambiguate by
-    // tapping the descendant inside the sheet.
-    final networkInSheet = find.descendant(
-      of: find.byType(NavBottomSheet),
-      matching: find.text('Network'),
-    );
-    expect(networkInSheet, findsOneWidget);
-
-    await tester.tap(networkInSheet);
-    await tester.pumpAndSettle();
-
-    // Sheet is gone, body swapped to the Network placeholder, pill updated.
-    expect(find.byType(NavBottomSheet), findsNothing);
-    expect(find.byType(PriceScreen), findsNothing);
-    expect(find.text('Coming soon'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(DynamicNavPill),
+      // The sheet tile for Network. Two "Network" texts can co-exist after
+      // selection (sheet during teardown, pill, body) — disambiguate by
+      // tapping the descendant inside the sheet.
+      final networkInSheet = find.descendant(
+        of: find.byType(NavBottomSheet),
         matching: find.text('Network'),
-      ),
-      findsOneWidget,
-    );
-  });
+      );
+      expect(networkInSheet, findsOneWidget);
 
-  testWidgets('the sheet only exposes the four Phase-3 sections',
-      (tester) async {
+      await tester.tap(networkInSheet);
+      await tester.pumpAndSettle();
+
+      // Sheet is gone, body swapped to the Network placeholder, pill updated.
+      expect(find.byType(NavBottomSheet), findsNothing);
+      expect(find.byType(PriceScreen), findsNothing);
+      expect(find.text('Coming soon'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(DynamicNavPill),
+          matching: find.text('Network'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('the sheet only exposes the four Phase-3 sections', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(900, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);

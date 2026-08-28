@@ -50,10 +50,7 @@ class _AppShellState extends State<AppShell> {
             right: 0,
             bottom: AppSpacing.s5 + MediaQuery.viewPaddingOf(context).bottom,
             child: Center(
-              child: DynamicNavPill(
-                active: _active,
-                onTap: _openMenu,
-              ),
+              child: DynamicNavPill(active: _active, onTap: _openMenu),
             ),
           ),
         ],
@@ -76,10 +73,7 @@ class _ComingSoon extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              section.label(l10n),
-              style: theme.textTheme.displayMedium,
-            ),
+            Text(section.label(l10n), style: theme.textTheme.displayMedium),
             const SizedBox(height: AppSpacing.s2),
             Text(
               l10n.comingSoon,

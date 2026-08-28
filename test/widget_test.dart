@@ -23,8 +23,9 @@ void main() {
     tempDir.deleteSync(recursive: true);
   });
 
-  testWidgets('app boots and shows the price screen with the floating pill',
-      (tester) async {
+  testWidgets('app boots and shows the price screen with the floating pill', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

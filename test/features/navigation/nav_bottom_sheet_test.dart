@@ -41,8 +41,9 @@ void main() {
   });
 
   group('rendering', () {
-    testWidgets('lists exactly the visible sections in declaration order',
-        (tester) async {
+    testWidgets('lists exactly the visible sections in declaration order', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1000, 1400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -112,8 +113,9 @@ void main() {
       expect(selected, NavSection.network);
     });
 
-    testWidgets('routes selection on the active section back to itself',
-        (tester) async {
+    testWidgets('routes selection on the active section back to itself', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1000, 1400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);

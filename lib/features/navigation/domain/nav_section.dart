@@ -30,11 +30,7 @@ enum NavSection {
     asset: 'assets/icons/nav/miner.svg',
     isVisibleInPhase3: false,
   ),
-  news(
-    id: 'news',
-    asset: 'assets/icons/nav/news.svg',
-    isVisibleInPhase3: true,
-  );
+  news(id: 'news', asset: 'assets/icons/nav/news.svg', isVisibleInPhase3: true);
 
   const NavSection({
     required this.id,

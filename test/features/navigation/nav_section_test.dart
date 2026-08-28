@@ -18,15 +18,12 @@ void main() {
 
   group('NavSection.visible()', () {
     test('returns exactly the four Phase-3 sections in declaration order', () {
-      expect(
-        NavSection.visible(),
-        const <NavSection>[
-          NavSection.price,
-          NavSection.market,
-          NavSection.network,
-          NavSection.news,
-        ],
-      );
+      expect(NavSection.visible(), const <NavSection>[
+        NavSection.price,
+        NavSection.market,
+        NavSection.network,
+        NavSection.news,
+      ]);
     });
 
     test('count matches the design-system Phase-3 spec', () {
