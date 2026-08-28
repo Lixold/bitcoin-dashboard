@@ -20,19 +20,6 @@
   "priceError": "Preis konnte nicht geladen werden",
   "priceRetry": "Erneut versuchen",
 
-  "marketEvolution": "Marktentwicklung",
-  "marketData": "Marktdaten",
-  "marketDataInsightPlaceholder": "Volumen im Verhältnis zur Marktcap ist heute ruhig.",
-  "marketInsights": "Market Insights",
-  "insightPlaceholderBullish": "Bullish-Signal-Platzhalter — wird in einem späteren Sprint angebunden.",
-  "insightPlaceholderVolatility": "Volatilitäts-Platzhalter — wird in einem späteren Sprint angebunden.",
-  "insightPlaceholderDominance": "BTC-Dominanz-Platzhalter — wird in einem späteren Sprint angebunden.",
-
-  "athTitle": "All-Time High",
-  "athDistance": "Abstand zum ATH",
-  "athCurrent": "Aktuell: {value}",
-  "athTarget": "Ziel: {value}",
-
   "comingSoon": "In Kürze verfügbar",
 
   "settingsTitle": "Einstellungen",

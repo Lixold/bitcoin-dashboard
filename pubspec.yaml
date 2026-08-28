@@ -33,7 +33,7 @@ dependencies:
   # i18n / number formatting
   intl: ^0.20.2
 
-  # SVG rendering for nav icons + brand logos exported from Open Design.
+  # SVG rendering for nav icons + brand logos exported from Claude Design.
   flutter_svg: ^2.0.10
 
 dev_dependencies:

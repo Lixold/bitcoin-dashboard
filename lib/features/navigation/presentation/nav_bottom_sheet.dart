@@ -9,7 +9,7 @@ import '../domain/nav_section.dart';
 /// Slide-up sheet listing all visible navigation sections.
 ///
 /// The curve `Cubic(0.16, 1, 0.3, 1)` over 400 ms matches the
-/// design-system motion token used in the Open Design mockups.
+/// design-system motion token used in the Claude Design mockups.
 class NavBottomSheet extends StatelessWidget {
   const NavBottomSheet({
     super.key,
@@ -34,11 +34,7 @@ class NavBottomSheet extends StatelessWidget {
     required ValueChanged<NavSection> onSelect,
   }) {
     return Navigator.of(context).push(
-      _NavSheetRoute(
-        active: active,
-        sections: sections,
-        onSelect: onSelect,
-      ),
+      _NavSheetRoute(active: active, sections: sections, onSelect: onSelect),
     );
   }
 
@@ -152,8 +148,10 @@ class _SectionTile extends StatelessWidget {
     final tint = isActive ? scheme.primary : scheme.onSurface;
     final border = isActive ? scheme.primary : scheme.outline;
     final bg = isActive
-        ? Color.alphaBlend(scheme.primary.withValues(alpha: 0.12),
-            scheme.surfaceContainerHighest)
+        ? Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.12),
+            scheme.surfaceContainerHighest,
+          )
         : scheme.surfaceContainerHighest;
 
     return InkWell(

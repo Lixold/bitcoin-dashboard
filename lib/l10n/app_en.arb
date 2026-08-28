@@ -36,29 +36,6 @@
   "priceError": "Could not fetch price",
   "priceRetry": "Retry",
 
-  "marketEvolution": "Market evolution",
-  "marketData": "Market data",
-  "marketDataInsightPlaceholder": "Volume vs market cap is calm today.",
-  "marketInsights": "Market insights",
-  "insightPlaceholderBullish": "Bullish signal placeholder — wired up in a later sprint.",
-  "insightPlaceholderVolatility": "Volatility insight placeholder — wired up in a later sprint.",
-  "insightPlaceholderDominance": "BTC dominance placeholder — wired up in a later sprint.",
-
-  "athTitle": "All-time high",
-  "athDistance": "Distance to ATH",
-  "athCurrent": "Current: {value}",
-  "@athCurrent": {
-    "placeholders": {
-      "value": { "type": "String" }
-    }
-  },
-  "athTarget": "Target: {value}",
-  "@athTarget": {
-    "placeholders": {
-      "value": { "type": "String" }
-    }
-  },
-
   "comingSoon": "Coming soon",
   "@comingSoon": {
     "description": "Placeholder for screens that are not yet implemented."
