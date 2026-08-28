@@ -18,7 +18,7 @@ internal source is authoritative.
 | [ADR-0002](0002-data-sources-and-apis.md) | Public data sources and APIs | Accepted |
 | [ADR-0003](0003-backend-cloudflare-workers-r2.md) | Backend: Cloudflare Workers + R2 + CDN | Accepted (v4, deployed 2026-05-10) |
 | [ADR-0004](0004-state-management-riverpod.md) | Riverpod for state management | Accepted |
-| [ADR-0005](0005-static-json-api-via-cdn.md) | Client ↔ CDN API: static JSON objects | Accepted (v2) |
+| [ADR-0005](0005-static-json-api-via-cdn.md) | Client ↔ CDN API: static JSON objects | Accepted (v3) |
 
 ## Format
 
