@@ -63,8 +63,9 @@ We follow **coordinated disclosure**:
 - The Flutter application source code in this repository (`lib/`,
   `test/`, platform projects under `android/`, `ios/`, `macos/`,
   `windows/`, `linux/`, `web/`).
-- The Python data pipeline scripts under `scripts/` and the GitHub
-  Actions workflows under `.github/workflows/`.
+- The Cloudflare Workers data pipelines under `workers/` (including
+  the shared modules in `workers/_shared/`) and the GitHub Actions
+  workflows under `.github/workflows/`.
 - The integrity of the JSON data assets we publish to the CDN
   (`data.bitcoin-dashboard.app`, backed by Cloudflare R2 bucket
   `bitcoin-dashboard-data`) — for example, supply-chain attacks that
@@ -112,8 +113,8 @@ A few project facts that shape what is and isn't a vulnerability:
   not collect, store, or transmit personal data. There are no
   credentials, sessions, or PII to leak server-side.
 - **Static-data delivery only.** The CDN serves read-only JSON files
-  produced by our GitHub Actions pipelines. There is no API server
-  and no write path from the app.
+  produced by our cron-triggered Cloudflare Workers. There is no API
+  server and no write path from the app.
 - **Client-side currency conversion.** Calculations such as
   `price_local = price_usd × fx_rates[code]` happen on the device and
   rely on the integrity of `fx-rates.json`. CDN integrity is therefore
