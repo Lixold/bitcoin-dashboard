@@ -7,14 +7,24 @@
   },
 
   "navPrice": "Price",
-  "@navPrice": {
-    "description": "Navigation tab: live price overview."
-  },
-  "navOnChain": "On-Chain",
+  "@navPrice": { "description": "Floating-pill section: live BTC price." },
+  "navMarket": "Market",
+  "navForecast": "Forecast",
+  "navNetwork": "Network",
+  "navMiner": "Miner",
   "navNews": "News",
-  "navSettings": "Settings",
+  "navOpenMenu": "Open navigation menu",
+  "@navOpenMenu": { "description": "Accessible label for the floating pill button." },
+  "navSectionsHeader": "Sections",
+  "@navSectionsHeader": { "description": "Header shown above the nav-sheet grid." },
 
   "priceLive": "Live price",
+  "priceHeroLabel": "Live price · {timestamp}",
+  "@priceHeroLabel": {
+    "placeholders": {
+      "timestamp": { "type": "String" }
+    }
+  },
   "priceLastUpdated": "Last updated {time}",
   "@priceLastUpdated": {
     "placeholders": {

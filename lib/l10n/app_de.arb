@@ -3,12 +3,17 @@
 
   "appTitle": "Bitcoin Dashboard",
 
-  "navPrice": "Preis",
-  "navOnChain": "On-Chain",
+  "navPrice": "Kurs",
+  "navMarket": "Markt",
+  "navForecast": "Prognose",
+  "navNetwork": "Netzwerk",
+  "navMiner": "Miner",
   "navNews": "News",
-  "navSettings": "Einstellungen",
+  "navOpenMenu": "Navigationsmenü öffnen",
+  "navSectionsHeader": "Bereiche",
 
   "priceLive": "Live-Preis",
+  "priceHeroLabel": "Aktueller Kurs · {timestamp}",
   "priceLastUpdated": "Aktualisiert {time}",
   "priceSourceBinance": "Quelle: Binance Public API",
   "priceLoading": "Preis wird geladen…",
