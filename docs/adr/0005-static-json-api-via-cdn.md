@@ -1,8 +1,17 @@
 # ADR-0005 — Client ↔ CDN API: static JSON objects
 
 - **Date:** 2026-05-06
-- **Status:** Accepted (v2 — aligned with [ADR-0003](0003-backend-cloudflare-workers-r2.md))
+- **Updated:** 2026-08-28 — v3: timestamp unit made explicit
+- **Status:** Accepted (v3 — aligned with [ADR-0003](0003-backend-cloudflare-workers-r2.md))
 - **Decider:** Daniel Nagel
+
+## Version history
+
+| Version | Date | Change |
+|---|---|---|
+| v1 | 2026-05-06 | Initial contract: static JSON on R2 behind the CDN |
+| v2 | 2026-05-10 | Aligned with ADR-0003 (Cloudflare Workers) |
+| v3 | 2026-08-28 | Time representation stated explicitly (see below) |
 
 ## Context
 
@@ -30,6 +39,23 @@ covers three concerns:
 | Prognosis models *(Phase 4)* | CDN `data/prognosis-{model}.json` | Batch | daily |
 | Network health | CDN `data/network-health.json` | Batch | daily |
 | Meta / supported languages *(planned)* | CDN `data/meta.json` | Batch | on change |
+
+## Time representation
+
+Two forms, and no others:
+
+- **Instants that describe a payload** (`fetchedAt`, `publishedAt`, `date`)
+  are ISO-8601 strings with an explicit UTC offset:
+  `YYYY-MM-DDTHH:MM:SS+00:00`, produced by `isoUtcSeconds` in
+  `workers/_shared/lib.js`.
+- **Numeric epochs inside data series** are **milliseconds, UTC**. The only
+  such field today is `timestamps` in `history-{range}.json`.
+
+Numeric epochs must never be passed through a bitwise operator in a Worker:
+JavaScript converts to a signed 32-bit integer first, and a millisecond
+epoch (~1.79e12) wraps. `Number(p[0]) | 0` in `cron-history` shipped exactly
+that corruption — timestamps decoded to 2006-2009 and the 3M and 1Y series
+lost monotonicity because the wraparound fell inside the array.
 
 ## CDN file formats
 
@@ -64,9 +90,19 @@ covers three concerns:
 }
 ```
 
-The two parallel arrays are sized for direct consumption by fl_chart
-without remapping. Currency conversion happens client-side using
-`fx-rates.json`.
+`timestamps` are **milliseconds since the Unix epoch, UTC** — the unit
+CoinGecko returns, passed through unmodified. The client reads them with
+`DateTime.fromMillisecondsSinceEpoch(ts, isUtc: true)`; the values are
+exactly representable as `double`, so fl_chart can use them as x-values
+without remapping.
+
+The two arrays are index-aligned and equally long: a pair whose timestamp
+or price is not a finite number is dropped from both, never emitted as
+`null`. Within one file the series is strictly increasing. Spacing follows
+the range (1D 5 min, 1W/1M/3M 1 h, 1Y 1 d) but is not guaranteed constant —
+the client must not derive a timestamp from an index.
+
+Currency conversion happens client-side using `fx-rates.json`.
 
 ### `data/fx-rates.json`
 

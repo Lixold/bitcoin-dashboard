@@ -10,6 +10,9 @@
 //   data/history-3M.json, data/history-1Y.json
 //   data/market.json
 //
+// History timestamps are milliseconds since the Unix epoch (UTC), passed
+// through from CoinGecko unmodified. See ADR-0005 and mapPriceSeries below.
+//
 // CoinGecko Demo tier — 30 req/min, no key required, but COINGECKO_API_KEY
 // (if set as a Worker secret) raises the limit and is sent as the
 // `x-cg-demo-api-key` header.
@@ -41,6 +44,54 @@ function authHeaders(env) {
     : {};
 }
 
+/**
+ * Coerce a CoinGecko field to a finite number, or `null` if it is not one.
+ *
+ * Deliberately narrower than bare `Number()`: that maps `null`, `""` and `[]`
+ * to `0`, which would turn a missing price into a real-looking 0 USD point in
+ * the chart. Only actual numbers and numeric strings are accepted.
+ */
+function toFiniteNumber(value) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string" && value.trim() !== "") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+/**
+ * Flatten CoinGecko's `[[ts_ms, price], ...]` pairs into the two parallel
+ * arrays the client contract specifies (see ADR-0005).
+ *
+ * **Timestamps are emitted verbatim as milliseconds since the Unix epoch,
+ * UTC** — the unit CoinGecko itself returns. Do not coerce them with `| 0`,
+ * `>>> 0`, or any other bitwise operator: JavaScript converts to a signed
+ * 32-bit integer first, and a millisecond epoch (~1.79e12) wraps. That bug
+ * shipped corrupted history for every range — timestamps decoded to 2006-2009
+ * and the 3M and 1Y series were no longer monotonic because the wraparound
+ * fell inside the array.
+ *
+ * Pairs whose timestamp or price is not a finite number are dropped, so the
+ * two arrays stay index-aligned and no `null` ever reaches the payload.
+ */
+export function mapPriceSeries(rawPrices) {
+  const pairs = Array.isArray(rawPrices) ? rawPrices : [];
+  const timestamps = [];
+  const prices = [];
+
+  for (const pair of pairs) {
+    if (!Array.isArray(pair)) continue;
+    const ts = toFiniteNumber(pair[0]);
+    const price = toFiniteNumber(pair[1]);
+    if (ts === null || price === null) continue;
+    timestamps.push(ts);
+    prices.push(price);
+  }
+
+  return { timestamps, prices };
+}
+
 async function fetchHistory(rangeKey, env) {
   const days = RANGE_TO_DAYS[rangeKey];
   const url =
@@ -48,18 +99,14 @@ async function fetchHistory(rangeKey, env) {
     `?vs_currency=usd&days=${days}`;
   const raw = await getJson(url, authHeaders(env));
 
-  // CoinGecko returns parallel [ts_ms, price] pairs; we flatten to two arrays
-  // so the JSON stays small and fl_chart can consume it without remapping.
-  const prices = Array.isArray(raw.prices) ? raw.prices : [];
-  const timestamps = prices.map((p) => Number(p[0]) | 0);
-  const priceValues = prices.map((p) => Number(p[1]));
+  const { timestamps, prices } = mapPriceSeries(raw.prices);
 
   return {
     range: rangeKey,
     currency: "usd",
     fetchedAt: isoUtcSeconds(new Date()),
     timestamps,
-    prices: priceValues,
+    prices,
   };
 }
 
