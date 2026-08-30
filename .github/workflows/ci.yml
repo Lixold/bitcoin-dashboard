@@ -249,7 +249,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install workers dependencies
         # Only runs if workers/package.json exists (introduced for finding
@@ -273,7 +273,7 @@ jobs:
         # any remote API call. Surfaces import errors, malformed config,
         # and missing bindings before deploy time.
         working-directory: workers/${{ matrix.worker }}
-        run: npx -y wrangler@3 deploy --dry-run --outdir /tmp/bundle
+        run: npx -y wrangler@4 deploy --dry-run --outdir /tmp/bundle
 
   # -------------------------------------------------------------------------
   # 8. Workers unit tests (audit finding #4 – first slice)
@@ -291,7 +291,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install workers dependencies
         run: npm --prefix workers ci --prefer-offline --no-audit --no-fund
