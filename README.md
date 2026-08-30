@@ -73,7 +73,7 @@ Live data (price, mempool, fees, sentiment) is fetched **directly** by the app f
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (3.41+)
 - Dart 3.11+
-- Node.js 20+ — only if you work on the Cloudflare Workers in `workers/`
+- Node.js 24+ — only if you work on the Cloudflare Workers in `workers/`
 
 Verify your setup before the first run:
 
