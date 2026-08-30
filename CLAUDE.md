@@ -224,6 +224,19 @@ Order of work within a slice:
   The Flutter jobs are chained (`format` → `analyze` → `test`/`build`),
   so an unformatted file skips every downstream job. Run
   `dart format .` before pushing.
+- **Actions run under an allow-list.** This repository is configured
+  with *Allow select actions* under Settings → Actions → General;
+  there is no blanket permission for `actions/*`. Adding an action
+  that is not on the list, or bumping one whose entry pins a version,
+  therefore needs a repository-settings change alongside the workflow
+  edit — a maintainer task that cannot be done from a PR. When that is
+  missed, the run ends as `startup_failure` with no jobs, no
+  annotations and no check runs, so `gh pr checks` says `no checks
+  reported on the branch`: it reads like the workflow was never
+  triggered rather than like a failing check, and neither `actionlint`
+  nor any local command can see the constraint. The list itself is a
+  settings value and is deliberately not copied into this repository —
+  read it in the settings page.
 - **One PR, one topic.** Keep unrelated refactors, dependency bumps,
   and housekeeping in their own PRs.
 - **Describe the slice in the PR body:** what ships, what is
