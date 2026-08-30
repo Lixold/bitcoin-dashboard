@@ -76,7 +76,7 @@ jobs:
         worker: ${{ fromJson(needs.setup.outputs.matrix) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # wrangler-action@v4 runs on `node24` and, with no `wranglerVersion`
       # input, installs Wrangler 4 by default. The CI dry-run gate pins the
