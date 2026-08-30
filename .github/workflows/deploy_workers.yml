@@ -78,10 +78,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # wrangler-action@v4 runs on `node24` and, with no `wranglerVersion`
-      # input, installs Wrangler 4 by default. The CI dry-run gate pins the
-      # same major (`wrangler@4` in ci.yml) so what is validated at PR time
-      # is what is bundled here.
+      # wrangler-action@v4 runs on `node24` as an *action runtime*, but the
+      # Wrangler CLI it installs and executes is a subprocess on the runner
+      # image's default Node — Node 22 as of image 20260823.283.1, whatever
+      # GitHub ships tomorrow after that. Pinning 24 here matches the two
+      # setup-node steps in ci.yml, so the bundle that is validated at PR
+      # time and the bundle that is uploaded are built on the same Node.
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # wrangler-action@v4 with no `wranglerVersion` input installs Wrangler
+      # 4 by default. The CI dry-run gate pins the same major (`wrangler@4`
+      # in ci.yml) so what is validated at PR time is what is bundled here.
       - name: Deploy via Wrangler
         uses: cloudflare/wrangler-action@v4
         with:

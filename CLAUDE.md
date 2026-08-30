@@ -64,9 +64,9 @@ you add it, do it in its own PR).
 | Area | Technology | Minimum |
 |---|---|---|
 | Runtime | Cloudflare Workers (JS, ESM) | — |
-| Local toolchain | Node.js | >= 20 |
-| Deploy | Wrangler | v3 |
-| Test runner | `node --test` | Node 20 built-in |
+| Local toolchain | Node.js | >= 24 |
+| Deploy | Wrangler | v4 |
+| Test runner | `node --test` | Node 24 built-in |
 | XML/RSS parsing | `fast-xml-parser` | ^5.5.7 |
 
 ### Release targets
