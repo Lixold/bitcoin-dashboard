@@ -10,9 +10,19 @@ body:
   - type: input
     id: outcome
     attributes:
-      label: Visible result
-      description: One sentence, in terms of what the user sees.
-      placeholder: The market cap and ATH card show real values from market.json.
+      label: Statement
+      description: The claim the user reads, in one sentence, not the widget that carries it.
+      placeholder: "Network health: good — hashrate at an all-time high, block time normal."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Which figures back the claim. The data contract says where the data lives; this says which number supports which claim.
+      placeholder: |
+        Hashrate at an all-time high: hashrate_7d_avg vs hashrate_ath
+        Block time normal: block_time_avg_144 against the 10 min target
     validations:
       required: true
   - type: textarea
@@ -48,7 +58,9 @@ body:
         - label: Design exists and is linked
         - label: Provider with loading, error and data states
         - label: UI renders real data, no placeholders
+        - label: Every figure sits inside a Statement with its insight sentence — no bare numbers
         - label: Strings in app_en.arb and app_de.arb
+        - label: Insight-sentence categories are translation keys, not hard-coded copy
         - label: Unit tests for pure logic
         - label: Widget test with provider overrides (loading / error / data)
         - label: All required checks green

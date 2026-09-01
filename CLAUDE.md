@@ -176,8 +176,12 @@ Order of work within a slice:
    has to produce the data, that Worker change ships first or in the
    same PR.
 2. **Design.** A design for this slice exists and is linked in the
-   issue before any widget work starts. Resolve layout, states, and
-   tokens before writing widgets. Every screen needs its loading, empty, and error states
+   issue before any widget work starts. **The input to a slice design
+   is a thesis, not an existing screen.** Brief it as thesis,
+   statement, evidence, states, components, and what is out of scope.
+   A design briefed from an existing layout reproduces that layout's
+   omissions. Resolve layout, states, and tokens before writing
+   widgets. Every screen needs its loading, empty, and error states
    defined up front — they are part of the slice, not a follow-up.
    Use the tokens in `lib/core/theme/`; do not hard-code colours,
    type, or spacing in widgets.
@@ -192,6 +196,9 @@ Order of work within a slice:
 - No placeholders anywhere in the shipped code: no dummy values, no
   dead controls, no commented-out branches, no `TODO`/`FIXME` left in
   the diff for the feature being shipped.
+- Every figure the slice adds is accompanied by its interpretation
+  sentence. A number without a sentence is a placeholder by another
+  name and does not ship.
 - Loading, empty, and error states are implemented and reachable.
 - User-facing strings are localised in `app_en.arb` **and**
   `app_de.arb` — no literals in widgets.
@@ -317,7 +324,7 @@ wins. Private local notes may add context; they never override anything here.
   prerequisite issue (`needs-data`, `needs-design`) instead of improvising:
   1. the data contract is verified against the live CDN, not assumed;
   2. a design for this slice is linked in the issue;
-  3. the visible result is stated in one sentence;
+  3. the statement the slice makes is written in one sentence;
   4. the issue carries the Definition of Done checklist.
 - Branch `slice/<issue-number>-<short-topic>`; the PR body closes the issue.
 - `.claude/skills/slice/SKILL.md` is the enforced implementation sequence and
