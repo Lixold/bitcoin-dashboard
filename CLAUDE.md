@@ -196,12 +196,14 @@ Order of work within a slice:
 - No placeholders anywhere in the shipped code: no dummy values, no
   dead controls, no commented-out branches, no `TODO`/`FIXME` left in
   the diff for the feature being shipped.
-- Every figure the slice adds is accompanied by its interpretation
-  sentence. A number without a sentence is a placeholder by another
-  name and does not ship.
+- Every figure sits inside a Statement with its insight sentence — no
+  bare numbers. A number without a sentence is a placeholder by
+  another name and does not ship.
 - Loading, empty, and error states are implemented and reachable.
 - User-facing strings are localised in `app_en.arb` **and**
   `app_de.arb` — no literals in widgets.
+- Insight-sentence categories are translation keys, not hard-coded
+  copy.
 - Tests for the new code exist and pass.
 - `dart format .`, `flutter analyze`, and `flutter test` are clean
   locally; Worker changes additionally pass `npm --prefix workers test`.
@@ -320,12 +322,13 @@ wins. Private local notes may add context; they never override anything here.
 
 - **GitHub Issues and the project board are the only backlog.** No task lists in
   markdown files, no work items living in a chat transcript.
-- A slice may start only when all four are true. Otherwise stop and open the
+- A slice may start only when all five are true. Otherwise stop and open the
   prerequisite issue (`needs-data`, `needs-design`) instead of improvising:
   1. the data contract is verified against the live CDN, not assumed;
   2. a design for this slice is linked in the issue;
   3. the statement the slice makes is written in one sentence;
-  4. the issue carries the Definition of Done checklist.
+  4. the evidence is named — which figure backs which part of the statement;
+  5. the issue carries the Definition of Done checklist.
 - Branch `slice/<issue-number>-<short-topic>`; the PR body closes the issue.
 - `.claude/skills/slice/SKILL.md` is the enforced implementation sequence and
   `.claude/skills/review/SKILL.md` the pre-merge check. Follow them rather than

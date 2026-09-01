@@ -25,11 +25,17 @@ A finding here blocks the merge regardless of everything else.
 - Provider covers loading, error and data.
 - UI shows real data — no `—`, no mock list, no hardcoded chart points, no
   `TODO`/`FIXME` in the shipped path.
+- Every figure sits inside a Statement with its insight sentence — no bare numbers.
+  A screen of bare metric cards is a rejection: list the figures that carry no sentence
+  and block the merge. This check fails on its own — a diff that is otherwise clean does
+  not pass it.
 - Every user-visible string is in both ARB files; no hardcoded strings in widgets.
+- Insight-sentence categories are translation keys, not hard-coded copy.
 - Tests added with the change: unit tests for pure logic, widget test with provider
   overrides for the three states.
 - Docs updated in the same PR when a decision or a documented behaviour changed.
-- PR body states the visible result and closes the issue.
+- PR body states the Statement the slice makes and the evidence behind it, and closes
+  the issue.
 
 ## 3. Consistency
 

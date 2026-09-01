@@ -15,12 +15,21 @@ current one is unverified.
 gh issue view <n> --comments
 ```
 
-Extract: data contract (which JSON, which fields), design link, the one-sentence visible
-result, DoD checklist.
+Extract: data contract (which JSON, which fields), design link, the Statement (the claim
+the user reads, in one sentence — not the widget that carries it), the Evidence (which
+figure backs which part of the claim), DoD checklist.
 
-**Gate.** If any of the four is missing, stop. Do not improvise them. Report what is
-missing and ask for the issue to be completed, or open the prerequisite issue (for
-example the Worker slice that produces the missing JSON).
+**Gate.** Five preconditions, all of them present before any other step:
+
+1. the data contract is verified against the live CDN, not assumed;
+2. a design for this slice is linked in the issue;
+3. the statement the slice makes is written in one sentence;
+4. the evidence is named — which figure backs which part of the statement;
+5. the issue carries the Definition of Done checklist.
+
+If any of the five is missing, stop. Do not improvise them. Report what is missing and
+ask for the issue to be completed, or open the prerequisite issue (for example the Worker
+slice that produces the missing JSON).
 
 ## Step 1 — Verify the data contract against reality
 
@@ -37,9 +46,13 @@ slice.
 
 ## Step 2 — Design
 
-The design must exist and be linked in the issue before UI work starts. Read it. Design only this slice, not the whole screen on spec. If the slice
-needs a component the design system does not cover, extend the design first, then
-implement.
+The design must exist and be linked in the issue before UI work starts. **The input to a
+slice design is a thesis, not an existing screen.** Brief it as thesis, statement,
+evidence, states, components, and what is out of scope. A design briefed from an existing
+layout reproduces that layout's omissions.
+
+Design only this slice, not the whole screen on spec. If the slice needs a component the
+design system does not cover, extend the design first, then implement.
 
 ## Step 3 — Branch
 
@@ -64,6 +77,14 @@ tests in the same step:
 
 Build the UI against the real provider. No mock values, no static chart points, no `—`
 placeholder. If something cannot show real data yet, it does not belong in this slice.
+
+Every figure sits inside a Statement with its insight sentence — no bare numbers.
+Insight-sentence categories are translation keys, not hard-coded copy.
+
+**Gate.** Before Step 6, list every figure this slice adds and name the sentence that
+reads it. A figure you cannot point a sentence at is a bare number: add the sentence or
+drop the figure. Do not ship the figure and leave its sentence for a follow-up — a screen
+of bare metric cards is a rejection in review.
 
 ## Step 6 — i18n
 
@@ -96,14 +117,15 @@ git push -u origin slice/<n>-<short-topic>
 gh pr create --fill --body-file <filled PR template>
 ```
 
-The PR body follows `.github/PULL_REQUEST_TEMPLATE.md`, includes `Closes #<n>` and a
-one-line statement of what is now visible.
+The PR body follows `.github/PULL_REQUEST_TEMPLATE.md`, includes `Closes #<n>`, and
+states the Statement — the claim the user now reads, in one sentence — together with the
+evidence behind it.
 
 ## Step 10 — Hand over for acceptance
 
 Run `.claude/skills/review/SKILL.md` against your own diff before reporting. Then
-summarise in two sentences: what is now visible in the app, and what to look at when
-running it.
+summarise in two sentences: the Statement the user now reads in the app, and what to look
+at when running it.
 
 ## Stop conditions
 
