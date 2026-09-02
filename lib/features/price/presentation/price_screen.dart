@@ -16,7 +16,7 @@ import '../domain/price_tick.dart';
 /// Layout follows the Claude Design `price-overview-final-3` mockup:
 ///
 ///   * **Header** — logo + currency pill
-///   * **Hero**   — live price (Newsreader) with observation timestamp
+///   * **Hero**   — live price (display serif) with observation timestamp
 ///
 /// Live price comes from [priceLiveProvider]. Chart, market data, ATH
 /// and insights arrive in later Phase-3 slices, once their CDN-backed
@@ -206,7 +206,7 @@ class _PriceLine extends StatelessWidget {
       price,
       style: AppTypography.displayHero.copyWith(
         color: scheme.onSurface,
-        fontFeatures: const [FontFeature.tabularFigures()],
+        fontFeatures: AppTypography.figureFeatures,
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
+import 'package:bitcoin_dashboard/core/theme/app_typography.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/domain/price_tick.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
@@ -72,5 +73,21 @@ void main() {
 
     expect(find.text('Bitcoin Dashboard'), findsOneWidget);
     expect(find.textContaining(r'$96,442.50'), findsOneWidget);
+  });
+
+  testWidgets('the live price renders in the hero figure role', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_harness(child: const PriceScreen()));
+    await tester.pump();
+
+    // The role, not the family: the family depends on the platform and
+    // is substituted by the test font manager anyway.
+    final hero = tester.widget<Text>(find.textContaining(r'$96,442.50'));
+    expect(hero.style?.fontSize, AppTypography.displayHero.fontSize);
+    expect(hero.style?.height, isNull);
+    expect(hero.style?.fontFeatures, AppTypography.figureFeatures);
   });
 }
