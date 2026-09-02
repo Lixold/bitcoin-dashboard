@@ -31,6 +31,11 @@ If any of the five is missing, stop. Do not improvise them. Report what is missi
 ask for the issue to be completed, or open the prerequisite issue (for example the Worker
 slice that produces the missing JSON).
 
+**Acceptance target.** Decide now, from the split in `CLAUDE.md` §10, whether anything
+in this change is platform-dependent. If it is, the issue names the target its acceptance
+requires before Step 3 — have it added if it is missing. Deciding this after the work is
+how a browser run gets claimed for a change it could never have shown.
+
 ## Step 1 — Verify the data contract against reality
 
 ```bash
@@ -126,6 +131,12 @@ evidence behind it.
 Run `.claude/skills/review/SKILL.md` against your own diff before reporting. Then
 summarise in two sentences: the Statement the user now reads in the app, and what to look
 at when running it.
+
+Name the target the acceptance requires (`CLAUDE.md` §10) and say whether it was run
+there. If it was not, record acceptance as deferred in the PR: which target, why it was
+unavailable, and what stays unseen. Do not offer a run on a different target in its
+place — the review gate reads the claimed target against the diff and rejects one that
+could not have shown the change.
 
 ## Stop conditions
 

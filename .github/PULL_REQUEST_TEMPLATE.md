@@ -9,6 +9,12 @@ carries it. Then the evidence: which figure backs which part of the claim. -->
 
 <!-- Which CDN file and fields this relies on, or "none" for chores. -->
 
+## Acceptance
+
+<!-- Which target this change requires (CLAUDE.md §10), and whether it was run there.
+If it was not, write "deferred" here with the target, why it was unavailable and what
+stays unseen. Prose, not a checkbox: it stays deferred until someone runs it. -->
+
 ## Definition of Done
 
 - [ ] Design exists and is linked in the issue
