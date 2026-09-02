@@ -34,6 +34,13 @@ A finding here blocks the merge regardless of everything else.
 - Tests added with the change: unit tests for pure logic, widget test with provider
   overrides for the three states.
 - Docs updated in the same PR when a decision or a documented behaviour changed.
+- Acceptance names a target that could have shown the change (`CLAUDE.md` §10). Read
+  the target the PR claims against the diff. If the change falls on the
+  platform-dependent side of §10 and the claimed target is Chrome, reject the
+  acceptance: the change is deferred, not accepted, and the PR has to say so and name
+  the target it is waiting for. A deferral recorded that way passes — an unavailable
+  target is not a defect. A claim the target could not support blocks the merge. This
+  check fails on its own — a diff that is otherwise clean does not pass it.
 - PR body states the Statement the slice makes and the evidence behind it, and closes
   the issue.
 

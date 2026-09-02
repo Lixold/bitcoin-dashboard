@@ -333,8 +333,26 @@ wins. Private local notes may add context; they never override anything here.
 - `.claude/skills/slice/SKILL.md` is the enforced implementation sequence and
   `.claude/skills/review/SKILL.md` the pre-merge check. Follow them rather than
   improvising an order.
-- **Acceptance is human.** Someone runs the app and looks at the slice. When you finish,
-  summarise in two sentences what is now visible and what to look at when running it.
+- **Acceptance is human.** Someone runs the app and looks at the change. When you
+  finish, summarise in two sentences what is now visible and what to look at when
+  running it.
+- **The target is part of the acceptance.** Which one counts follows from what changed:
+  - **Chrome is enough** for layout, navigation, interaction, and the loading, empty and
+    error states.
+  - **A native target is required** for anything platform-dependent — fonts, platform
+    menus, window chrome, file paths, platform APIs. Chrome resolves these through the
+    browser engine, not through the platform the shipped app sits on, so a browser run
+    can show something the product never renders.
+  - **A change that renders nothing** — CI, Workers, docs, this file — has no
+    acceptance target. Say that in the PR instead of claiming a run.
+
+  Platform-dependent work names its target in the issue before the work starts, not in
+  the PR afterwards. Where that target is not available, the PR records acceptance as
+  **deferred** — which target is missing, why, and what stays unseen. Deferred is a
+  state the change carries until someone runs it there; it is not a box to tick, and a
+  run on a target that could not have shown the change does not clear it. A claim from
+  such a target fails the review gate. `README.md` covers how to run each target; this
+  rule only says which one counts.
 
 ---
 
