@@ -7,7 +7,7 @@ import 'app_typography.dart';
 ///
 /// Dark mode is the canonical surface; light mode mirrors the same tokens
 /// with inverted neutrals. Colours come from [AppColors] and the text
-/// theme threads [AppTypography] families into the M3 roles.
+/// theme threads [AppTypography] roles into the M3 slots.
 class AppTheme {
   AppTheme._();
 
