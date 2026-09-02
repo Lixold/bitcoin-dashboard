@@ -20,18 +20,24 @@ class AppTypography {
 
   /// Serif chain for figures and headlines.
   ///
-  /// * `New York` — Apple, lining figures. Ships inside macOS/iOS only as
-  ///   the hidden system face `.New York`, which cannot be requested by
-  ///   family name; it resolves solely where Apple's downloadable New
-  ///   York pack is installed. Kept because that costs nothing when it is
-  ///   absent, but it is not what a stock Mac renders.
+  /// Every entry resolves on a machine nobody prepared for it. A face
+  /// that only appears once a font pack is installed is not in this list,
+  /// however good it looks: it would show the maintainer one rendering
+  /// and users another, which is the gap this chain exists to close.
+  ///
   /// * `Cambria` — Windows, lining figures.
   /// * `Noto Serif` — Android and most Linux desktops, lining figures.
-  /// * `Times New Roman` — lining figures; the face a stock Mac lands on.
-  /// * `Georgia` — old-style figures that make a 64 px hero wobble, so it
-  ///   sits behind every lining-figure face and ahead of generic `serif`.
+  /// * `Times New Roman` — lining figures. It leads on Apple platforms
+  ///   because it is the first entry macOS and iOS resolve at all, and
+  ///   because it is the only serif they ship whose digits share one
+  ///   height.
+  /// * `Georgia` — the one old-style face here. Its digits vary in height
+  ///   by 18.7 per 100 em (the 6 rises to 71 while the 5 stops at 52),
+  ///   against 1.4 for Times New Roman, so a 64 px price visibly wobbles
+  ///   as it ticks. That measurement is the whole reason it sits behind
+  ///   every lining-figure face; it is not a ranking by looks and must
+  ///   not be tidied forward.
   static const List<String> displayStack = <String>[
-    'New York',
     'Cambria',
     'Noto Serif',
     'Times New Roman',
@@ -41,14 +47,16 @@ class AppTypography {
 
   /// Monospace chain for labels, units, deltas and metadata.
   ///
-  /// * `SF Mono` — like New York, in-box on macOS only as the hidden
-  ///   `.SF NS Mono`; resolves where Apple's SF Mono pack is installed.
+  /// Same rule as [displayStack]: nothing here depends on a font pack
+  /// somebody installed by hand.
+  ///
   /// * `Cascadia Mono` — in-box on Windows 11, absent on stock Windows 10.
   /// * `Roboto Mono` — Android and many Linux desktops.
-  /// * `Menlo` — the face a stock Mac lands on.
-  /// * `Consolas` — the face a stock Windows 10 lands on.
+  /// * `Menlo` — leads on Apple platforms; lining figures, spread 1.6 per
+  ///   100 em.
+  /// * `Consolas` — catches stock Windows 10, where Cascadia Mono is not
+  ///   installed.
   static const List<String> monoStack = <String>[
-    'SF Mono',
     'Cascadia Mono',
     'Roboto Mono',
     'Menlo',
