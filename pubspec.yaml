@@ -51,5 +51,10 @@ flutter:
   generate: true                # enables flutter gen-l10n via l10n.yaml
 
   assets:
+    # A directory entry bundles only the files directly inside it, never
+    # its subdirectories. `assets/icons/` therefore covers the four UI
+    # glyphs and `assets/icons/nav/` the six section glyphs; merging the
+    # two lines drops one set at runtime without any build-time error.
+    - assets/icons/
     - assets/icons/nav/
     - assets/logos/
