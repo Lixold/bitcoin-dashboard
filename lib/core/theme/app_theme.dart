@@ -53,17 +53,39 @@ class AppTheme {
         elevation: 0,
         centerTitle: false,
       ),
+      // The display roles sit on the M3 slots that match them **by size**,
+      // not by the matching name. Lining the names up one-for-one is what
+      // made the two `displayMedium`s — the app's and the text theme's —
+      // different sizes, so a widget reading one was never reading the
+      // other:
+      //
+      //   AppTypography.displayHero    48-80  ->  displayLarge   (M3 57)
+      //   AppTypography.displayLarge      32  ->  headlineLarge  (M3 32)
+      //   AppTypography.displayMedium     24  ->  headlineSmall  (M3 24)
+      //   AppTypography.displaySmall      18  ->  titleLarge     (M3 22)
+      //
+      // Two consequences of that, both checked rather than assumed:
+      //
+      //   * `displayMedium`, `displaySmall` and `headlineMedium` keep
+      //     their Material defaults (45 / 36 / 28, platform sans). No app
+      //     role is that big, and nothing reads those slots. A read that
+      //     lands there is outside the design system — move it onto one
+      //     of the four above rather than filling the slot with an
+      //     invented size.
+      //   * `titleLarge` also backs the M3 app bar title, so the settings
+      //     screen's title renders in the app's smallest display role
+      //     instead of the stock sans.
       textTheme: base.textTheme.copyWith(
         displayLarge: AppTypography.displayHero.copyWith(
           color: scheme.onSurface,
         ),
-        displayMedium: AppTypography.displayLarge.copyWith(
+        headlineLarge: AppTypography.displayLarge.copyWith(
           color: scheme.onSurface,
         ),
-        displaySmall: AppTypography.displayMedium.copyWith(
+        headlineSmall: AppTypography.displayMedium.copyWith(
           color: scheme.onSurface,
         ),
-        headlineMedium: AppTypography.displayLarge.copyWith(
+        titleLarge: AppTypography.displaySmall.copyWith(
           color: scheme.onSurface,
         ),
         bodyLarge: AppTypography.bodyLarge.copyWith(color: scheme.onSurface),

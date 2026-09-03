@@ -80,14 +80,44 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_harness(child: const PriceScreen()));
+    await tester.pumpWidget(
+      _harness(child: const PriceScreen(), size: const Size(390, 844)),
+    );
     await tester.pump();
 
     // The role, not the family: the family depends on the platform and
     // is substituted by the test font manager anyway.
     final hero = tester.widget<Text>(find.textContaining(r'$96,442.50'));
-    expect(hero.style?.fontSize, AppTypography.displayHero.fontSize);
     expect(hero.style?.height, isNull);
     expect(hero.style?.fontFeatures, AppTypography.figureFeatures);
+    expect(hero.style?.fontWeight, AppTypography.displayHero.fontWeight);
+  });
+
+  testWidgets('the hero scales with the window it is rendered in', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    // Three points on the design system's clamp(48px, 10vw, 80px): a
+    // phone under the floor, a window inside the range, a desktop frame
+    // over the ceiling. A fixed hero size would fail two of them.
+    for (final probe in <(Size, double)>[
+      (const Size(390, 844), AppTypography.heroMinFontSize),
+      (const Size(640, 900), 64),
+      (const Size(1200, 900), AppTypography.heroMaxFontSize),
+    ]) {
+      final (size, expected) = probe;
+      await tester.pumpWidget(_harness(child: const PriceScreen(), size: size));
+      await tester.pump();
+
+      final hero = tester.widget<Text>(find.textContaining(r'$96,442.50'));
+      expect(
+        hero.style?.fontSize,
+        expected,
+        reason: 'hero at a ${size.width.toInt()} px window',
+      );
+    }
   });
 }
