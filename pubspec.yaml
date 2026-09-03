@@ -35,6 +35,7 @@ dependencies:
 
   # SVG rendering for nav icons + brand logos exported from Claude Design.
   flutter_svg: ^2.0.10
+  go_router: ^17.5.0
 
 dev_dependencies:
   flutter_test:

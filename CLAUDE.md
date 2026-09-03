@@ -49,6 +49,7 @@ these constraints.
 | Framework | Flutter (stable) | 3.41.9 (CI-pinned) |
 | Language | Dart | SDK `^3.11.5` |
 | State management | `flutter_riverpod` ([ADR-0004](docs/adr/0004-state-management-riverpod.md)) | ^3.3.1 |
+| Routing | `go_router` | ^17.5.0 |
 | HTTP | `dio` | ^5.9.2 |
 | Local cache / settings | `hive`, `hive_flutter` | ^2.2.3 / ^1.1.0 |
 | Charts | `fl_chart` | ^1.2.0 |
@@ -95,6 +96,7 @@ bitcoin-dashboard/
 ├── lib/                        # Flutter app source
 │   ├── core/                   # Cross-feature infrastructure
 │   │   ├── http/               # dio provider / HTTP setup
+│   │   ├── router/             # GoRouter: one shell branch per section
 │   │   └── theme/              # theme tokens, AppTheme
 │   ├── features/               # One directory per feature
 │   │   └── <feature>/

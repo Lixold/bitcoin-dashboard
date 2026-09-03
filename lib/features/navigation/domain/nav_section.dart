@@ -53,8 +53,16 @@ enum NavSection {
     NavSection.news => l10n.navNews,
   };
 
+  /// Route location of this section's shell branch. The id is the single
+  /// source of the URL, so the pill, the router, and a deep link can never
+  /// disagree about what `/news` means.
+  String get location => '/$id';
+
   /// All sections visible in the current phase, preserving the canonical
   /// declaration order.
+  ///
+  /// This is also the router's branch order and therefore the index the
+  /// shell maps back to a section — see `lib/core/router/app_router.dart`.
   static List<NavSection> visible() =>
       NavSection.values.where((s) => s.isVisibleInPhase3).toList();
 }
