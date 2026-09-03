@@ -41,6 +41,7 @@ Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news 
 | HTTP | dio |
 | Local Cache | Hive |
 | State Management | Riverpod |
+| Routing | go_router |
 
 ### Backend (Serverless, no origin server)
 
