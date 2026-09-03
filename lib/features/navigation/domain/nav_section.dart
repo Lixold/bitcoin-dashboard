@@ -1,10 +1,15 @@
+import '../../../core/widgets/brand_icon.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// One destination in the floating-pill navigation.
 ///
 /// The enum carries all six future sections so the UI never has to learn
 /// new ids; sections not yet built simply opt out via [isVisibleInPhase3].
-enum NavSection {
+///
+/// It implements [BrandGlyph] so [BrandIcon] can render a section through
+/// the same entry point as a [UiGlyph]. [asset] stays the only place the
+/// six section paths are written down.
+enum NavSection implements BrandGlyph {
   price(
     id: 'price',
     asset: 'assets/icons/nav/price.svg',
@@ -39,6 +44,8 @@ enum NavSection {
   });
 
   final String id;
+
+  @override
   final String asset;
   final bool isVisibleInPhase3;
 
