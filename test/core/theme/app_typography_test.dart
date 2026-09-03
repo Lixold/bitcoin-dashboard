@@ -32,23 +32,67 @@ void main() {
       // take the resolved face's own metrics instead.
       expect(AppTypography.displayHero.height, isNull);
       expect(AppTypography.displayLarge.height, isNull);
+      expect(AppTypography.displayMedium.height, isNull);
+      expect(AppTypography.displaySmall.height, isNull);
       expect(AppTypography.monoValue.height, isNull);
     });
   });
 
   group('role sizes', () {
-    test('hero is the 64 px price role', () {
-      expect(AppTypography.displayHero.fontSize, 64);
-      expect(AppTypography.displayHero.fontWeight, FontWeight.w500);
-    });
-
     test('card metrics are the 32/500 display role', () {
       expect(AppTypography.displayLarge.fontSize, 32);
       expect(AppTypography.displayLarge.fontWeight, FontWeight.w500);
     });
 
+    test('section titles are the 24/500 display role', () {
+      expect(AppTypography.displayMedium.fontSize, 24);
+      expect(AppTypography.displayMedium.fontWeight, FontWeight.w500);
+    });
+
+    test('model names are the 18/500 display role', () {
+      expect(AppTypography.displaySmall.fontSize, 18);
+      expect(AppTypography.displaySmall.fontWeight, FontWeight.w500);
+    });
+
     test('mono value is the 14 px unit and delta role', () {
       expect(AppTypography.monoValue.fontSize, 14);
+    });
+
+    test('the display roles descend without a gap or a tie', () {
+      // The mapping in AppTheme assigns these by size. Two roles that
+      // meet, or that swap order, would put one of them on the wrong
+      // Material slot.
+      expect(
+        <double?>[
+          AppTypography.heroFontSize(640),
+          AppTypography.displayLarge.fontSize,
+          AppTypography.displayMedium.fontSize,
+          AppTypography.displaySmall.fontSize,
+        ],
+        <double>[64, 32, 24, 18],
+      );
+    });
+  });
+
+  group('hero size', () {
+    test('scales with the viewport at 10vw', () {
+      expect(AppTypography.heroFontSize(500), 50);
+      expect(AppTypography.heroFontSize(640), 64);
+      expect(AppTypography.heroFontSize(700), 70);
+    });
+
+    test('clamps to 48 below the range and 80 above it', () {
+      // A phone frame sits under the floor, a desktop frame over the
+      // ceiling — the two ends a fixed 64 got wrong.
+      expect(AppTypography.heroFontSize(390), AppTypography.heroMinFontSize);
+      expect(AppTypography.heroFontSize(0), AppTypography.heroMinFontSize);
+      expect(AppTypography.heroFontSize(1200), AppTypography.heroMaxFontSize);
+      expect(AppTypography.heroFontSize(3840), AppTypography.heroMaxFontSize);
+    });
+
+    test('the bounds are continuous with the 10vw slope', () {
+      expect(AppTypography.heroFontSize(480), AppTypography.heroMinFontSize);
+      expect(AppTypography.heroFontSize(800), AppTypography.heroMaxFontSize);
     });
   });
 
@@ -58,6 +102,7 @@ void main() {
         AppTypography.displayHero,
         AppTypography.displayLarge,
         AppTypography.displayMedium,
+        AppTypography.displaySmall,
         AppTypography.monoValue,
         AppTypography.monoCaption,
         AppTypography.monoLabel,

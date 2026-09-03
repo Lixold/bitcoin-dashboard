@@ -206,6 +206,7 @@ class _PriceLine extends StatelessWidget {
       price,
       style: AppTypography.displayHero.copyWith(
         color: scheme.onSurface,
+        fontSize: AppTypography.heroFontSize(MediaQuery.sizeOf(context).width),
         fontFeatures: AppTypography.figureFeatures,
       ),
     );

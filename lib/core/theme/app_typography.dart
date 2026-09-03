@@ -72,13 +72,49 @@ class AppTypography {
     FontFeature.tabularFigures(),
   ];
 
-  // Display — serif stack, used for the BTC price hero and card metrics.
+  // Display — serif stack: the price hero, card metrics, section titles
+  // and model names.
   //
-  // Figure styles declare no `height`. The resolved face differs per
+  // No display style declares a `height`. The resolved face differs per
   // platform and a line height pinned near 1.0 clips the taller metrics
   // (Georgia needs ~1.14 em, Times New Roman ~1.15 em), so these styles
   // take the face's own metrics, which reserve roughly ten per cent.
 
+  /// Smallest hero size, at viewports of 480 px and below.
+  static const double heroMinFontSize = 48;
+
+  /// Largest hero size, at viewports of 800 px and above.
+  static const double heroMaxFontSize = 80;
+
+  /// Share of the viewport width the hero takes between those bounds —
+  /// the design system's `10vw`.
+  static const double heroWidthFactor = 0.1;
+
+  /// The price hero size for a viewport [width] — the design system's
+  /// `clamp(48px, 10vw, 80px)`.
+  ///
+  /// **The hero scales; it is not one number.** A fixed 64 px is wrong at
+  /// both ends of the range the app ships on: it crowds the line on a
+  /// 390 px phone and reads as an ordinary heading on a 1200 px desktop
+  /// frame, where the design system asks for 80. `TextStyle` has no
+  /// `clamp()`, so the size is computed here from the window width and
+  /// applied with `copyWith` where the price renders. Uses the window,
+  /// not a `LayoutBuilder` box, because `vw` is a viewport unit and the
+  /// hero should answer to the window the user drags.
+  static double heroFontSize(double width) =>
+      (width * heroWidthFactor).clamp(heroMinFontSize, heroMaxFontSize);
+
+  /// The price hero — one per screen.
+  ///
+  /// [fontSize] here is the mid-scale value (`10vw` at a 640 px window)
+  /// and exists so the style is complete on its own: it also backs
+  /// `textTheme.displayLarge`, and a style without a size silently
+  /// renders at 14. It is not the hero size. Anything that renders the
+  /// price passes [heroFontSize] through `copyWith`.
+  ///
+  /// [letterSpacing] stays absolute rather than scaling with the size;
+  /// across 48–80 px it moves between -0.010 em and -0.006 em, which is
+  /// below the threshold where the tracking reads as different.
   static const TextStyle displayHero = TextStyle(
     fontFamilyFallback: displayStack,
     fontWeight: FontWeight.w500,
@@ -86,18 +122,26 @@ class AppTypography {
     letterSpacing: -0.5,
   );
 
+  /// Card metrics, headlines, composite figures.
   static const TextStyle displayLarge = TextStyle(
     fontFamilyFallback: displayStack,
     fontWeight: FontWeight.w500,
     fontSize: 32,
   );
 
+  /// Section titles.
   static const TextStyle displayMedium = TextStyle(
     fontFamilyFallback: displayStack,
     fontWeight: FontWeight.w500,
-    fontSize: 20,
-    height: 1.2,
+    fontSize: 24,
     letterSpacing: -0.1,
+  );
+
+  /// Model names — the label a valuation model carries next to its figure.
+  static const TextStyle displaySmall = TextStyle(
+    fontFamilyFallback: displayStack,
+    fontWeight: FontWeight.w500,
+    fontSize: 18,
   );
 
   // Body — platform sans; declares no family on purpose.

@@ -73,7 +73,7 @@ class _ComingSoon extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(section.label(l10n), style: theme.textTheme.displayMedium),
+            Text(section.label(l10n), style: theme.textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.s2),
             Text(
               l10n.comingSoon,
