@@ -126,7 +126,12 @@ Conventions:
   models live under `lib/features/<feature>/`. Only code used by more
   than one feature belongs in `lib/core/`.
 - **`test/` mirrors `lib/`.** `lib/features/price/data/x.dart` →
-  `test/features/price/data/x_test.dart`.
+  `test/features/price/data/x_test.dart`. Repository-hygiene checks
+  are the exception: a test that covers `assets/`, the build files
+  or the shape of the tree has no `lib/` counterpart to mirror, so
+  it sits beside the check it belongs with rather than at a mirrored
+  path — `test/core/widgets/asset_hygiene_test.dart` next to the
+  bundling test in `brand_icon_test.dart`.
 - **`workers/_shared/`** holds everything used by more than one Worker
   (R2 writes, fetch-with-retry, logging, the RSS/news pipeline). Each
   Worker under `workers/cron-*/` is `src/index.js` + `wrangler.toml`
@@ -313,10 +318,28 @@ One subject, one canonical place. Everything else links to it.
 | Executable step sequences for agents | `.claude/skills/` |
 | Backlog, tasks, status | GitHub Issues and the project board |
 | Product strategy and roadmap | maintained outside this repository |
+| Glyphs, logos and design tokens | the design-system project in Claude Design |
 
 **Precedence.** This repository is authoritative for how the project is built. If an
 external note, an earlier session, or a private document says otherwise, this file
 wins. Private local notes may add context; they never override anything here.
+
+**Design-system sync.** The design system is the one store outside this repository that
+is canonical for files inside it, so its boundary is fixed here rather than decided per
+pull:
+
+- **One direction.** `/design-sync` pulls; it never pushes. Claude Design is the source
+  for glyph geometry, this repository executes it. A push from the CLI would reverse
+  that precedence.
+- **One boundary.** Drawing crosses: geometry, `viewBox`, attributes, path data.
+  Generator metadata does not — no C2PA manifest, no editor annotations, no export
+  timestamps. Claude Design re-signs a manifest into every file it saves, so stripping
+  it is a step of every pull, not a one-off; `test/core/widgets/asset_hygiene_test.dart`
+  fails when one reaches `assets/`.
+- **Normalised comparison.** Byte-identity with the design system is not the goal — that
+  serialiser is not ours and can change at any time. Compare the two stores by
+  normalising empty-element serialisation (`<path/>` against `<path></path>`) and the
+  trailing newline first, never by comparing bytes.
 
 ---
 
