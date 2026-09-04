@@ -3,9 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Asset hygiene, next to the bundling check in `brand_icon_test.dart`:
-/// both ask whether a file in `assets/` is fit to ship, not whether a
-/// widget behaves.
+/// Asset hygiene, beside the bundling check in `brand_icon_test.dart`
+/// rather than at a mirrored path — CLAUDE.md §3.
 ///
 /// Claude Design signs a C2PA manifest into every file it saves, so a
 /// pulled glyph arrives with roughly 14 KB of base64 that renders nothing,

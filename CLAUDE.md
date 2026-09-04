@@ -126,7 +126,12 @@ Conventions:
   models live under `lib/features/<feature>/`. Only code used by more
   than one feature belongs in `lib/core/`.
 - **`test/` mirrors `lib/`.** `lib/features/price/data/x.dart` →
-  `test/features/price/data/x_test.dart`.
+  `test/features/price/data/x_test.dart`. Repository-hygiene checks
+  are the exception: a test that covers `assets/`, the build files
+  or the shape of the tree has no `lib/` counterpart to mirror, so
+  it sits beside the check it belongs with rather than at a mirrored
+  path — `test/core/widgets/asset_hygiene_test.dart` next to the
+  bundling test in `brand_icon_test.dart`.
 - **`workers/_shared/`** holds everything used by more than one Worker
   (R2 writes, fetch-with-retry, logging, the RSS/news pipeline). Each
   Worker under `workers/cron-*/` is `src/index.js` + `wrangler.toml`
