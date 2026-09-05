@@ -130,9 +130,11 @@ void main() {
       expect(find.byType(DynamicNavPill), findsNothing);
     });
 
-    testWidgets('no control in the shell points at /settings', (tester) async {
-      // The gear arrives with #64. Until then the route has no entry point,
-      // and the sheet lists sections only.
+    testWidgets('the navigation does not list settings as a section', (
+      tester,
+    ) async {
+      // The header's gear is the way in. The sheet lists sections only —
+      // settings is a task, and six sections is already one too many.
       await pumpAt(tester, homeLocation);
 
       await tester.tap(find.byType(DynamicNavPill));

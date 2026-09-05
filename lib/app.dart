@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,6 +22,7 @@ class BitcoinDashboardApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsControllerProvider);
+    final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppL10n.of(context).appTitle,
@@ -38,7 +41,72 @@ class BitcoinDashboardApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      routerConfig: ref.watch(appRouterProvider),
+      routerConfig: router,
+      // The menu bar wraps the app content rather than the router: it has
+      // to sit inside `Localizations` to label itself, and it must not be
+      // rebuilt by navigation.
+      builder: (context, child) => AppPlatformMenus(
+        onOpenSettings: () => router.push(settingsLocation),
+        child: child ?? const SizedBox.shrink(),
+      ),
+    );
+  }
+}
+
+/// The application menu, on the one platform that has one.
+///
+/// macOS puts preferences in the app menu behind ⌘, and users expect it
+/// there; the other four targets have no such menu, so on them this widget
+/// is its [child] and nothing else. `Quit` is declared alongside because a
+/// declared app menu replaces the default one — leaving it out would take
+/// ⌘Q with it.
+///
+/// The check is `kIsWeb` first: on the web `defaultTargetPlatform` reports
+/// the host operating system, so a browser on a Mac would otherwise try to
+/// install a native menu bar.
+class AppPlatformMenus extends StatelessWidget {
+  const AppPlatformMenus({
+    super.key,
+    required this.onOpenSettings,
+    required this.child,
+  });
+
+  final VoidCallback onOpenSettings;
+  final Widget child;
+
+  static bool get isSupported =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isSupported) return child;
+
+    final l10n = AppL10n.of(context);
+
+    return PlatformMenuBar(
+      menus: <PlatformMenuItem>[
+        PlatformMenu(
+          label: l10n.appTitle,
+          menus: <PlatformMenuItem>[
+            PlatformMenuItem(
+              label: l10n.settingsTitle,
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.comma,
+                meta: true,
+              ),
+              onSelected: onOpenSettings,
+            ),
+            const PlatformMenuItemGroup(
+              members: <PlatformMenuItem>[
+                PlatformProvidedMenuItem(
+                  type: PlatformProvidedMenuItemType.quit,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+      child: child,
     );
   }
 }
