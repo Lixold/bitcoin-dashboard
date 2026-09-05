@@ -20,14 +20,38 @@
   "priceError": "Preis konnte nicht geladen werden",
   "priceRetry": "Erneut versuchen",
 
+  "currencyPair": "{currency} / BTC",
+
   "comingSoon": "In Kürze verfügbar",
 
   "settingsTitle": "Einstellungen",
-  "settingsLanguage": "Sprache",
-  "settingsCurrency": "Währung",
-  "settingsTheme": "Erscheinungsbild",
+  "settingsPrivacyNote": "Gilt nur auf diesem Gerät. Kein Konto, keine Analytics.",
+
+  "settingsGroupAppearance": "Erscheinungsbild",
+  "settingsGroupLanguageRegion": "Sprache und Region",
+  "settingsGroupAbout": "Über die App",
+
+  "settingsTheme": "Thema",
+  "settingsThemeDescription": "Dunkel ist die Standardansicht.",
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Hell",
   "settingsThemeDark": "Dunkel",
-  "settingsAbout": "Über"
+
+  "settingsLanguage": "Sprache",
+  "settingsLanguageDescription": "Wirkt sofort, ohne Neustart.",
+  "settingsLanguagePickerTitle": "Sprache wählen",
+  "settingsLanguageEnglish": "Englisch",
+  "settingsLanguageGerman": "Deutsch",
+
+  "settingsCurrency": "Währung",
+  "settingsCurrencyDescription": "Bezugswährung für alle Kurse.",
+  "settingsNumberFormat": "Zahlenformat",
+  "settingsNumberFormatDescription": "Folgt der gewählten Sprache.",
+
+  "settingsVersion": "Version",
+  "settingsLicence": "Lizenz",
+  "settingsDataSources": "Datenquellen",
+  "settingsSourceCode": "Quellcode",
+  "settingsReportIssue": "Fehler melden",
+  "settingsReportIssueDescription": "Ein Issue auf GitHub eröffnen unter {url}"
 }

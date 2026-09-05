@@ -15,9 +15,9 @@ String get homeLocation => NavSection.visible().first.location;
 /// Settings sits outside the shell: it covers the whole screen, including the
 /// floating pill, and is not one of the sections.
 ///
-/// The route exists as groundwork for #64, which adds the gear that leads
-/// here. Until then the location is reachable by deep link only — this PR
-/// deliberately ships no control pointing at it.
+/// The gear in `AppHeader` pushes this location, so settings opens on top of
+/// the section the user was in and closing it returns there. The navigation
+/// still does not list it: it is a task, not a destination.
 const String settingsLocation = '/settings';
 
 /// Builds the app's routing table.

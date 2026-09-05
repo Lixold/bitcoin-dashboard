@@ -20,6 +20,7 @@ Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news 
 - **Currency Conversion** — ~30 fiat currencies via daily ECB reference rates
 - **Prognosis Models** — Stock-to-Flow and additional valuation models *(roadmap)*
 - **Dark & Light Mode** — Native theme support on all platforms
+- **Settings on Every Screen** — Language, appearance and currency behind the gear in the screen header; on macOS also via ⌘,
 - **Privacy First** — No account, no tracking, no analytics; settings stay on device
 
 ---

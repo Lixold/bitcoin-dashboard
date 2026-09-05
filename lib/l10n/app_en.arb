@@ -36,17 +36,70 @@
   "priceError": "Could not fetch price",
   "priceRetry": "Retry",
 
+  "currencyPair": "{currency} / BTC",
+  "@currencyPair": {
+    "description": "The unit shown in the header pill: the fiat code over BTC.",
+    "placeholders": {
+      "currency": { "type": "String" }
+    }
+  },
+
   "comingSoon": "Coming soon",
   "@comingSoon": {
     "description": "Placeholder for screens that are not yet implemented."
   },
 
   "settingsTitle": "Settings",
-  "settingsLanguage": "Language",
-  "settingsCurrency": "Currency",
+  "@settingsTitle": {
+    "description": "Settings screen title, and the label of the header gear."
+  },
+  "settingsPrivacyNote": "Applies to this device only. No account, no analytics.",
+  "@settingsPrivacyNote": {
+    "description": "Sits under the settings title and states where preferences live."
+  },
+
+  "settingsGroupAppearance": "Appearance",
+  "@settingsGroupAppearance": { "description": "Settings group title." },
+  "settingsGroupLanguageRegion": "Language and region",
+  "@settingsGroupLanguageRegion": { "description": "Settings group title." },
+  "settingsGroupAbout": "About the app",
+  "@settingsGroupAbout": { "description": "Settings group title." },
+
   "settingsTheme": "Theme",
+  "settingsThemeDescription": "Dark is the default view.",
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
   "settingsThemeDark": "Dark",
-  "settingsAbout": "About"
+
+  "settingsLanguage": "Language",
+  "settingsLanguageDescription": "Takes effect immediately, no restart.",
+  "settingsLanguagePickerTitle": "Choose a language",
+  "@settingsLanguagePickerTitle": {
+    "description": "Header of the sheet that lists the available languages."
+  },
+  "settingsLanguageEnglish": "English",
+  "@settingsLanguageEnglish": {
+    "description": "The English language, named in the language on screen."
+  },
+  "settingsLanguageGerman": "German",
+  "@settingsLanguageGerman": {
+    "description": "The German language, named in the language on screen."
+  },
+
+  "settingsCurrency": "Currency",
+  "settingsCurrencyDescription": "Reference currency for all prices.",
+  "settingsNumberFormat": "Number format",
+  "settingsNumberFormatDescription": "Follows the selected language.",
+
+  "settingsVersion": "Version",
+  "settingsLicence": "Licence",
+  "settingsDataSources": "Data sources",
+  "settingsSourceCode": "Source code",
+  "settingsReportIssue": "Report a problem",
+  "settingsReportIssueDescription": "Open an issue on GitHub at {url}",
+  "@settingsReportIssueDescription": {
+    "placeholders": {
+      "url": { "type": "String" }
+    }
+  }
 }
