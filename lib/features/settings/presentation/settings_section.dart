@@ -98,14 +98,6 @@ class SettingsRow extends StatelessWidget {
   /// Chevron size, as the design system uses it next to a value.
   static const double chevronSize = 12;
 
-  /// Below this width the row stacks its control under the text.
-  ///
-  /// The design draws one 600 dp frame. On a phone the text column and a
-  /// three-option segmented control do not fit on one line at their
-  /// intrinsic widths (roughly 180 px and 210 px plus the row's own 32 px
-  /// of padding), so side by side would overflow on every shipped phone.
-  static const double stackBelowWidth = 440;
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -155,6 +147,28 @@ class SettingsRow extends StatelessWidget {
       _ => null,
     };
 
+    // Side by side while the text and the control both fit at their
+    // natural widths, stacked when they do not.
+    //
+    // [OverflowBar] makes that decision by measuring the two of them
+    // against the width the row actually has, so it is the copy that
+    // decides: a German label and its longer description stack at a width
+    // where the English pair still sits on one line, and the fifteen
+    // languages after them need no threshold of their own. A pixel
+    // constant here would be a guess about text it has never seen — and
+    // it would read like a layout breakpoint, which this is not.
+    final Widget body = end == null
+        ? Align(alignment: Alignment.centerLeft, child: text)
+        : Center(
+            child: OverflowBar(
+              alignment: MainAxisAlignment.spaceBetween,
+              overflowAlignment: OverflowBarAlignment.start,
+              spacing: AppSpacing.s4,
+              overflowSpacing: AppSpacing.s3,
+              children: [text, end],
+            ),
+          );
+
     final content = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s4,
@@ -162,31 +176,7 @@ class SettingsRow extends StatelessWidget {
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: minHeight),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (end == null) {
-              return Align(alignment: Alignment.centerLeft, child: text);
-            }
-            if (constraints.maxWidth < stackBelowWidth) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  text,
-                  const SizedBox(height: AppSpacing.s3),
-                  end,
-                ],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: text),
-                const SizedBox(width: AppSpacing.s4),
-                end,
-              ],
-            );
-          },
-        ),
+        child: body,
       ),
     );
 
