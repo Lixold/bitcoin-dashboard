@@ -1,3 +1,4 @@
+import 'package:bitcoin_dashboard/core/theme/app_spacing.dart';
 import 'package:bitcoin_dashboard/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -56,6 +57,31 @@ void main() {
 
     test('mono value is the 14 px unit and delta role', () {
       expect(AppTypography.monoValue.fontSize, 14);
+    });
+
+    test('the body ramp is 16 / 14 / 13, the platform sizes', () {
+      // #82 decided this direction: the design system took the
+      // repository's sizes, the repository did not take the mockups'
+      // 15 px prose. A 15 reappearing here — as a fourth role or in place
+      // of one of these — is that decision being undone.
+      expect(
+        <double?>[
+          AppTypography.bodyLarge.fontSize,
+          AppTypography.bodyMedium.fontSize,
+          AppTypography.bodySmall.fontSize,
+        ],
+        <double>[16, 14, 13],
+      );
+    });
+
+    test('the prose role steps on the spacing grid', () {
+      // 16 x 1.5 = 24 = AppSpacing.s5. This is what the design system's
+      // 15 px stood for, and the only number #82 moved: a wrapped
+      // paragraph has to advance by a spacing step, not by 22.4.
+      expect(
+        AppTypography.bodyLarge.fontSize! * AppTypography.bodyLarge.height!,
+        AppSpacing.s5,
+      );
     });
 
     test('the display roles descend without a gap or a tie', () {

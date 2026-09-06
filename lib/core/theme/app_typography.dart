@@ -145,9 +145,32 @@ class AppTypography {
   );
 
   // Body — platform sans; declares no family on purpose.
+  //
+  // **The sizes are the repository's, not the mockups'.** The design
+  // system asked for 15 px prose; 15 is a web value carried over from the
+  // OpenDesign mockups, and 16 is the platform default for body text on
+  // all five targets this app ships to. So the design system moved to
+  // 16 / 14 and these numbers stayed — the same lesson as the font
+  // stacks: a value that was right in the mockups is not automatically
+  // right in the product.
+  //
+  // What the 15 actually stood for was the rhythm, and that is what
+  // [bodyLarge] takes over: 16 x 1.5 = 24 = `AppSpacing.s5`, so a wrapped
+  // paragraph steps on the spacing grid instead of drifting off it. That
+  // is the one number this decision moved.
+  //
+  // [bodyMedium] and [bodySmall] keep their 1.45 and land on 20.3 and
+  // 18.85 — off the grid on purpose. The rhythm is only visible where
+  // text wraps, and those two carry single-line descriptions and notes.
+  // Bending 14 onto 20 would be a fraction invented for a line that never
+  // has a second line to align with.
+  //
+  // The prose role is therefore still untried: every call site today is
+  // one line. The first real paragraph is the insight sentence in #68,
+  // and that is where 24 gets looked at rather than calculated.
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
-    height: 1.4,
+    height: 1.5,
     fontWeight: FontWeight.w400,
   );
 
