@@ -205,7 +205,14 @@ Order of work within a slice:
   the diff for the feature being shipped.
 - Every figure sits inside a Statement with its insight sentence — no
   bare numbers. A number without a sentence is a placeholder by
-  another name and does not ship.
+  another name and does not ship. **The rule covers figures the app
+  reports about the world** — fetched, derived or measured values,
+  where the reader needs to know what the value means. It does not
+  cover identifiers and format samples: a version number, a licence, a
+  build hash, a locale formatting example. The test: could the figure
+  read differently tomorrow, and would the reader want to know whether
+  that is good? If yes, it needs a sentence. If it only identifies the
+  app or demonstrates a format, it does not.
 - Loading, empty, and error states are implemented and reachable.
 - User-facing strings are localised in `app_en.arb` **and**
   `app_de.arb` — no literals in widgets.
