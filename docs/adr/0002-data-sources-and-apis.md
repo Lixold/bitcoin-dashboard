@@ -1,7 +1,8 @@
 # ADR-0002 — Public data sources and APIs
 
 - **Date:** 2026-05-06
-- **Status:** Accepted (updated 2026-05-10 to reflect Cloudflare Workers)
+- **Status:** Accepted (updated 2026-05-10 to reflect Cloudflare Workers;
+  2026-09-06 to record the CDN as an app-side host)
 - **Decider:** Daniel Nagel
 - **Depends on:** [ADR-0003](0003-backend-cloudflare-workers-r2.md)
 
@@ -25,6 +26,36 @@ produced by Cloudflare Workers and served via Cloudflare R2 / CDN.
 
 All four endpoints are key-less and rate-limit-friendly for client-side
 polling. No vendor sees user identity beyond standard request metadata.
+
+### Published data (Flutter reads the CDN)
+
+| Data point | Source | Client cache |
+|---|---|---|
+| Mining pool shares, network health | `https://data.bitcoin-dashboard.app/data/network-health.json` | 60 min |
+
+Until the mining-pool slice the app spoke only to the four live APIs
+above; the CDN was a Worker output that nothing in `lib/` read. It is now
+an **outbound host of the app**, which CLAUDE.md §1 requires to be
+recorded here rather than left implicit because the domain is ours.
+
+Being ours changes nothing about the privacy posture, and that is worth
+stating rather than assuming:
+
+- The bucket serves world-readable static JSON. Every reader receives the
+  identical document, so a request reveals only that some client asked
+  for a public file.
+- There is no write path, no cookie, no auth header and no query string —
+  the app issues a bare `GET` through the shared `dio` instance with the
+  same `User-Agent` it sends everywhere else.
+- Nothing is logged back to us that a CDN does not log for any static
+  asset. No identifier travels with the request, and the app has no
+  identity to attach to one.
+
+The client cache above is the app's, not the CDN's: a payload is reused
+for 60 minutes before it is re-requested, and is kept and shown at any
+age when a fetch fails — see
+[ADR-0005](0005-static-json-api-via-cdn.md) for the payload contract and
+the staleness rule that goes with it.
 
 ### Batch data (Cloudflare Workers → R2 → CDN)
 
@@ -77,6 +108,7 @@ cross-rate matrix so the app needs no inversion logic.
 - New languages and news sources land without an app release
 - Multi-currency works without paid FX APIs
 - All live endpoints are key-less — no tracking surface for end users
+- The CDN adds no identity surface: static, world-readable, read-only
 
 **Negative / risks**
 

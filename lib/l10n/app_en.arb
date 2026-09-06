@@ -100,5 +100,142 @@
   "settingsOpensInBrowser": "Opens in your browser",
   "@settingsOpensInBrowser": {
     "description": "Screen-reader hint on the About rows that hand their address to the platform browser. The row leaves the app; nothing opens inside it."
-  }
+  },
+
+  "networkPoolsCategory": "Mining pool concentration",
+  "@networkPoolsCategory": {
+    "description": "Eyebrow above the mining pool concentration statement on the network screen."
+  },
+  "networkPoolsAsOf": "As of {timestamp}",
+  "@networkPoolsAsOf": {
+    "description": "Qualifier after the category, naming when the producer gathered the data — not when the app fetched it.",
+    "placeholders": { "timestamp": { "type": "String" } }
+  },
+  "networkPoolsLoadingLabel": "Loading the distribution…",
+  "@networkPoolsLoadingLabel": { "description": "Qualifier after the category while the payload is being read." },
+
+  "networkPoolsStaleNotice": "Data {age} old · no update since {timestamp}",
+  "@networkPoolsStaleNotice": {
+    "description": "Age hint shown when the payload is older than 26 hours. The figures stay on screen; this says how far behind they are.",
+    "placeholders": {
+      "age": { "type": "String" },
+      "timestamp": { "type": "String" }
+    }
+  },
+  "networkPoolsStaleAge": "{hours} hours",
+  "@networkPoolsStaleAge": {
+    "description": "The age itself, in whole hours, as used inside networkPoolsStaleNotice.",
+    "placeholders": { "hours": { "type": "int" } }
+  },
+
+  "networkPoolsVerdictOk": "Uncritical",
+  "@networkPoolsVerdictOk": { "description": "Verdict word when top 3 <= 70 % and top 1 <= 40 %." },
+  "networkPoolsVerdictWarning": "Elevated",
+  "@networkPoolsVerdictWarning": { "description": "Verdict word when top 3 > 70 % or top 1 > 40 %." },
+  "networkPoolsVerdictCritical": "Critical",
+  "@networkPoolsVerdictCritical": { "description": "Verdict word when top 3 >= 80 % or top 1 > 50 %." },
+
+  "networkPoolsBadgeOk": "Distribution broad",
+  "networkPoolsBadgeWarning": "Concentration elevated",
+  "networkPoolsBadgeCritical": "Concentration critical",
+
+  "networkPoolsInsightCategoryOk": "Decentralisation",
+  "@networkPoolsInsightCategoryOk": { "description": "Insight category on a calm reading." },
+  "networkPoolsInsightCategoryAlert": "Attention",
+  "@networkPoolsInsightCategoryAlert": { "description": "Insight category once a threshold is crossed." },
+
+  "networkPoolsInsightOk": "No pool holds more than {topOne} % of the computing power, and the three largest together do not cross the {threshold} % line — nobody can decide on their own which transactions make it into blocks.",
+  "@networkPoolsInsightOk": {
+    "description": "The insight sentence on a calm reading. \"Do not cross\", not \"stay below\": a top three of exactly 70.0 % is still ok, so \"below\" would be false at the boundary. The threshold is a placeholder rather than a literal so the sentence cannot drift away from PoolConcentration.topThreeWarningThreshold.",
+    "placeholders": {
+      "topOne": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
+  },
+  "networkPoolsInsightWarning": "The hashrate is unevenly distributed: the largest pool holds {topOne} %, the three largest {topThree} % together — enough for a small group to influence which transactions make it into blocks.",
+  "@networkPoolsInsightWarning": {
+    "description": "The insight sentence once a warning threshold is crossed. It names both figures because either of them can be the trigger — top 1 above 40 % with a calm top 3 is a warning too.",
+    "placeholders": {
+      "topOne": { "type": "String" },
+      "topThree": { "type": "String" }
+    }
+  },
+  "networkPoolsInsightCritical": "The largest pool holds {topOne} %, the three largest {topThree} % together — at this scale a single operator or a small group can withhold blocks and decide the order of transactions.",
+  "@networkPoolsInsightCritical": {
+    "description": "The insight sentence at critical level. Names both figures for the same reason as the warning sentence.",
+    "placeholders": {
+      "topOne": { "type": "String" },
+      "topThree": { "type": "String" }
+    }
+  },
+
+  "networkPoolsTopOneLabel": "Largest pool",
+  "networkPoolsTopThreeLabel": "The three largest combined",
+  "networkPoolsThreshold": "Threshold {value} %",
+  "@networkPoolsThreshold": {
+    "description": "Left label under a meter, naming the warning line.",
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "networkPoolsCriticalFrom": "Critical from {value} %",
+  "@networkPoolsCriticalFrom": {
+    "description": "Right label under a meter, naming the critical line.",
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "networkPoolsDistanceBelow": "{points} pp below the {threshold} % threshold",
+  "@networkPoolsDistanceBelow": {
+    "description": "Note under a meter when the figure sits below its warning line.",
+    "placeholders": {
+      "points": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
+  },
+  "networkPoolsDistanceAbove": "{points} pp above the {threshold} % threshold",
+  "@networkPoolsDistanceAbove": {
+    "description": "Note under a meter when the figure sits above its warning line.",
+    "placeholders": {
+      "points": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
+  },
+
+  "networkPoolsEvidenceTitle": "Pool distribution · last 24 h",
+  "@networkPoolsEvidenceTitle": {
+    "description": "Title of the evidence card. The window is the producer's: cron-network-stats reads mempool.space/api/v1/mining/pools/24h."
+  },
+  "networkPoolsPayloadCount": "{count} pools in the payload",
+  "@networkPoolsPayloadCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "networkPoolsTopThreeBox": "Top 3 · {share} % combined",
+  "@networkPoolsTopThreeBox": {
+    "placeholders": { "share": { "type": "String" } }
+  },
+  "networkPoolsShowRest": "Show more pools",
+  "networkPoolsHideRest": "Hide more pools",
+  "networkPoolsCoverage": "Σ {share} % attributed to the listed pools · the rest is spread over smaller pools the payload does not list",
+  "@networkPoolsCoverage": {
+    "description": "Says what the list covers so the reader does not assume it sums to 100. The remainder is not an \"Others\" pool: the producing worker keeps only the ten largest of the pools its source reports, and the difference is those it dropped.",
+    "placeholders": { "share": { "type": "String" } }
+  },
+
+  "networkPoolsEmptyTitle": "Statement about the three largest pools cannot be formed",
+  "networkPoolsEmptyBody": "The payload contains only {count} pools. There is no substitute value for the combined share of the three largest, so no verdict is shown.",
+  "@networkPoolsEmptyBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "networkPoolsEmptyFooter": "{count} pools delivered · distribution incomplete, a sum over all pools would have no source here",
+  "@networkPoolsEmptyFooter": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "networkPoolsErrorTitle": "Pool distribution unavailable",
+  "networkPoolsErrorBody": "The published network data could not be reached. The live price is unaffected — it comes straight from Binance.",
+  "@networkPoolsErrorBody": {
+    "description": "The error names what still works. The app reads pool data from the CDN and the price directly from Binance, so a CDN outage leaves the price intact."
+  },
+  "networkPoolsRetry": "Try again",
+
+  "networkPoolsInfoTrigger": "What is a mining pool?",
+  "networkPoolsInfoTitle": "Mining pool",
+  "networkPoolsInfoBody": "A mining pool is a group of miners that combine their computing power and split the block reward between them. The operator assembles the blocks and therefore decides which transactions go into them. What matters is not the number of miners, but how much hashrate sits with a single operator."
 }

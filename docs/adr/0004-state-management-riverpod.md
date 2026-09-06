@@ -1,7 +1,7 @@
 # ADR-0004 — Riverpod for state management
 
 - **Date:** 2026-05-06
-- **Status:** Accepted
+- **Status:** Accepted (amended 2026-09-06 with the retry policy)
 - **Decider:** Daniel Nagel
 
 ## Context
@@ -53,6 +53,46 @@ short; the annotation-based variant (`riverpod_generator`,
 `riverpod_annotation`) can be adopted later without breaking existing
 providers.
 
+## Retry policy: providers state their own, or decline one
+
+**Riverpod 3 retries a failed provider by default, and the default is
+wrong for this app.** `ProviderContainer.defaultRetry` makes up to ten
+attempts with exponential backoff from 200 ms to a 6.4 s cap — roughly
+38 seconds before an error reaches the screen. Until then the state is
+`AsyncLoading` *carrying* the error, so a screen that renders
+`AsyncValue.when` shows its loading state throughout and its error state
+only at the end.
+
+Three consequences, all of them against how this app is built:
+
+- **The error state stops being reachable in practice.** The Definition
+  of Done requires loading, empty and error to be implemented *and
+  reachable*; a state that appears after 38 seconds of spinner is not.
+- **The retries are not free.** Eleven requests for one screen view is a
+  lot to spend on a document a cron job rewrites once a day, and it is
+  spent hardest exactly when the network is already failing.
+- **It hides the resilience we actually built.** The CDN-backed providers
+  answer a failed fetch with the cached copy and an age hint. A retry
+  storm in front of that delays the fallback without improving it.
+
+The rule that follows, and it applies to every provider, not only the
+one that surfaced it:
+
+> A provider states its retry cadence explicitly, or declines retries by
+> passing `retry: (_, _) => null`. Inheriting the framework default is
+> not a decision this repository accepts by silence.
+
+Where a provider does want retries, they are written out and justified
+in the provider, the way `priceLiveProvider` writes its own 60 s → 5 min
+backoff — that one is unaffected by the default because it reports
+failures into a `StreamController` rather than throwing out of the
+provider body, so it never enters the framework's retry path.
+
+`networkPoolsProvider` is the first `FutureProvider` in the app and
+declines retries: its fallback is the cache, and a reader who is offline
+is better served by yesterday's shares plus an age hint than by half a
+minute of spinner.
+
 ## Provider hierarchy
 
 ```
@@ -68,7 +108,8 @@ currenciesProvider                CDN fx-rates.json, one-shot + 24 h cache
 newsProvider(langs)               CDN news-{lang}.json
                                    ↳ depends on settingsProvider.languages,
                                      re-fetches on change via ref.invalidate
-networkProvider                   CDN network-health.json, 24 h cache
+networkPoolsProvider              CDN network-health.json, 60 min cache,
+                                   stale past 26 h, no retries
 prognosisProvider(model)          CDN prognosis-{model}.json, daily (Phase 4)
 ```
 
@@ -97,6 +138,10 @@ prognosisProvider(model)          CDN prognosis-{model}.json, daily (Phase 4)
 
 - Once code generation is adopted, `build_runner` becomes a required
   step after provider changes
+- Framework defaults can change behaviour without a code change on our
+  side. The retry default was found by a test that hung rather than by
+  reading a changelog; a Riverpod major upgrade deserves a pass over the
+  defaults it ships
 - Initial onboarding cost for contributors new to Riverpod's mental
   model
 

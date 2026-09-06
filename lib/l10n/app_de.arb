@@ -54,5 +54,116 @@
   "settingsSourceCode": "Quellcode",
   "settingsReportIssue": "Fehler melden",
 
-  "settingsOpensInBrowser": "Öffnet sich im Browser"
+  "settingsOpensInBrowser": "Öffnet sich im Browser",
+
+  "networkPoolsCategory": "Mining-Pool-Konzentration",
+  "networkPoolsAsOf": "Stand {timestamp}",
+  "@networkPoolsAsOf": {
+    "placeholders": { "timestamp": { "type": "String" } }
+  },
+  "networkPoolsLoadingLabel": "Verteilung wird geladen…",
+
+  "networkPoolsStaleNotice": "Daten {age} alt · keine Aktualisierung seit {timestamp}",
+  "@networkPoolsStaleNotice": {
+    "placeholders": {
+      "age": { "type": "String" },
+      "timestamp": { "type": "String" }
+    }
+  },
+  "networkPoolsStaleAge": "{hours} Stunden",
+  "@networkPoolsStaleAge": {
+    "placeholders": { "hours": { "type": "int" } }
+  },
+
+  "networkPoolsVerdictOk": "Unbedenklich",
+  "networkPoolsVerdictWarning": "Erhöht",
+  "networkPoolsVerdictCritical": "Kritisch",
+
+  "networkPoolsBadgeOk": "Verteilung breit",
+  "networkPoolsBadgeWarning": "Konzentration erhöht",
+  "networkPoolsBadgeCritical": "Konzentration kritisch",
+
+  "networkPoolsInsightCategoryOk": "Dezentralisierung",
+  "networkPoolsInsightCategoryAlert": "Achtung",
+
+  "networkPoolsInsightOk": "Kein Pool hält mehr als {topOne} % der Rechenleistung, und die drei größten überschreiten zusammen die Grenze von {threshold} % nicht — niemand kann allein bestimmen, welche Transaktionen in Blöcke kommen.",
+  "@networkPoolsInsightOk": {
+    "placeholders": {
+      "topOne": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
+  },
+  "networkPoolsInsightWarning": "Die Hashrate ist ungleich verteilt: Der größte Pool hält {topOne} %, die drei größten zusammen {topThree} % — genug, dass eine kleine Gruppe beeinflussen kann, welche Transaktionen in Blöcke aufgenommen werden.",
+  "@networkPoolsInsightWarning": {
+    "placeholders": {
+      "topOne": { "type": "String" },
+      "topThree": { "type": "String" }
+    }
+  },
+  "networkPoolsInsightCritical": "Der größte Pool hält {topOne} %, die drei größten zusammen {topThree} % — in dieser Größenordnung kann ein einzelner Betreiber oder eine kleine Gruppe Blöcke zurückhalten und die Reihenfolge von Transaktionen bestimmen.",
+  "@networkPoolsInsightCritical": {
+    "placeholders": {
+      "topOne": { "type": "String" },
+      "topThree": { "type": "String" }
+    }
+  },
+
+  "networkPoolsTopOneLabel": "Größter Pool",
+  "networkPoolsTopThreeLabel": "Die drei größten zusammen",
+  "networkPoolsThreshold": "Schwelle {value} %",
+  "@networkPoolsThreshold": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "networkPoolsCriticalFrom": "Kritisch ab {value} %",
+  "@networkPoolsCriticalFrom": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "networkPoolsDistanceBelow": "{points} %-Punkte unter der Schwelle von {threshold} %",
+  "@networkPoolsDistanceBelow": {
+    "placeholders": {
+      "points": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
+  },
+  "networkPoolsDistanceAbove": "{points} %-Punkte über der Schwelle von {threshold} %",
+  "@networkPoolsDistanceAbove": {
+    "placeholders": {
+      "points": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
+  },
+
+  "networkPoolsEvidenceTitle": "Pool-Verteilung · letzte 24 h",
+  "networkPoolsPayloadCount": "{count} Pools im Payload",
+  "@networkPoolsPayloadCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "networkPoolsTopThreeBox": "Top 3 · {share} % zusammen",
+  "@networkPoolsTopThreeBox": {
+    "placeholders": { "share": { "type": "String" } }
+  },
+  "networkPoolsShowRest": "Weitere Pools anzeigen",
+  "networkPoolsHideRest": "Weitere Pools ausblenden",
+  "networkPoolsCoverage": "Σ {share} % den gelisteten Pools zugeordnet · der Rest verteilt sich auf kleinere Pools, die der Payload nicht listet",
+  "@networkPoolsCoverage": {
+    "placeholders": { "share": { "type": "String" } }
+  },
+
+  "networkPoolsEmptyTitle": "Aussage über die drei größten Pools nicht bildbar",
+  "networkPoolsEmptyBody": "Der Payload enthält nur {count} Pools. Für den gemeinsamen Anteil der drei größten gibt es keinen Ersatzwert, deshalb steht hier kein Verdikt.",
+  "@networkPoolsEmptyBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "networkPoolsEmptyFooter": "{count} Pools geliefert · Verteilung unvollständig, eine Summe über alle Pools hätte hier keine Quelle",
+  "@networkPoolsEmptyFooter": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "networkPoolsErrorTitle": "Pool-Verteilung nicht erreichbar",
+  "networkPoolsErrorBody": "Die veröffentlichten Netzwerkdaten waren nicht erreichbar. Der Live-Kurs ist davon nicht betroffen — er kommt direkt von Binance.",
+  "networkPoolsRetry": "Erneut versuchen",
+
+  "networkPoolsInfoTrigger": "Was ist ein Mining-Pool?",
+  "networkPoolsInfoTitle": "Mining-Pool",
+  "networkPoolsInfoBody": "Ein Mining-Pool ist ein Zusammenschluss vieler Miner, die ihre Rechenleistung bündeln und den Blockertrag anteilig aufteilen. Der Betreiber stellt die Blöcke zusammen und entscheidet damit, welche Transaktionen aufgenommen werden. Entscheidend ist deshalb nicht die Zahl der Miner, sondern wie viel Hashrate auf einen einzelnen Betreiber entfällt."
 }

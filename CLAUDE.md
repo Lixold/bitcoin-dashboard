@@ -60,6 +60,14 @@ Riverpod is used with the classic API — no codegen for now
 (`riverpod_annotation` / `riverpod_generator` may be added later; if
 you add it, do it in its own PR).
 
+**Every provider states its retry cadence or declines one.** Riverpod 3
+retries a failed provider ten times by default and keeps the state on
+`AsyncLoading` meanwhile, which pushes the error state roughly 38 seconds
+out of reach and spends eleven requests getting there. Pass
+`retry: (_, _) => null` to decline, or write the cadence out in the
+provider — never inherit the default silently. The reasoning is in
+[ADR-0004](docs/adr/0004-state-management-riverpod.md).
+
 ### Workers
 
 | Area | Technology | Minimum |

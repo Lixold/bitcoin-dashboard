@@ -55,4 +55,48 @@ class AppColors {
   // Dark error matches negative; light error is darker for AA contrast.
   static const Color darkError = negative;
   static const Color lightError = Color(0xFFBF3F29); // oklch(0.55 0.175 25)
+
+  // Signal colours, light scheme ---------------------------------------------
+  //
+  // **The four signal colours above are tuned for the dark surface and do
+  // not carry to the light one.** On `lightSurface` they measure 3.00 : 1
+  // (positive), 2.31 : 1 (amber) and 3.91 : 1 (neutral) — all below the
+  // 4.5 : 1 that AA asks of the 11–14 px mono labels they are used on.
+  // [lightError] already existed for exactly this reason; these three
+  // complete the set, following the same rule rather than inventing one.
+  //
+  // Values are the design system's own light-scheme corrections, converted
+  // from OKLCh. Unlike the constants above they have no OKLCh twin in the
+  // design system's CSS to drift from: they were authored as OKLCh there,
+  // so the conversion reproduces what was approved rather than
+  // re-deriving it.
+
+  /// `oklch(0.55 0.115 150)` — 4.60 : 1 on [lightSurface].
+  static const Color lightPositive = Color(0xFF37844C);
+
+  /// `oklch(0.52 0.135 75)` — 5.61 : 1 on [lightSurface].
+  static const Color lightWarning = Color(0xFF955A00);
+
+  /// `oklch(0.46 0.010 80)` — 7.17 : 1 on [lightSurface].
+  static const Color lightNeutral = Color(0xFF5B5752);
+
+  // Brightness-aware signal accessors ----------------------------------------
+  //
+  // Signal colours are deliberately not in `ColorScheme`: M3 has no slot
+  // that means "this reading is good" and overloading `tertiary` would
+  // hide the meaning. Widgets therefore read them here, and these four
+  // accessors are the only place the light/dark choice is made — a widget
+  // that writes the conditional itself is the bug this prevents.
+
+  static Color positiveFor(Brightness brightness) =>
+      brightness == Brightness.dark ? positive : lightPositive;
+
+  static Color negativeFor(Brightness brightness) =>
+      brightness == Brightness.dark ? negative : lightError;
+
+  static Color warningFor(Brightness brightness) =>
+      brightness == Brightness.dark ? amber : lightWarning;
+
+  static Color neutralFor(Brightness brightness) =>
+      brightness == Brightness.dark ? neutral : lightNeutral;
 }
