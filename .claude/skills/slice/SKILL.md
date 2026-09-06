@@ -87,9 +87,10 @@ Every figure sits inside a Statement with its insight sentence — no bare numbe
 Insight-sentence categories are translation keys, not hard-coded copy.
 
 **Gate.** Before Step 6, list every figure this slice adds and name the sentence that
-reads it. A figure you cannot point a sentence at is a bare number: add the sentence or
-drop the figure. Do not ship the figure and leave its sentence for a follow-up — a screen
-of bare metric cards is a rejection in review.
+reads it — which figures the rule covers: `CLAUDE.md` §5. A figure you cannot point a
+sentence at is a bare number: add the sentence or drop the figure. Do not ship the figure
+and leave its sentence for a follow-up — a screen of bare metric cards is a rejection in
+review.
 
 ## Step 6 — i18n
 
