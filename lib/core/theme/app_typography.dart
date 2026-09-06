@@ -165,9 +165,18 @@ class AppTypography {
   // Bending 14 onto 20 would be a fraction invented for a line that never
   // has a second line to align with.
   //
-  // The prose role is therefore still untried: every call site today is
-  // one line. The first real paragraph is the insight sentence in #68,
-  // and that is where 24 gets looked at rather than calculated.
+  // The prose role has now been tried, and it holds. The insight sentence
+  // of the mining-pool statement (#68) is the app's first wrapped
+  // paragraph, and 16 / 1.5 was accepted on screen: the 24 px line lands
+  // on `AppSpacing.s5` as the calculation promised, and it reads as prose
+  // rather than as a stretched label.
+  //
+  // **Prose therefore gets no role of its own — [bodyLarge] is it.** That
+  // was the open question when the ramp was decided (#82) and it is
+  // closed: a softer line was considered and turned out not to be needed,
+  // so adding a fifth body style would be a role with one call site and
+  // no argument behind it. Reopen only if a screen carries a paragraph
+  // long enough to disagree, and say which one in the commit.
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
     height: 1.5,
