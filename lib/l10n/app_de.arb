@@ -86,9 +86,12 @@
   "networkPoolsInsightCategoryOk": "Dezentralisierung",
   "networkPoolsInsightCategoryAlert": "Achtung",
 
-  "networkPoolsInsightOk": "Kein Pool hält mehr als {topOne} % der Rechenleistung, und die drei größten bleiben zusammen unter der Grenze von 70 % — niemand kann allein bestimmen, welche Transaktionen in Blöcke kommen.",
+  "networkPoolsInsightOk": "Kein Pool hält mehr als {topOne} % der Rechenleistung, und die drei größten überschreiten zusammen die Grenze von {threshold} % nicht — niemand kann allein bestimmen, welche Transaktionen in Blöcke kommen.",
   "@networkPoolsInsightOk": {
-    "placeholders": { "topOne": { "type": "String" } }
+    "placeholders": {
+      "topOne": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
   },
   "networkPoolsInsightWarning": "Die Hashrate ist ungleich verteilt: Der größte Pool hält {topOne} %, die drei größten zusammen {topThree} % — genug, dass eine kleine Gruppe beeinflussen kann, welche Transaktionen in Blöcke aufgenommen werden.",
   "@networkPoolsInsightWarning": {

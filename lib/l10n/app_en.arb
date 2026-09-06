@@ -144,10 +144,13 @@
   "networkPoolsInsightCategoryAlert": "Attention",
   "@networkPoolsInsightCategoryAlert": { "description": "Insight category once a threshold is crossed." },
 
-  "networkPoolsInsightOk": "No pool holds more than {topOne} % of the computing power, and the three largest together stay below the 70 % line — nobody can decide on their own which transactions make it into blocks.",
+  "networkPoolsInsightOk": "No pool holds more than {topOne} % of the computing power, and the three largest together do not cross the {threshold} % line — nobody can decide on their own which transactions make it into blocks.",
   "@networkPoolsInsightOk": {
-    "description": "The insight sentence on a calm reading.",
-    "placeholders": { "topOne": { "type": "String" } }
+    "description": "The insight sentence on a calm reading. \"Do not cross\", not \"stay below\": a top three of exactly 70.0 % is still ok, so \"below\" would be false at the boundary. The threshold is a placeholder rather than a literal so the sentence cannot drift away from PoolConcentration.topThreeWarningThreshold.",
+    "placeholders": {
+      "topOne": { "type": "String" },
+      "threshold": { "type": "String" }
+    }
   },
   "networkPoolsInsightWarning": "The hashrate is unevenly distributed: the largest pool holds {topOne} %, the three largest {topThree} % together — enough for a small group to influence which transactions make it into blocks.",
   "@networkPoolsInsightWarning": {

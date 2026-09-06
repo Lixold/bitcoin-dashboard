@@ -188,7 +188,10 @@ class _PoolsStatement extends StatelessWidget {
     final topOne = formatShare(locale, concentration.topPoolShare);
     final topThree = formatShare(locale, concentration.topThreeShare);
     return switch (concentration.verdict) {
-      ConcentrationVerdict.ok => l10n.networkPoolsInsightOk(topOne),
+      ConcentrationVerdict.ok => l10n.networkPoolsInsightOk(
+        topOne,
+        formatThreshold(locale, PoolConcentration.topThreeWarningThreshold),
+      ),
       ConcentrationVerdict.warning => l10n.networkPoolsInsightWarning(
         topOne,
         topThree,

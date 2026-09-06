@@ -163,7 +163,10 @@ void main() {
       expect(find.text('57.9'), findsOneWidget);
       expect(find.text('Foundry USA'), findsWidgets);
       expect(
-        find.textContaining('No pool holds more than 22.4 %'),
+        find.textContaining(
+          'No pool holds more than 22.4 % of the computing power, and the '
+          'three largest together do not cross the 70 % line',
+        ),
         findsOneWidget,
         reason: 'every figure needs its sentence',
       );
