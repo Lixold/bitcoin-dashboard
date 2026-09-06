@@ -32,24 +32,27 @@ class SettingsSection extends StatelessWidget {
             ),
           ),
         ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            border: Border.all(color: scheme.outline),
+        // A [Material], not a painted box: the fill and the ink of an
+        // interactive row have to come from the same layer. A
+        // [DecoratedBox] paints its background over the ink of whatever
+        // Material sits above it in the tree, which leaves a row's
+        // pressed state set in the widget and invisible on screen.
+        Material(
+          color: scheme.surface,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radius),
+            side: BorderSide(color: scheme.outline),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppSpacing.radius),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < rows.length; i++) ...[
-                  if (i > 0)
-                    Divider(height: 1, thickness: 1, color: scheme.outline),
-                  rows[i],
-                ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < rows.length; i++) ...[
+                if (i > 0)
+                  Divider(height: 1, thickness: 1, color: scheme.outline),
+                rows[i],
               ],
-            ),
+            ],
           ),
         ),
       ],
@@ -72,6 +75,7 @@ class SettingsRow extends StatelessWidget {
     this.value,
     this.trailing,
     this.onTap,
+    this.hint,
   }) : assert(
          trailing == null || value == null,
          'a row carries either a control or a value, not both',
@@ -87,10 +91,15 @@ class SettingsRow extends StatelessWidget {
   /// `AppSegmentedControl`.
   final Widget? trailing;
 
-  /// Set when the row opens something — a picker, a sheet. Adds the
-  /// chevron and the tap target; without it the row is a label, not a
-  /// control.
+  /// Set when the row opens something — a picker, a sheet, a page in the
+  /// browser. Adds the chevron and the tap target; without it the row is
+  /// a label, not a control.
   final VoidCallback? onTap;
+
+  /// What activating the row does, for a screen reader, when the label
+  /// alone does not say it — a link says that it leaves the app. Read
+  /// after the label; it adds nothing to the visible copy.
+  final String? hint;
 
   /// `--touch-min`.
   static const double minHeight = 44;
@@ -123,6 +132,24 @@ class SettingsRow extends StatelessWidget {
       ],
     );
 
+    // The design system owns one chevron and turns it where it has to
+    // point: its `SettingsRow` and its `PreferenceLink` both draw the
+    // `chevron-down` glyph at `rotate(-90deg)`, the same character for a
+    // row that opens a sheet and for a row that leads away. Turning it
+    // here is what keeps the set at ten — a `chevron-right.svg` would be
+    // a second file for a character the design system already has, which
+    // is what #78 stopped.
+    final Widget? chevron = onTap == null || trailing != null
+        ? null
+        : RotatedBox(
+            quarterTurns: 3,
+            child: BrandIcon(
+              UiGlyph.chevronDown,
+              size: chevronSize,
+              color: scheme.onSurfaceVariant,
+            ),
+          );
+
     final Widget? end = switch ((trailing, value)) {
       (final Widget control?, _) => control,
       (_, final String current?) => Row(
@@ -134,17 +161,16 @@ class SettingsRow extends StatelessWidget {
               color: scheme.onSurfaceVariant,
             ),
           ),
-          if (onTap != null) ...[
+          if (chevron != null) ...[
             const SizedBox(width: AppSpacing.s2),
-            BrandIcon(
-              UiGlyph.chevronDown,
-              size: chevronSize,
-              color: scheme.onSurfaceVariant,
-            ),
+            chevron,
           ],
         ],
       ),
-      _ => null,
+      // A row that opens something and states no value — the About links
+      // carry their address in the description line, so the chevron is
+      // the whole right-hand side.
+      _ => chevron,
     };
 
     // Side by side while the text and the control both fit at their
@@ -182,10 +208,24 @@ class SettingsRow extends StatelessWidget {
 
     if (onTap == null) return content;
 
-    return InkWell(
-      onTap: onTap,
-      hoverColor: scheme.surfaceContainerHighest,
-      child: content,
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        hint: hint,
+        child: InkWell(
+          onTap: onTap,
+          hoverColor: scheme.surfaceContainerHighest,
+          // Pressing reads as the same fill as hovering, and there is no
+          // ripple: the design system states one interactive row and
+          // gives it a background change, not an expanding circle. Its
+          // `--press-scale` token belongs to buttons that have an edge to
+          // shrink — a row inside a clipped card would pull away from its
+          // own dividers.
+          highlightColor: scheme.surfaceContainerHighest,
+          splashFactory: NoSplash.splashFactory,
+          child: content,
+        ),
+      ),
     );
   }
 }

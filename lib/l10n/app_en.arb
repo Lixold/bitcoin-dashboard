@@ -96,10 +96,9 @@
   "settingsDataSources": "Data sources",
   "settingsSourceCode": "Source code",
   "settingsReportIssue": "Report a problem",
-  "settingsReportIssueDescription": "Open an issue on GitHub at {url}",
-  "@settingsReportIssueDescription": {
-    "placeholders": {
-      "url": { "type": "String" }
-    }
+
+  "settingsOpensInBrowser": "Opens in your browser",
+  "@settingsOpensInBrowser": {
+    "description": "Screen-reader hint on the About rows that hand their address to the platform browser. The row leaves the app; nothing opens inside it."
   }
 }

@@ -37,6 +37,10 @@ dependencies:
   flutter_svg: ^2.0.10
   go_router: ^17.5.0
 
+  # Hands a URL to the platform's own browser. It opens no connection of
+  # its own, so it adds no host to §1 — see SECURITY.md.
+  url_launcher: ^6.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -30,4 +30,26 @@ class AppInfo {
 
   static const String newIssue =
       'github.com/Lixold/bitcoin-dashboard/issues/new';
+
+  /// The addresses above in the absolute form the platform browser needs.
+  ///
+  /// Derived from the string the row prints rather than written out a
+  /// second time: a row that shows one address and opens another is a lie
+  /// no compiler catches, and `test/core/app_info_test.dart` holds the
+  /// two ends together. The scheme is added here and not in the widget —
+  /// assembling a URL next to a tap handler is how the two drift apart.
+  static Uri get repositoryUrl => _https(repository);
+
+  static Uri get newIssueUrl => _https(newIssue);
+
+  /// Where [licence] can be read in full.
+  ///
+  /// The `LICENSE` file in this repository, not a generic SPDX page: the
+  /// file names the copyright holder and the year, which is exactly what
+  /// the three letters on the row leave out. It also keeps the About
+  /// group pointing at one address that this build is actually published
+  /// from.
+  static Uri get licenceUrl => _https('$repository/blob/main/LICENSE');
+
+  static Uri _https(String address) => Uri.parse('https://$address');
 }

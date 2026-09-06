@@ -53,5 +53,6 @@
   "settingsDataSources": "Datenquellen",
   "settingsSourceCode": "Quellcode",
   "settingsReportIssue": "Fehler melden",
-  "settingsReportIssueDescription": "Ein Issue auf GitHub eröffnen unter {url}"
+
+  "settingsOpensInBrowser": "Öffnet sich im Browser"
 }
