@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:bitcoin_dashboard/app.dart';
 import 'package:bitcoin_dashboard/features/navigation/presentation/dynamic_nav_pill.dart';
+import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
+import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
@@ -22,6 +24,12 @@ Widget _app() {
         ref.onDispose(controller.close);
         return controller.stream.cast();
       }),
+      // The network section reads the CDN. Left alone it would make a
+      // real request the moment a test navigates there; this future never
+      // completes, so the section stays in its loading state.
+      networkPoolsProvider.overrideWith(
+        (ref) => Completer<NetworkHealthSnapshot>().future,
+      ),
     ],
     child: const BitcoinDashboardApp(),
   );

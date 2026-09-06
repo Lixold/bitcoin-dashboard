@@ -6,6 +6,9 @@ import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
 import 'package:bitcoin_dashboard/features/navigation/presentation/dynamic_nav_pill.dart';
 import 'package:bitcoin_dashboard/features/navigation/presentation/nav_bottom_sheet.dart';
+import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
+import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
+import 'package:bitcoin_dashboard/features/network/presentation/network_screen.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
@@ -26,6 +29,10 @@ Widget _harness(GoRouter router) {
         ref.onDispose(controller.close);
         return controller.stream.cast();
       }),
+      // Same reason: navigating to Network must not reach the CDN.
+      networkPoolsProvider.overrideWith(
+        (ref) => Completer<NetworkHealthSnapshot>().future,
+      ),
     ],
     child: MaterialApp.router(
       debugShowCheckedModeBanner: false,
@@ -124,12 +131,12 @@ void main() {
       await tester.tap(networkInSheet);
       await tester.pumpAndSettle();
 
-      // Sheet is gone, body swapped to the Network placeholder, pill updated,
+      // Sheet is gone, body swapped to the Network section, pill updated,
       // and the section change is a route change rather than local state.
       expect(find.byType(NavBottomSheet), findsNothing);
       expect(find.byType(PriceScreen), findsNothing);
       expect(router.state.uri.path, NavSection.network.location);
-      expect(find.text('Coming soon'), findsOneWidget);
+      expect(find.byType(NetworkScreen), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(DynamicNavPill),

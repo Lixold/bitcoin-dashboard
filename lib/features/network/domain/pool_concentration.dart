@@ -82,12 +82,7 @@ class PoolConcentration {
   static PoolConcentration? from(List<MiningPool> pools) {
     if (pools.length < minimumPools) return null;
 
-    final sorted = [...pools]
-      ..sort((a, b) {
-        final byShare = b.hashratePercent.compareTo(a.hashratePercent);
-        return byShare != 0 ? byShare : a.name.compareTo(b.name);
-      });
-
+    final sorted = sortedByShare(pools);
     final topThreeShare = sorted
         .take(minimumPools)
         .fold<double>(0, (sum, pool) => sum + pool.hashratePercent);
@@ -97,7 +92,7 @@ class PoolConcentration {
     );
 
     return PoolConcentration(
-      pools: List.unmodifiable(sorted),
+      pools: sorted,
       topPoolName: sorted.first.name,
       topPoolShare: sorted.first.hashratePercent,
       topThreeShare: topThreeShare,
@@ -106,6 +101,24 @@ class PoolConcentration {
         topOneShare: sorted.first.hashratePercent,
         topThreeShare: topThreeShare,
       ),
+    );
+  }
+
+  /// [pools] ordered largest share first, ties broken by name.
+  ///
+  /// Public because the empty state needs it too: with fewer than
+  /// [minimumPools] entries there is no [PoolConcentration] to ask, but
+  /// the screen still names the largest pool it did receive. Sorting it a
+  /// second time in the widget would be a second definition of "largest".
+  static List<MiningPool> sortedByShare(List<MiningPool> pools) {
+    return List.unmodifiable(
+      // Typed literal on purpose: `List.unmodifiable` takes an untyped
+      // `Iterable`, so an inferred literal would make the comparator's
+      // arguments dynamic and its result unanalysable.
+      <MiningPool>[...pools]..sort((a, b) {
+        final byShare = b.hashratePercent.compareTo(a.hashratePercent);
+        return byShare != 0 ? byShare : a.name.compareTo(b.name);
+      }),
     );
   }
 
