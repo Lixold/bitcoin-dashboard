@@ -2,10 +2,13 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:bitcoin_dashboard/app.dart';
+import 'package:bitcoin_dashboard/core/app_info.dart';
+import 'package:bitcoin_dashboard/core/links/url_opener.dart';
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/core/theme/app_typography.dart';
 import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
+import 'package:bitcoin_dashboard/features/settings/presentation/settings_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,7 +20,7 @@ import 'package:hive/hive.dart';
 /// through a bare `home:` — the sheet, the theme and the locale all run
 /// through the app's own wiring, which is what "takes effect immediately"
 /// means.
-Widget _app() {
+Widget _app({UrlOpener? openUrl}) {
   return ProviderScope(
     overrides: [
       appRouterProvider.overrideWith((ref) {
@@ -25,6 +28,9 @@ Widget _app() {
         ref.onDispose(router.dispose);
         return router;
       }),
+      // Left alone unless a test asks: the About rows then reach the real
+      // opener, and a link would try to leave the test.
+      if (openUrl != null) urlOpenerProvider.overrideWithValue(openUrl),
     ],
     child: const BitcoinDashboardApp(),
   );
@@ -191,5 +197,97 @@ void main() {
       tester.getTopLeft(control).dx,
       greaterThan(tester.getTopRight(label).dx),
     );
+  });
+
+  group('the About group opens what it names', () {
+    /// The rows under test, with the platform swapped for a list.
+    ///
+    /// Nothing else changes: the addresses come from [AppInfo] through
+    /// the real screen, so a row that prints one address and opens
+    /// another fails here.
+    Future<List<Uri>> openSettings(WidgetTester tester) async {
+      _useTallView(tester);
+      final opened = <Uri>[];
+
+      await tester.pumpWidget(_app(openUrl: opened.add));
+      await tester.pumpAndSettle();
+
+      return opened;
+    }
+
+    testWidgets('the source-code row opens the repository', (tester) async {
+      final opened = await openSettings(tester);
+
+      await tester.tap(find.text('Source code'));
+
+      // Asserted before any further pump on purpose. The web opens a tab
+      // only while the click still counts as a user gesture, so the
+      // opener has to run inside the tap and not a frame later.
+      expect(opened, [AppInfo.repositoryUrl]);
+    });
+
+    testWidgets('the licence row opens the licence file', (tester) async {
+      final opened = await openSettings(tester);
+
+      await tester.tap(find.text('Licence'));
+
+      expect(opened, [AppInfo.licenceUrl]);
+    });
+
+    testWidgets('the report row opens the issue form', (tester) async {
+      final opened = await openSettings(tester);
+
+      await tester.tap(find.text('Report a problem'));
+
+      expect(opened, [AppInfo.newIssueUrl]);
+    });
+
+    testWidgets('the rows that state a fact stay facts', (tester) async {
+      final handle = tester.ensureSemantics();
+      await openSettings(tester);
+
+      for (final label in ['Version', 'Data sources']) {
+        expect(
+          tester.getSemantics(
+            find.ancestor(
+              of: find.text(label),
+              matching: find.byType(SettingsRow),
+            ),
+          ),
+          isSemantics(hasTapAction: false, isButton: false),
+          reason: '$label opens nothing, so it must not read as a control',
+        );
+      }
+
+      handle.dispose();
+    });
+
+    testWidgets('a link says where it goes in the language on screen', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await openSettings(tester);
+
+      Finder sourceRow() => find.ancestor(
+        of: find.text(AppInfo.repository),
+        matching: find.byType(SettingsRow),
+      );
+
+      expect(
+        tester.getSemantics(sourceRow()),
+        isSemantics(hint: 'Opens in your browser', isButton: true),
+      );
+
+      await tester.tap(find.text('Language'));
+      await tester.pumpAndSettle();
+      await _tapAndSettle(tester, find.text('German'));
+
+      expect(
+        tester.getSemantics(sourceRow()),
+        isSemantics(hint: 'Öffnet sich im Browser'),
+      );
+
+      handle.dispose();
+    });
   });
 }

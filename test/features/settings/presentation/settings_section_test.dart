@@ -1,4 +1,5 @@
 import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
+import 'package:bitcoin_dashboard/core/widgets/brand_icon.dart';
 import 'package:bitcoin_dashboard/core/widgets/segmented_control.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_section.dart';
 import 'package:flutter/material.dart';
@@ -129,5 +130,147 @@ void main() {
 
     expect(find.text('ABOUT THE APP'), findsOneWidget);
     expect(find.byType(Divider), findsOneWidget);
+  });
+
+  group('a row that opens something', () {
+    /// The section in the tree it really sits in — a [Scaffold] brings a
+    /// [Material] of its own, well above the card.
+    Widget sectionAlone(List<Widget> rows) => MaterialApp(
+      theme: AppTheme.dark(),
+      home: Scaffold(
+        body: SettingsSection(title: 'About the app', rows: rows),
+      ),
+    );
+
+    /// The ink layer *inside* [scope].
+    ///
+    /// Scoped on purpose: the Scaffold above has an ink layer too, and
+    /// that is the one a row used to paint into — underneath the card's
+    /// own fill, where the pressed state was drawn and never seen.
+    RenderObject inkLayerIn(WidgetTester tester, Finder scope) {
+      RenderObject? found;
+      void visit(RenderObject node) {
+        if (found != null) return;
+        if (node.runtimeType.toString() == '_RenderInkFeatures') {
+          found = node;
+          return;
+        }
+        node.visitChildren(visit);
+      }
+
+      visit(tester.renderObject(scope));
+      expect(found, isNotNull, reason: 'the card carries no ink layer');
+      return found!;
+    }
+
+    Finder chevronOf(Finder row) => find.descendant(
+      of: row,
+      matching: find.byWidgetPredicate(
+        (w) => w is BrandIcon && w.glyph == UiGlyph.chevronDown,
+      ),
+    );
+
+    testWidgets('points its chevron the way the design points it', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        sectionAlone([
+          SettingsRow(
+            label: 'Source code',
+            description: 'github.com/x/y',
+            onTap: () {},
+          ),
+        ]),
+      );
+
+      // The design system draws one chevron and turns it: both its
+      // `SettingsRow` and its `PreferenceLink` render the `chevron-down`
+      // glyph at `rotate(-90deg)`. Three quarter turns clockwise is that
+      // same quarter turn anticlockwise — the glyph points right.
+      final rotation = tester.widget<RotatedBox>(
+        find.ancestor(
+          of: chevronOf(find.byType(SettingsRow)),
+          matching: find.byType(RotatedBox),
+        ),
+      );
+      expect(rotation.quarterTurns % 4, 3);
+    });
+
+    testWidgets('shows the chevron even when it states no value', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        sectionAlone([
+          SettingsRow(
+            label: 'Source code',
+            description: 'github.com/x/y',
+            onTap: () {},
+          ),
+          const SettingsRow(label: 'Data sources', description: 'Binance'),
+        ]),
+      );
+
+      final rows = find.byType(SettingsRow);
+      expect(
+        chevronOf(rows.at(0)),
+        findsOneWidget,
+        reason: 'the About links carry their address in the description',
+      );
+      expect(
+        chevronOf(rows.at(1)),
+        findsNothing,
+        reason: 'a row that opens nothing must not look as if it does',
+      );
+    });
+
+    testWidgets('darkens under the finger, on the card and not behind it', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        sectionAlone([SettingsRow(label: 'Source code', onTap: () {})]),
+      );
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(SettingsRow)),
+      );
+      addTearDown(() => gesture.up());
+      // One frame to start the highlight, one to run its fade-in out.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        inkLayerIn(tester, find.byType(SettingsSection)),
+        paints
+          ..rect(color: AppTheme.dark().colorScheme.surfaceContainerHighest),
+      );
+    });
+
+    testWidgets('says what it does before it does it', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        sectionAlone([
+          SettingsRow(
+            label: 'Source code',
+            hint: 'Opens in your browser',
+            onTap: () {},
+          ),
+        ]),
+      );
+
+      expect(
+        tester.getSemantics(find.byType(SettingsRow)),
+        isSemantics(
+          label: 'Source code',
+          // Read after the label, so the row announces that it leaves
+          // the app before the user commits to the tap.
+          hint: 'Opens in your browser',
+          isButton: true,
+          hasTapAction: true,
+        ),
+      );
+
+      handle.dispose();
+    });
   });
 }

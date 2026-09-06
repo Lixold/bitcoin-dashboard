@@ -123,6 +123,17 @@ A few project facts that shape what is and isn't a vulnerability:
   in [Hive](https://pub.dev/packages/hive) boxes inside the platform's
   per-app sandbox. Access to those files implies access to the user's
   account or device.
+- **Links leave the app; the browser makes the connection.** Where the
+  app offers a link — the About rows today, article links later — it
+  hands the address to the platform's own browser through
+  [`url_launcher`](https://pub.dev/packages/url_launcher) and reads
+  nothing back. The binary opens no connection to a linked host, sends
+  it no request and receives no response, so a link target is not a data
+  source: it does not belong in the source list in
+  [ADR-0002](docs/adr/0002-data-sources-and-apis.md) and it is not a new
+  host under `CLAUDE.md` §1. What happens after the handover — which
+  cookies travel, what the page loads — belongs to the user's browser
+  session and is outside this app's control and outside this scope.
 
 ---
 

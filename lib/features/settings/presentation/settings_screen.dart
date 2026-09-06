@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/app_info.dart';
+import '../../../core/links/url_opener.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_header.dart';
@@ -216,22 +217,37 @@ class _LanguageAndRegionSection extends StatelessWidget {
 /// What the app is, where its data comes from, and where to report it
 /// when something is wrong.
 ///
-/// The rows state their addresses instead of opening them: following a
-/// link needs `url_launcher`, and this slice does not add a dependency the
-/// issue does not ask for. A row with no tap target is a fact; a row that
-/// looks tappable and is not would be a dead control.
-class _AboutSection extends StatelessWidget {
+/// Three of the five rows leave the app. They hand their address to the
+/// platform browser and read nothing back: the app opens no connection of
+/// its own here, so a link target is not a host under CLAUDE.md §1 — see
+/// SECURITY.md. What the browser then finds is the browser's screen to
+/// draw, which is why nothing is checked first and no error state is
+/// offered.
+///
+/// Version, licence identifier and data sources stay facts: an address
+/// they could open would not tell the reader more than the line already
+/// does.
+class _AboutSection extends ConsumerWidget {
   const _AboutSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
+    // Read once, here: the opener has to run inside the tap itself. On
+    // the web a hop through an `await` costs the click its gesture and
+    // the tab is blocked without a word — `core/links/url_opener.dart`.
+    final open = ref.watch(urlOpenerProvider);
 
     return SettingsSection(
       title: l10n.settingsGroupAbout,
       rows: [
         SettingsRow(label: l10n.settingsVersion, value: AppInfo.version),
-        SettingsRow(label: l10n.settingsLicence, value: AppInfo.licence),
+        SettingsRow(
+          label: l10n.settingsLicence,
+          value: AppInfo.licence,
+          hint: l10n.settingsOpensInBrowser,
+          onTap: () => open(AppInfo.licenceUrl),
+        ),
         SettingsRow(
           label: l10n.settingsDataSources,
           description: AppInfo.dataSources,
@@ -239,10 +255,14 @@ class _AboutSection extends StatelessWidget {
         SettingsRow(
           label: l10n.settingsSourceCode,
           description: AppInfo.repository,
+          hint: l10n.settingsOpensInBrowser,
+          onTap: () => open(AppInfo.repositoryUrl),
         ),
         SettingsRow(
           label: l10n.settingsReportIssue,
-          description: l10n.settingsReportIssueDescription(AppInfo.newIssue),
+          description: AppInfo.newIssue,
+          hint: l10n.settingsOpensInBrowser,
+          onTap: () => open(AppInfo.newIssueUrl),
         ),
       ],
     );
