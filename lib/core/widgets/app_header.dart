@@ -17,9 +17,9 @@ import 'brand_icon.dart';
 /// (settings does, the sections do not).
 ///
 /// **Its composition does not change with the window width.** The gear is
-/// the entry point to settings on every width; the navigation rail of #65
-/// gets none. There is therefore no breakpoint in here, and no wide
-/// variant to keep in sync.
+/// the entry point to settings on every width; the navigation bar, rail
+/// and drawer get none. There is therefore no breakpoint in here, and no
+/// wide variant to keep in sync.
 class AppHeader extends StatelessWidget {
   /// The header of a section screen: currency pill, then the gear that
   /// opens `/settings`.

@@ -13,8 +13,8 @@ import '../../features/settings/presentation/settings_screen.dart';
 /// that does not match a route.
 String get homeLocation => NavSection.visible().first.location;
 
-/// Settings sits outside the shell: it covers the whole screen, including the
-/// floating pill, and is not one of the sections.
+/// Settings sits outside the shell: it covers the whole screen, navigation
+/// included, and is not one of the sections.
 ///
 /// The gear in `AppHeader` pushes this location, so settings opens on top of
 /// the section the user was in and closing it returns there. The navigation
@@ -27,13 +27,13 @@ const String settingsLocation = '/settings';
 /// [NavSection.visible], so `/forecast` and `/miner` — which render nothing
 /// but a placeholder and cannot be opened from the UI — get no route. Giving
 /// them one would make placeholder surface deep-linkable, which CLAUDE.md §5
-/// rules out. When #65 turns `isVisibleInPhase3` into `hasShippedSlice`, the
-/// branches follow that flag without a change here.
+/// rules out. When `isVisibleInPhase3` becomes `hasShippedSlice`, the branches
+/// follow that flag without a change here.
 ///
 /// [StatefulShellRoute.indexedStack] (rather than a plain `ShellRoute`) gives
 /// every section its own [Navigator]: its own back stack, and scroll and load
-/// state that survive leaving the section. It is also the construction the
-/// `NavigationBar` / `NavigationRail` of #65 attach to.
+/// state that survive leaving the section. It is also what `AppNavigation`
+/// attaches to: a destination index is a branch index.
 GoRouter createAppRouter({String? initialLocation}) {
   final sections = NavSection.visible();
 

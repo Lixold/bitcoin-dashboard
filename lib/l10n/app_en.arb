@@ -7,16 +7,14 @@
   },
 
   "navPrice": "Price",
-  "@navPrice": { "description": "Floating-pill section: live BTC price." },
+  "@navPrice": {
+    "description": "Navigation destination: live BTC price. The section names are shown uppercased in the bar and the rail; the ARB keeps them in sentence case so a locale that must not be shouted can be given one."
+  },
   "navMarket": "Market",
   "navForecast": "Forecast",
   "navNetwork": "Network",
   "navMiner": "Miner",
   "navNews": "News",
-  "navOpenMenu": "Open navigation menu",
-  "@navOpenMenu": { "description": "Accessible label for the floating pill button." },
-  "navSectionsHeader": "Sections",
-  "@navSectionsHeader": { "description": "Header shown above the nav-sheet grid." },
 
   "priceLive": "Live price",
   "priceHeroLabel": "Live price · {timestamp}",

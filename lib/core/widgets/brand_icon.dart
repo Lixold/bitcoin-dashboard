@@ -41,7 +41,8 @@ class BrandIcon extends StatelessWidget {
   final BrandGlyph glyph;
 
   /// Edge length of the square the glyph is drawn into. The design system
-  /// uses 34 in sheet tiles, 28 in the pill and 12 for the chevron.
+  /// uses 24 on a navigation destination, 22 for the header gear and 12
+  /// for the chevron.
   final double size;
 
   /// Tint applied to the whole glyph. Defaults to `colorScheme.onSurface`.
