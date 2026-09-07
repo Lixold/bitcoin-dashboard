@@ -1,7 +1,7 @@
 import '../../../core/widgets/brand_icon.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
-/// One destination in the floating-pill navigation.
+/// One destination in the app's navigation.
 ///
 /// The enum carries all six future sections so the UI never has to learn
 /// new ids; sections not yet built simply opt out via [isVisibleInPhase3].
@@ -50,7 +50,7 @@ enum NavSection implements BrandGlyph {
   final bool isVisibleInPhase3;
 
   /// Localised label, looked up through [AppL10n]. Centralised here so the
-  /// pill, sheet, and screen headers stay in lockstep.
+  /// bar, the rail and the drawer stay in lockstep.
   String label(AppL10n l10n) => switch (this) {
     NavSection.price => l10n.navPrice,
     NavSection.market => l10n.navMarket,
@@ -61,8 +61,8 @@ enum NavSection implements BrandGlyph {
   };
 
   /// Route location of this section's shell branch. The id is the single
-  /// source of the URL, so the pill, the router, and a deep link can never
-  /// disagree about what `/news` means.
+  /// source of the URL, so the navigation, the router, and a deep link can
+  /// never disagree about what `/news` means.
   String get location => '/$id';
 
   /// All sections visible in the current phase, preserving the canonical

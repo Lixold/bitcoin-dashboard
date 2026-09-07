@@ -9,8 +9,6 @@
   "navNetwork": "Netzwerk",
   "navMiner": "Miner",
   "navNews": "News",
-  "navOpenMenu": "Navigationsmenü öffnen",
-  "navSectionsHeader": "Bereiche",
 
   "priceLive": "Live-Preis",
   "priceHeroLabel": "Aktueller Kurs · {timestamp}",

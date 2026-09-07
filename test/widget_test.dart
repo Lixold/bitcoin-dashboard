@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bitcoin_dashboard/app.dart';
-import 'package:bitcoin_dashboard/features/navigation/presentation/dynamic_nav_pill.dart';
+import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
+import 'package:bitcoin_dashboard/features/navigation/presentation/app_shell.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
@@ -39,21 +40,26 @@ Widget _app() {
 /// way the settings screen does.
 ProviderContainer _containerOf(WidgetTester tester) =>
     ProviderScope.containerOf(
-      tester.element(find.byType(DynamicNavPill)),
+      tester.element(find.byType(AppShell)),
       listen: false,
     );
 
-/// The nav sheet needs more room than the 800x600 default test view.
-void _useTallView(WidgetTester tester) {
-  tester.view.physicalSize = const Size(900, 1600);
+/// A phone-width window, so these tests always meet the bottom bar rather
+/// than the rail or the drawer — which expression appears at which width is
+/// covered in the navigation's own tests.
+void _usePhoneView(WidgetTester tester) {
+  tester.view.physicalSize = const Size(390, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 }
 
-Finder _pillLabel(String label) => find.descendant(
-  of: find.byType(DynamicNavPill),
-  matching: find.text(label),
-);
+/// The bar uppercases its labels, as the design system's `text-transform`
+/// does.
+Finder _destination(String label) => find.text(label.toUpperCase());
+
+/// Index of the destination the bar marks as active.
+int _selectedIndex(WidgetTester tester) =>
+    tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex;
 
 void main() {
   late Directory tempDir;
@@ -75,29 +81,36 @@ void main() {
     tempDir.deleteSync(recursive: true);
   });
 
-  testWidgets('app boots and shows the price screen with the floating pill', (
+  testWidgets('app boots into the price section with its navigation', (
     tester,
   ) async {
+    _usePhoneView(tester);
+
     await tester.pumpWidget(_app());
     await tester.pump(); // first frame
 
-    expect(find.byType(DynamicNavPill), findsOneWidget);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(
+      _selectedIndex(tester),
+      NavSection.visible().indexOf(NavSection.price),
+    );
     // App title appears in the screen header.
     expect(find.text('Bitcoin Dashboard'), findsWidgets);
   });
 
   testWidgets('switching the theme does not reset the section', (tester) async {
-    _useTallView(tester);
+    _usePhoneView(tester);
 
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
     // Leave the initial section.
-    await tester.tap(find.byType(DynamicNavPill));
+    await tester.tap(_destination('Network'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Network').last);
-    await tester.pumpAndSettle();
-    expect(_pillLabel('Network'), findsOneWidget);
+    expect(
+      _selectedIndex(tester),
+      NavSection.visible().indexOf(NavSection.network),
+    );
 
     // The root widget rebuilds on a theme change. The router must survive it:
     // built in `build()` it would be replaced and drop us back on /price.
@@ -112,38 +125,50 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(_pillLabel('Network'), findsOneWidget);
+    expect(
+      _selectedIndex(tester),
+      NavSection.visible().indexOf(NavSection.network),
+    );
     expect(find.byType(PriceScreen), findsNothing);
   });
 
   testWidgets('the section survives a restart and restore', (tester) async {
-    _useTallView(tester);
+    _usePhoneView(tester);
 
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(DynamicNavPill));
+    await tester.tap(_destination('News'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('News').last);
-    await tester.pumpAndSettle();
-    expect(_pillLabel('News'), findsOneWidget);
+    expect(
+      _selectedIndex(tester),
+      NavSection.visible().indexOf(NavSection.news),
+    );
 
     // Tears the tree down, restores the platform restoration data, and pumps
     // a fresh app — the same path the OS takes after killing the process.
     await tester.restartAndRestore();
     await tester.pumpAndSettle();
 
-    expect(_pillLabel('News'), findsOneWidget);
+    expect(
+      _selectedIndex(tester),
+      NavSection.visible().indexOf(NavSection.news),
+    );
     expect(find.byType(PriceScreen), findsNothing);
   });
 
   testWidgets('a fresh start without restoration data opens the home section', (
     tester,
   ) async {
+    _usePhoneView(tester);
+
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
 
     expect(find.byType(PriceScreen), findsOneWidget);
-    expect(_pillLabel('Price'), findsOneWidget);
+    expect(
+      _selectedIndex(tester),
+      NavSection.visible().indexOf(NavSection.price),
+    );
   });
 }

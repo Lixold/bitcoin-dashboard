@@ -4,8 +4,7 @@ import 'dart:io';
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
-import 'package:bitcoin_dashboard/features/navigation/presentation/dynamic_nav_pill.dart';
-import 'package:bitcoin_dashboard/features/navigation/presentation/nav_bottom_sheet.dart';
+import 'package:bitcoin_dashboard/features/navigation/presentation/app_navigation.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
@@ -44,10 +43,11 @@ Widget _harness(GoRouter router) {
   );
 }
 
-Finder _pillLabel(String label) => find.descendant(
-  of: find.byType(DynamicNavPill),
-  matching: find.text(label),
-);
+/// Index of the destination the navigation marks as active. The tests below
+/// run at a width where the rail is the expression; which expression appears
+/// at which width is the navigation's own test.
+int? _selectedIndex(WidgetTester tester) =>
+    tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex;
 
 void main() {
   late Directory tempDir;
@@ -84,17 +84,18 @@ void main() {
     ) async {
       final router = await pumpAt(tester, NavSection.price.location);
 
-      // Also pins the branch order: the shell reads the section back from the
-      // branch index, so a reordered branch list would show the wrong pill.
+      // Also pins the branch order: the shell reads the section back from
+      // the branch index, so a reordered branch list would mark the wrong
+      // destination.
       for (final section in NavSection.visible()) {
         router.go(section.location);
         await tester.pumpAndSettle();
 
         expect(router.state.uri.path, section.location);
         expect(
-          _pillLabel(section.label(l10n)),
-          findsOneWidget,
-          reason: 'pill should show ${section.id}',
+          _selectedIndex(tester),
+          NavSection.visible().indexOf(section),
+          reason: 'the navigation should mark ${section.id}',
         );
       }
     });
@@ -115,7 +116,7 @@ void main() {
 
       expect(router.state.uri.path, homeLocation);
       expect(find.byType(PriceScreen), findsOneWidget);
-      expect(_pillLabel('Forecast'), findsNothing);
+      expect(find.text(l10n.navForecast.toUpperCase()), findsNothing);
     });
   });
 
@@ -127,39 +128,46 @@ void main() {
 
       expect(find.byType(SettingsScreen), findsOneWidget);
       // No navigation chrome: settings is not a section.
-      expect(find.byType(DynamicNavPill), findsNothing);
+      expect(find.byType(AppNavigation), findsNothing);
     });
 
     testWidgets('the navigation does not list settings as a section', (
       tester,
     ) async {
-      // The header's gear is the way in. The sheet lists sections only —
-      // settings is a task, and six sections is already one too many.
+      // The header's gear is the way in. The navigation lists sections
+      // only — settings is a task, not a destination.
       await pumpAt(tester, homeLocation);
 
-      await tester.tap(find.byType(DynamicNavPill));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(NavBottomSheet), findsOneWidget);
-      expect(find.text('Settings'), findsNothing);
+      expect(find.byType(AppNavigation), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AppNavigation),
+          matching: find.textContaining(
+            RegExp(l10n.settingsTitle, caseSensitive: false),
+          ),
+        ),
+        findsNothing,
+      );
     });
   });
 
   group('back gesture', () {
-    testWidgets('closes the nav sheet instead of leaving the app', (
-      tester,
-    ) async {
+    testWidgets('closes settings and returns to the section it was opened '
+        'from', (tester) async {
+      // Settings is pushed on top of the section rather than replacing it,
+      // so the system back gesture has something to pop before it can
+      // leave the app.
       final router = await pumpAt(tester, NavSection.news.location);
 
-      await tester.tap(find.byType(DynamicNavPill));
+      router.push(settingsLocation);
       await tester.pumpAndSettle();
-      expect(find.byType(NavBottomSheet), findsOneWidget);
+      expect(find.byType(SettingsScreen), findsOneWidget);
 
       final handled = await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
 
       expect(handled, isTrue);
-      expect(find.byType(NavBottomSheet), findsNothing);
+      expect(find.byType(SettingsScreen), findsNothing);
       expect(router.state.uri.path, NavSection.news.location);
     });
   });

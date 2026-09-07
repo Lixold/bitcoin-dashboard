@@ -49,9 +49,7 @@ class SettingsScreen extends ConsumerWidget {
                 horizontalPad,
                 AppSpacing.s5,
                 horizontalPad,
-                // The 80 px of clearance the design reserves at the foot
-                // of every screen.
-                AppSpacing.s7 + AppSpacing.s6,
+                AppSpacing.screenFootClearance,
               ),
               children: [
                 ConstrainedBox(

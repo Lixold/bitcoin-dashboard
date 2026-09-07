@@ -46,8 +46,7 @@ class NetworkScreen extends ConsumerWidget {
                 horizontalPad,
                 AppSpacing.s5,
                 horizontalPad,
-                // Clears the floating pill, per the slice design.
-                132,
+                AppSpacing.screenFootClearance,
               ),
               children: [
                 ConstrainedBox(

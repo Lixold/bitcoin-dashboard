@@ -45,8 +45,7 @@ class PriceScreen extends ConsumerWidget {
                 horizontalPad,
                 AppSpacing.s5,
                 horizontalPad,
-                // Leave room for the floating pill (44 + 24 anchor + margins).
-                AppSpacing.s7 * 2.5,
+                AppSpacing.screenFootClearance,
               ),
               children: [
                 ConstrainedBox(
