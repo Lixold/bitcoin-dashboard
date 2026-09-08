@@ -1,20 +1,24 @@
-import 'dart:async';
-import 'dart:io';
-
-import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/core/widgets/statement.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
 import 'package:bitcoin_dashboard/features/network/domain/mining_pool.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/presentation/network_screen.dart';
 import 'package:bitcoin_dashboard/features/network/presentation/pool_share_list.dart';
-import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
-import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
+
+import '../../../support/harness.dart';
+
+/// `data/network-health.json` as the CDN served it on 2026-09-08.
+///
+/// Top 1 = 22.96 (AntPool), top 3 = 60.74, listed = 97.04 → uncritical.
+final NetworkHealthSnapshot _live = NetworkHealthSnapshot.fromJson(
+  loadJsonFixture('network-health.json'),
+);
+
+/// Eleven hours after the producer wrote the fixture: comfortably inside
+/// the 26-hour staleness threshold, on whatever day this suite runs.
+final DateTime _now = _live.fetchedAt.add(const Duration(hours: 11));
 
 /// A snapshot whose top-one and top-three shares land where the test wants
 /// them, so a verdict can be produced without restating the matrix here.
@@ -23,7 +27,7 @@ NetworkHealthSnapshot _snapshot({
   DateTime? fetchedAt,
 }) {
   return NetworkHealthSnapshot(
-    fetchedAt: fetchedAt ?? DateTime.now().toUtc(),
+    fetchedAt: fetchedAt ?? _now,
     pools: [
       for (final (name, share) in pools)
         MiningPool(name: name, hashratePercent: share),
@@ -31,86 +35,35 @@ NetworkHealthSnapshot _snapshot({
   );
 }
 
-/// The live payload of 2026-09-06 — top 1 = 22.37, top 3 = 57.90 → ok.
-final _okPools = <(String, double)>[
-  ('Foundry USA', 22.37),
-  ('AntPool', 18.42),
-  ('F2Pool', 17.11),
-  ('ViaBTC', 11.84),
-  ('SpiderPool', 11.18),
-  ('Luxor', 4.61),
-  ('Binance Pool', 3.95),
-  ('SECPOOL', 3.29),
-  ('MARA Pool', 2.63),
-  ('OCEAN', 1.97),
-];
-
-/// Builds the screen with [create] standing in for the CDN read.
-///
-/// Takes the create function rather than a ready-made override because
-/// `flutter_riverpod` does not export the `Override` type, so a helper
-/// cannot name one in its signature.
-Widget _harness({
-  required FutureOr<NetworkHealthSnapshot> Function(Ref) create,
+/// The screen, with [pools] standing in for the CDN read.
+Future<void> _pumpNetwork(
+  WidgetTester tester,
+  Override pools, {
+  Size view = TestView.tallTablet,
   Locale locale = const Locale('en'),
-  Brightness brightness = Brightness.dark,
-}) {
-  return ProviderScope(
-    overrides: [networkPoolsProvider.overrideWith(create)],
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
-      locale: locale,
-      supportedLocales: AppL10n.supportedLocales,
-      localizationsDelegates: const [
-        AppL10n.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: const Scaffold(body: NetworkScreen()),
-    ),
+  DateTime? now,
+}) async {
+  useView(tester, view);
+  await pumpApp(
+    tester,
+    child: const NetworkScreen(),
+    overrides: [pools],
+    locale: locale,
+    now: now ?? _now,
   );
 }
 
-FutureOr<NetworkHealthSnapshot> Function(Ref) _data(
-  NetworkHealthSnapshot snapshot,
-) =>
-    (ref) async => snapshot;
-
-/// A future that never completes — the loading state, held still.
-FutureOr<NetworkHealthSnapshot> _loading(Ref ref) =>
-    Completer<NetworkHealthSnapshot>().future;
-
-FutureOr<NetworkHealthSnapshot> _error(Ref ref) async =>
-    throw Exception('CDN unreachable');
-
 void main() {
-  late Directory tempDir;
-
-  setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_network_');
-    Hive.init(tempDir.path);
-    await Hive.openBox<String>(SettingsController.boxName);
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
-  });
-
-  void useTallView(WidgetTester tester) {
-    tester.view.physicalSize = const Size(900, 2600);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-  }
+  setUpTestHive();
 
   group('loading', () {
     testWidgets('names the subject and says the distribution is loading', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(_harness(create: _loading));
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncLoading()),
+      );
       await tester.pump();
 
       expect(find.textContaining('MINING POOL CONCENTRATION'), findsOneWidget);
@@ -123,8 +76,10 @@ void main() {
 
   group('error', () {
     testWidgets('names what still works and offers a retry', (tester) async {
-      useTallView(tester);
-      await tester.pumpWidget(_harness(create: _error));
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncError(Exception('unreachable'))),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Pool distribution unavailable'), findsOneWidget);
@@ -137,8 +92,10 @@ void main() {
     });
 
     testWidgets('shows no figures it cannot back', (tester) async {
-      useTallView(tester);
-      await tester.pumpWidget(_harness(create: _error));
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncError(Exception('unreachable'))),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(PoolShareList), findsNothing);
@@ -150,21 +107,21 @@ void main() {
     testWidgets('states the ok verdict with both figures and the sentence', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(create: _data(_snapshot(pools: _okPools))),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Uncritical'), findsOneWidget);
       expect(find.text('DISTRIBUTION BROAD'), findsOneWidget);
-      // Top 1 = 22.37 -> 22.4, top 3 = 57.90 -> 57.9.
-      expect(find.text('22.4'), findsOneWidget);
-      expect(find.text('57.9'), findsOneWidget);
-      expect(find.text('Foundry USA'), findsWidgets);
+      // Top 1 = 22.96 -> 23.0, top 3 = 60.74 -> 60.7.
+      expect(find.text('23.0'), findsOneWidget);
+      expect(find.text('60.7'), findsOneWidget);
+      expect(find.text('AntPool'), findsWidgets);
       expect(
         find.textContaining(
-          'No pool holds more than 22.4 % of the computing power, and the '
+          'No pool holds more than 23.0 % of the computing power, and the '
           'three largest together do not cross the 70 % line',
         ),
         findsOneWidget,
@@ -175,9 +132,9 @@ void main() {
     testWidgets('shows the thresholds the verdict is measured against', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(create: _data(_snapshot(pools: _okPools))),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
       );
       await tester.pumpAndSettle();
 
@@ -186,7 +143,7 @@ void main() {
       expect(find.text('THRESHOLD 70 %'), findsOneWidget);
       expect(find.text('CRITICAL FROM 80 %'), findsOneWidget);
       expect(
-        find.textContaining('17.6 PP BELOW THE 40 % THRESHOLD'),
+        find.textContaining('17.0 PP BELOW THE 40 % THRESHOLD'),
         findsOneWidget,
       );
     });
@@ -194,14 +151,14 @@ void main() {
     testWidgets('says what the list covers without inventing an Others pool', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(create: _data(_snapshot(pools: _okPools))),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
       );
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Σ 97.37 % ATTRIBUTED TO THE LISTED POOLS'),
+        find.textContaining('Σ 97.04 % ATTRIBUTED TO THE LISTED POOLS'),
         findsOneWidget,
       );
       expect(find.textContaining('OTHERS'), findsNothing);
@@ -210,14 +167,14 @@ void main() {
     testWidgets('keeps the tail behind a toggle and reveals it on tap', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(create: _data(_snapshot(pools: _okPools))),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
       );
       await tester.pumpAndSettle();
 
-      // Leaders are visible, the seventh pool is not.
-      expect(find.text('AntPool'), findsWidgets);
+      // Leaders are visible, the ninth pool is not.
+      expect(find.text('Foundry USA'), findsWidgets);
       expect(find.text('OCEAN'), findsNothing);
 
       await tester.tap(find.text('SHOW MORE POOLS'));
@@ -230,9 +187,9 @@ void main() {
     testWidgets('opens the mining pool explanation from the info trigger', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(create: _data(_snapshot(pools: _okPools))),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
       );
       await tester.pumpAndSettle();
 
@@ -249,10 +206,10 @@ void main() {
 
   group('data · warning', () {
     testWidgets('escalates when the top three cross 70 %', (tester) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(
-          create: _data(
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(
+          asyncData(
             _snapshot(
               pools: const [
                 ('Foundry USA', 38.14),
@@ -280,11 +237,11 @@ void main() {
     testWidgets('escalates on a single pool above 40 % with a calm top three', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(
-          create: _data(
-            // Top 1 = 45, top 3 = 65: only the single-pool line is crossed.
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(
+          // Top 1 = 45, top 3 = 65: only the single-pool line is crossed.
+          asyncData(
             _snapshot(
               pools: const [
                 ('Foundry USA', 45.0),
@@ -310,10 +267,10 @@ void main() {
     testWidgets('states the critical verdict when one pool passes 50 %', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(
-          create: _data(
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(
+          asyncData(
             _snapshot(
               pools: const [
                 ('Foundry USA', 52.36),
@@ -334,43 +291,28 @@ void main() {
 
   group('stale', () {
     testWidgets('keeps the figures and adds an age hint', (tester) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(
-          create: _data(
-            _snapshot(
-              pools: _okPools,
-              fetchedAt: DateTime.now().toUtc().subtract(
-                const Duration(hours: 31),
-              ),
-            ),
-          ),
-        ),
+      // The payload does not change; the clock moves past the threshold.
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
+        now: _live.fetchedAt.add(const Duration(hours: 31)),
       );
       await tester.pumpAndSettle();
 
       expect(find.textContaining('DATA 31 HOURS OLD'), findsOneWidget);
       // Stale is not an error: the verdict and the figures stay.
       expect(find.text('Uncritical'), findsOneWidget);
-      expect(find.text('22.4'), findsOneWidget);
+      expect(find.text('23.0'), findsOneWidget);
       expect(find.text('Pool distribution unavailable'), findsNothing);
     });
 
     testWidgets('a payload inside 26 hours carries no age hint', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(
-          create: _data(
-            _snapshot(
-              pools: _okPools,
-              fetchedAt: DateTime.now().toUtc().subtract(
-                const Duration(hours: 25),
-              ),
-            ),
-          ),
-        ),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
+        now: _live.fetchedAt.add(const Duration(hours: 25)),
       );
       await tester.pumpAndSettle();
 
@@ -382,10 +324,10 @@ void main() {
     testWidgets('below three pools it states why, with no substitute figure', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(
-          create: _data(
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(
+          asyncData(
             _snapshot(
               pools: const [('Foundry USA', 26.44), ('AntPool', 14.79)],
             ),
@@ -415,10 +357,10 @@ void main() {
     testWidgets('does not claim a coverage sum it has no source for', (
       tester,
     ) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(
-          create: _data(
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(
+          asyncData(
             _snapshot(
               pools: const [('Foundry USA', 26.44), ('AntPool', 14.79)],
             ),
@@ -442,18 +384,16 @@ void main() {
       // The evidence rows carry fixed columns (rank, name, figure) around
       // a flexible bar. A RenderFlex overflow throws here, so rendering at
       // the narrowest shipped width is the assertion.
-      tester.view.physicalSize = const Size(390, 3000);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(
-        _harness(create: _data(_snapshot(pools: _okPools))),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
+        view: TestView.tallPhone,
       );
       await tester.pumpAndSettle();
 
       // The two figure columns stack rather than sitting side by side.
-      final topOne = tester.getTopLeft(find.text('22.4'));
-      final topThree = tester.getTopLeft(find.text('57.9'));
+      final topOne = tester.getTopLeft(find.text('23.0'));
+      final topThree = tester.getTopLeft(find.text('60.7'));
       expect(topThree.dy, greaterThan(topOne.dy));
       expect(topThree.dx, topOne.dx);
 
@@ -465,17 +405,15 @@ void main() {
     testWidgets('places the figures side by side when there is room', (
       tester,
     ) async {
-      tester.view.physicalSize = const Size(1280, 2000);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(
-        _harness(create: _data(_snapshot(pools: _okPools))),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
+        view: TestView.tallDesktop,
       );
       await tester.pumpAndSettle();
 
-      final topOne = tester.getTopLeft(find.text('22.4'));
-      final topThree = tester.getTopLeft(find.text('57.9'));
+      final topOne = tester.getTopLeft(find.text('23.0'));
+      final topThree = tester.getTopLeft(find.text('60.7'));
       expect(topThree.dy, topOne.dy);
       expect(topThree.dx, greaterThan(topOne.dx));
     });
@@ -483,20 +421,18 @@ void main() {
 
   group('localisation', () {
     testWidgets('renders German copy and German decimals', (tester) async {
-      useTallView(tester);
-      await tester.pumpWidget(
-        _harness(
-          create: _data(_snapshot(pools: _okPools)),
-          locale: const Locale('de'),
-        ),
+      await _pumpNetwork(
+        tester,
+        networkPoolsProvider.overrideWith(asyncData(_live)),
+        locale: const Locale('de'),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Unbedenklich'), findsOneWidget);
-      expect(find.text('22,4'), findsOneWidget);
-      expect(find.text('57,9'), findsOneWidget);
+      expect(find.text('23,0'), findsOneWidget);
+      expect(find.text('60,7'), findsOneWidget);
       expect(
-        find.textContaining('Kein Pool hält mehr als 22,4 %'),
+        find.textContaining('Kein Pool hält mehr als 23,0 %'),
         findsOneWidget,
       );
     });

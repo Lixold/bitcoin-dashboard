@@ -1,25 +1,16 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/core/theme/app_spacing.dart';
-import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
 import 'package:bitcoin_dashboard/features/navigation/presentation/app_navigation.dart';
-import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
-import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/presentation/network_screen.dart';
-import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
-import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
+
+import '../../../support/harness.dart';
 
 /// The three expressions and a width that produces each of them.
 const _expressions = <(String, double)>[
@@ -28,42 +19,14 @@ const _expressions = <(String, double)>[
   ('drawer', 1200),
 ];
 
-Widget _harness(GoRouter router) {
-  return ProviderScope(
-    overrides: [
-      // Keep the test offline and deterministic: the live stream never emits.
-      priceLiveProvider.overrideWith((ref) {
-        final controller = StreamController<dynamic>();
-        ref.onDispose(controller.close);
-        return controller.stream.cast();
-      }),
-      // Same reason: navigating to Network must not reach the CDN.
-      networkPoolsProvider.overrideWith(
-        (ref) => Completer<NetworkHealthSnapshot>().future,
-      ),
-    ],
-    child: MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(),
-      locale: const Locale('en'),
-      supportedLocales: AppL10n.supportedLocales,
-      localizationsDelegates: const [
-        AppL10n.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      routerConfig: router,
-    ),
-  );
-}
-
 /// A window [width] logical pixels wide, tall enough that no expression has
 /// to scroll its destinations.
-void _resize(WidgetTester tester, double width) {
-  tester.view.physicalSize = Size(width, 1000);
-  tester.view.devicePixelRatio = 1;
-}
+///
+/// The widths are written out here rather than taken from [TestView]:
+/// which expression a width produces is what this file asserts, so the
+/// number is the claim.
+void _resize(WidgetTester tester, double width) =>
+    useView(tester, Size(width, 1000));
 
 /// Finds a destination inside the navigation by name, regardless of case:
 /// the bar and the rail uppercase their labels the way the design system's
@@ -82,19 +45,11 @@ Finder _destination(String label) => find.descendant(
 );
 
 void main() {
-  late Directory tempDir;
   late AppL10n l10n;
 
+  setUpTestHive();
   setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_shell_');
-    Hive.init(tempDir.path);
-    await Hive.openBox<String>(SettingsController.boxName);
     l10n = await AppL10n.delegate.load(const Locale('en'));
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
   });
 
   Future<GoRouter> pumpAt(
@@ -103,12 +58,11 @@ void main() {
     String? initialLocation,
   }) async {
     _resize(tester, width);
-    addTearDown(tester.view.reset);
 
     final router = createAppRouter(initialLocation: initialLocation);
     addTearDown(router.dispose);
 
-    await tester.pumpWidget(_harness(router));
+    await pumpRouterApp(tester, router: router);
     await tester.pumpAndSettle();
     return router;
   }

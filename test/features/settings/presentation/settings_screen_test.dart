@@ -1,27 +1,30 @@
-import 'dart:io';
-import 'dart:typed_data';
-
-import 'package:bitcoin_dashboard/app.dart';
 import 'package:bitcoin_dashboard/core/app_info.dart';
 import 'package:bitcoin_dashboard/core/links/url_opener.dart';
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/core/theme/app_typography.dart';
-import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_section.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
 
-/// The app, opened straight on `/settings`.
+import '../../../support/harness.dart';
+
+/// The app, opened straight on `/settings`, in a window tall enough for
+/// the whole screen.
 ///
 /// The screen under test is reached through the real router rather than
 /// through a bare `home:` — the sheet, the theme and the locale all run
 /// through the app's own wiring, which is what "takes effect immediately"
-/// means.
-Widget _app({UrlOpener? openUrl}) {
-  return ProviderScope(
+/// means. That is why this file pumps [pumpAppRoot] rather than placing
+/// the screen with `pumpApp`.
+Future<void> _pumpSettings(
+  WidgetTester tester, {
+  UrlOpener? openUrl,
+  Size view = TestView.tallTablet,
+}) async {
+  useView(tester, view);
+  await pumpAppRoot(
+    tester,
     overrides: [
       appRouterProvider.overrideWith((ref) {
         final router = createAppRouter(initialLocation: settingsLocation);
@@ -32,15 +35,7 @@ Widget _app({UrlOpener? openUrl}) {
       // opener, and a link would try to leave the test.
       if (openUrl != null) urlOpenerProvider.overrideWithValue(openUrl),
     ],
-    child: const BitcoinDashboardApp(),
   );
-}
-
-/// The screen is taller than the 800x600 default view.
-void _useTallView(WidgetTester tester, {Size size = const Size(900, 1600)}) {
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
 }
 
 ThemeData _theme(WidgetTester tester) =>
@@ -58,34 +53,15 @@ Future<void> _tapAndSettle(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
-  late Directory tempDir;
-
-  setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_settings_');
-    Hive.init(tempDir.path);
-    // `bytes:` puts the box on Hive's in-memory backend. A file-backed box
-    // completes its writes on the real event loop, which a widget test's
-    // fake async zone never reaches — the theme would still be light three
-    // frames after the tap. This keeps the settings path deterministic and
-    // off the disk.
-    await Hive.openBox<String>(SettingsController.boxName, bytes: Uint8List(0));
-  });
-
-  tearDown(() async {
-    await Hive.box<String>(SettingsController.boxName).clear();
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
-  });
+  // In memory: this file taps controls that *write* a preference and then
+  // asserts on the effect, and a file-backed box does not complete its
+  // write inside a widget test's fake async zone.
+  setUpTestHive(inMemory: true, clearBetweenTests: true);
 
   testWidgets('renders the three groups and nothing to wait for', (
     tester,
   ) async {
-    _useTallView(tester);
-
-    await tester.pumpWidget(_app());
+    await _pumpSettings(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('APPEARANCE'), findsOneWidget);
@@ -105,9 +81,7 @@ void main() {
   testWidgets('the screen title is set from the design, not inherited', (
     tester,
   ) async {
-    _useTallView(tester);
-
-    await tester.pumpWidget(_app());
+    await _pumpSettings(tester);
     await tester.pumpAndSettle();
 
     final title = tester.widget<Text>(find.text('Settings'));
@@ -119,9 +93,7 @@ void main() {
   });
 
   testWidgets('switching the theme takes effect immediately', (tester) async {
-    _useTallView(tester);
-
-    await tester.pumpWidget(_app());
+    await _pumpSettings(tester);
     await tester.pumpAndSettle();
 
     expect(_theme(tester).brightness, Brightness.light);
@@ -134,9 +106,7 @@ void main() {
   testWidgets('switching the language takes effect immediately', (
     tester,
   ) async {
-    _useTallView(tester);
-
-    await tester.pumpWidget(_app());
+    await _pumpSettings(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('English'), findsOneWidget);
@@ -156,9 +126,7 @@ void main() {
   });
 
   testWidgets('the number format follows the language', (tester) async {
-    _useTallView(tester);
-
-    await tester.pumpWidget(_app());
+    await _pumpSettings(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('Number format'), findsOneWidget);
@@ -174,9 +142,7 @@ void main() {
   testWidgets('a row stacks its control under the text on a phone', (
     tester,
   ) async {
-    _useTallView(tester, size: const Size(390, 1600));
-
-    await tester.pumpWidget(_app());
+    await _pumpSettings(tester, view: TestView.tallPhone);
     await tester.pumpAndSettle();
 
     final label = find.text('Theme');
@@ -189,8 +155,7 @@ void main() {
     );
 
     // Wide enough, and the control returns to the right of the text.
-    _useTallView(tester);
-    await tester.pumpWidget(_app());
+    await _pumpSettings(tester);
     await tester.pumpAndSettle();
 
     expect(
@@ -206,10 +171,9 @@ void main() {
     /// the real screen, so a row that prints one address and opens
     /// another fails here.
     Future<List<Uri>> openSettings(WidgetTester tester) async {
-      _useTallView(tester);
       final opened = <Uri>[];
 
-      await tester.pumpWidget(_app(openUrl: opened.add));
+      await _pumpSettings(tester, openUrl: opened.add);
       await tester.pumpAndSettle();
 
       return opened;

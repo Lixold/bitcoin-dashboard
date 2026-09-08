@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/http/cdn_client.dart';
+import '../../../core/time/clock.dart';
 import '../domain/network_health_snapshot.dart';
 import 'network_health_cache.dart';
 
@@ -45,7 +46,7 @@ final networkPoolsProvider = FutureProvider.autoDispose<NetworkHealthSnapshot>((
 ) async {
   final cdn = ref.watch(cdnClientProvider);
   final cache = ref.watch(networkHealthCacheProvider);
-  final now = DateTime.now().toUtc();
+  final now = ref.watch(clockProvider)().toUtc();
 
   final cached = await cache.read();
   if (cached != null &&

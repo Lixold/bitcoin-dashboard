@@ -1,25 +1,16 @@
-import 'dart:io';
-
 import 'package:bitcoin_dashboard/features/network/data/network_health_cache.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import '../../../support/harness.dart';
+
 void main() {
-  late Directory tempDir;
-  late NetworkHealthCache cache;
+  setUpTestHive(
+    boxes: const [NetworkHealthCache.boxName],
+    clearBetweenTests: true,
+  );
 
-  setUp(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_cdn_cache_');
-    Hive.init(tempDir.path);
-    await Hive.openBox<String>(NetworkHealthCache.boxName);
-    cache = NetworkHealthCache();
-  });
-
-  tearDown(() async {
-    await Hive.deleteFromDisk();
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
-  });
+  final cache = NetworkHealthCache();
 
   test('an empty cache reads as null rather than throwing', () async {
     expect(await cache.read(), isNull);

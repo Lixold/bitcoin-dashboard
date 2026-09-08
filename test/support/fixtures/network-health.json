@@ -1,0 +1,79 @@
+{
+  "_meta": {
+    "fetchedAt": "2026-09-08T01:01:18+00:00",
+    "date": "2026-09-08",
+    "sources": [
+      "Bitnodes.io",
+      "Mempool.space"
+    ]
+  },
+  "fullNodes": {
+    "count": null,
+    "percentChange24h": null,
+    "trend": "unknown"
+  },
+  "miningPools": [
+    {
+      "name": "AntPool",
+      "hashratePercent": 22.96,
+      "blockCount": 31,
+      "alert": false
+    },
+    {
+      "name": "Foundry USA",
+      "hashratePercent": 21.48,
+      "blockCount": 29,
+      "alert": false
+    },
+    {
+      "name": "F2Pool",
+      "hashratePercent": 16.3,
+      "blockCount": 22,
+      "alert": false
+    },
+    {
+      "name": "SpiderPool",
+      "hashratePercent": 9.63,
+      "blockCount": 13,
+      "alert": false
+    },
+    {
+      "name": "ViaBTC",
+      "hashratePercent": 6.67,
+      "blockCount": 9,
+      "alert": false
+    },
+    {
+      "name": "SECPOOL",
+      "hashratePercent": 5.93,
+      "blockCount": 8,
+      "alert": false
+    },
+    {
+      "name": "MARA Pool",
+      "hashratePercent": 5.93,
+      "blockCount": 8,
+      "alert": false
+    },
+    {
+      "name": "Luxor",
+      "hashratePercent": 3.7,
+      "blockCount": 5,
+      "alert": false
+    },
+    {
+      "name": "OCEAN",
+      "hashratePercent": 2.22,
+      "blockCount": 3,
+      "alert": false
+    },
+    {
+      "name": "Braiins Pool",
+      "hashratePercent": 2.22,
+      "blockCount": 3,
+      "alert": false
+    }
+  ],
+  "poolConcentrationAlert": false,
+  "aggregatedHealth": "good"
+}

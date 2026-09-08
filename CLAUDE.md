@@ -139,7 +139,10 @@ Conventions:
   or the shape of the tree has no `lib/` counterpart to mirror, so
   it sits beside the check it belongs with rather than at a mirrored
   path — `test/core/widgets/asset_hygiene_test.dart` next to the
-  bundling test in `brand_icon_test.dart`.
+  bundling test in `brand_icon_test.dart`. `test/support/` is the other
+  exception: it holds no tests at all, only the shared harness and the
+  captured payloads under `test/support/fixtures/`, so there is nothing
+  for it to mirror — see §7.
 - **`workers/_shared/`** holds everything used by more than one Worker
   (R2 writes, fetch-with-retry, logging, the RSS/news pipeline). Each
   Worker under `workers/cron-*/` is `src/index.js` + `wrangler.toml`
@@ -304,6 +307,45 @@ and no tests is incomplete.
   reliance on wall-clock time or on ordering of real feeds.
 - Coverage is reported in the CI job log only — never wire up an
   external coverage service (§1).
+
+### The shared harness
+
+`test/support/` is one harness for provider-driven widget tests. A test
+imports `support/harness.dart` and has all of it.
+
+| Helper | What it gives |
+|---|---|
+| `pumpApp` | A screen inside `ProviderScope` → `MaterialApp` → `Scaffold`, with the theme, the locale and the four localisation delegates wired |
+| `pumpRouterApp` | The same for a screen reached through a `GoRouter` |
+| `pumpAppRoot` | The real `BitcoinDashboardApp`, for tests whose subject is the app's own wiring — its router, its theme mode, its state restoration |
+| `setUpTestHive` | The Hive boxes a screen reads, on a temporary directory that dies with the test file |
+| `asyncLoading` / `asyncError` / `asyncData` | The three states of a `FutureProvider`, as override callbacks |
+| `TestView` / `useView` | Window sizes named after what the app does at them |
+| `loadJsonFixture` | A captured CDN payload from `test/support/fixtures/` |
+
+Three rules the harness enforces so the next author does not have to
+remember them:
+
+- **Offline is the harness's job.** `pumpApp` and its siblings override
+  every provider that would otherwise open a socket. A test that
+  overrides one of those for its own purpose **replaces** that default
+  rather than adding a second override — Riverpod asserts when one
+  container is handed two overrides of the same provider.
+- **A test that asserts on the age of a payload freezes the clock**
+  with `pumpApp(now:)`. Building the input relative to `DateTime.now()`
+  instead makes the assertion drift with the day the suite runs on.
+- **A fixture is a capture, not an invention.** Files under
+  `test/support/fixtures/` are what the CDN actually served, values
+  untouched. Nothing validates them against the payload contract yet —
+  that is issue #42.
+
+**Not every widget test belongs on the harness.** `statement_test`,
+`segmented_control_test`, `brand_icon_test`, `settings_section_test` and
+`language_picker_sheet_test` build a minimal tree with no `ProviderScope`
+on purpose, and they stay that way: a widget test should show what the
+widget actually needs, and pumping a component through the whole app
+wiring hides that. Reach for the harness when the subject is a screen;
+build the tree by hand when it is a component.
 
 ---
 
