@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/time/clock.dart';
 import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/brand_icon.dart';
 import '../../../core/widgets/statement.dart';
@@ -79,17 +80,19 @@ class NetworkScreen extends ConsumerWidget {
 
 // -- Data -------------------------------------------------------------------
 
-class _PoolsStatement extends StatelessWidget {
+class _PoolsStatement extends ConsumerWidget {
   const _PoolsStatement({required this.snapshot});
 
   final NetworkHealthSnapshot snapshot;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
 
-    final now = DateTime.now();
+    // Read rather than called directly: staleness is a comparison against
+    // now, and a test has to be able to say which now it means.
+    final now = ref.watch(clockProvider)();
     final isStale = snapshot.isStaleAt(now);
     final stamp = DateFormat.yMMMd(
       locale,

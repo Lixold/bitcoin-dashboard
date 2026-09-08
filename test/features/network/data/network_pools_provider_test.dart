@@ -1,9 +1,18 @@
 import 'package:bitcoin_dashboard/core/http/cdn_client.dart';
+import 'package:bitcoin_dashboard/core/time/clock.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_health_cache.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+/// The moment every age in this file is measured from.
+///
+/// The provider compares a cached copy's age against the clock, so the
+/// test fixes the clock rather than building its inputs relative to the
+/// real one. An age written as "now minus 61 minutes" says less than two
+/// timestamps do, and it drifts with the day the suite runs on.
+final DateTime _now = DateTime.utc(2026, 9, 8, 12);
 
 Map<String, dynamic> _payload(String fetchedAt) => <String, dynamic>{
   '_meta': {'fetchedAt': fetchedAt},
@@ -66,6 +75,7 @@ ProviderContainer _container({
     overrides: [
       cdnClientProvider.overrideWithValue(cdn),
       networkHealthCacheProvider.overrideWithValue(cache),
+      clockProvider.overrideWithValue(() => _now),
     ],
   );
   addTearDown(container.dispose);
@@ -93,7 +103,7 @@ void main() {
     final cache = _FakeCache(
       CachedPayload(
         // Well inside the 60-minute TTL.
-        cachedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 5)),
+        cachedAt: _now.subtract(const Duration(minutes: 5)),
         payload: _payload('2026-09-05T01:00:32+00:00'),
       ),
     );
@@ -108,7 +118,7 @@ void main() {
     final cdn = _FakeCdn(payload: _payload('2026-09-06T01:00:32+00:00'));
     final cache = _FakeCache(
       CachedPayload(
-        cachedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 61)),
+        cachedAt: _now.subtract(const Duration(minutes: 61)),
         payload: _payload('2026-09-05T01:00:32+00:00'),
       ),
     );
@@ -127,7 +137,7 @@ void main() {
       final cdn = _FakeCdn(failure: Exception('CDN unreachable'));
       final cache = _FakeCache(
         CachedPayload(
-          cachedAt: DateTime.now().toUtc().subtract(const Duration(days: 4)),
+          cachedAt: _now.subtract(const Duration(days: 4)),
           payload: _payload('2026-09-02T01:00:32+00:00'),
         ),
       );
@@ -137,9 +147,9 @@ void main() {
       expect(cdn.calls, 1);
       expect(snapshot.fetchedAt, DateTime.utc(2026, 9, 2, 1, 0, 32));
       expect(
-        snapshot.isStaleAt(DateTime.utc(2026, 9, 6)),
+        snapshot.isStaleAt(_now),
         isTrue,
-        reason: 'four days old — the screen shows this with an age hint',
+        reason: 'six days old — the screen shows this with an age hint',
       );
     },
   );
