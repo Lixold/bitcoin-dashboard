@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:bitcoin_dashboard/app.dart';
 import 'package:bitcoin_dashboard/core/theme/app_colors.dart';
@@ -7,12 +6,12 @@ import 'package:bitcoin_dashboard/core/widgets/app_header.dart';
 import 'package:bitcoin_dashboard/core/widgets/brand_icon.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
-import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
+
+import '../../support/harness.dart';
 
 /// The whole app, with the live price stream replaced by one that never
 /// emits — the header is what is under test, not the price.
@@ -37,22 +36,7 @@ Finder _gearIcon = find.descendant(
 BrandIcon _gear(WidgetTester tester) => tester.widget<BrandIcon>(_gearIcon);
 
 void main() {
-  late Directory tempDir;
-
-  setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_header_');
-    Hive.init(tempDir.path);
-    await Hive.openBox<String>(SettingsController.boxName);
-  });
-
-  tearDown(() async {
-    await Hive.box<String>(SettingsController.boxName).clear();
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
-  });
+  setUpTestHive(clearBetweenTests: true);
 
   testWidgets('the header names the app, never the section', (tester) async {
     await tester.pumpWidget(_app());

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
@@ -7,7 +6,6 @@ import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
 import 'package:bitcoin_dashboard/features/navigation/presentation/app_navigation.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
-import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +13,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
+
+import '../../support/harness.dart';
 
 Widget _harness(GoRouter router) {
   return ProviderScope(
@@ -50,19 +49,11 @@ int? _selectedIndex(WidgetTester tester) =>
     tester.widget<NavigationRail>(find.byType(NavigationRail)).selectedIndex;
 
 void main() {
-  late Directory tempDir;
   late AppL10n l10n;
 
+  setUpTestHive();
   setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_router_');
-    Hive.init(tempDir.path);
-    await Hive.openBox<String>(SettingsController.boxName);
     l10n = await AppL10n.delegate.load(const Locale('en'));
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
   });
 
   Future<GoRouter> pumpAt(WidgetTester tester, String location) async {

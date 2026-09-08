@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:bitcoin_dashboard/app.dart';
 import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
@@ -12,7 +11,8 @@ import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
+
+import 'support/harness.dart';
 
 Widget _app() {
   return ProviderScope(
@@ -62,24 +62,7 @@ int _selectedIndex(WidgetTester tester) =>
     tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex;
 
 void main() {
-  late Directory tempDir;
-
-  setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_hive_');
-    Hive.init(tempDir.path);
-    await Hive.openBox<String>(SettingsController.boxName);
-  });
-
-  tearDown(() async {
-    // Settings are persisted; a test that changes them must not leak into the
-    // next one.
-    await Hive.box<String>(SettingsController.boxName).clear();
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
-  });
+  setUpTestHive(clearBetweenTests: true);
 
   testWidgets('app boots into the price section with its navigation', (
     tester,

@@ -1,18 +1,15 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:bitcoin_dashboard/app.dart';
 import 'package:bitcoin_dashboard/core/app_info.dart';
 import 'package:bitcoin_dashboard/core/links/url_opener.dart';
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/core/theme/app_typography.dart';
-import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
+
+import '../../../support/harness.dart';
 
 /// The app, opened straight on `/settings`.
 ///
@@ -58,27 +55,10 @@ Future<void> _tapAndSettle(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
-  late Directory tempDir;
-
-  setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_settings_');
-    Hive.init(tempDir.path);
-    // `bytes:` puts the box on Hive's in-memory backend. A file-backed box
-    // completes its writes on the real event loop, which a widget test's
-    // fake async zone never reaches — the theme would still be light three
-    // frames after the tap. This keeps the settings path deterministic and
-    // off the disk.
-    await Hive.openBox<String>(SettingsController.boxName, bytes: Uint8List(0));
-  });
-
-  tearDown(() async {
-    await Hive.box<String>(SettingsController.boxName).clear();
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
-  });
+  // In memory: this file taps controls that *write* a preference and then
+  // asserts on the effect, and a file-backed box does not complete its
+  // write inside a widget test's fake async zone.
+  setUpTestHive(inMemory: true, clearBetweenTests: true);
 
   testWidgets('renders the three groups and nothing to wait for', (
     tester,

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/core/theme/app_spacing.dart';
@@ -11,7 +10,6 @@ import 'package:bitcoin_dashboard/features/network/domain/network_health_snapsho
 import 'package:bitcoin_dashboard/features/network/presentation/network_screen.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
-import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,7 +17,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive/hive.dart';
+
+import '../../../support/harness.dart';
 
 /// The three expressions and a width that produces each of them.
 const _expressions = <(String, double)>[
@@ -82,19 +81,11 @@ Finder _destination(String label) => find.descendant(
 );
 
 void main() {
-  late Directory tempDir;
   late AppL10n l10n;
 
+  setUpTestHive();
   setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_shell_');
-    Hive.init(tempDir.path);
-    await Hive.openBox<String>(SettingsController.boxName);
     l10n = await AppL10n.delegate.load(const Locale('en'));
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
   });
 
   Future<GoRouter> pumpAt(

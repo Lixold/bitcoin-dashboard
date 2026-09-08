@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/core/widgets/statement.dart';
@@ -8,13 +7,13 @@ import 'package:bitcoin_dashboard/features/network/domain/mining_pool.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/presentation/network_screen.dart';
 import 'package:bitcoin_dashboard/features/network/presentation/pool_share_list.dart';
-import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
+
+import '../../../support/harness.dart';
 
 /// A snapshot whose top-one and top-three shares land where the test wants
 /// them, so a verdict can be produced without restating the matrix here.
@@ -86,18 +85,7 @@ FutureOr<NetworkHealthSnapshot> _error(Ref ref) async =>
     throw Exception('CDN unreachable');
 
 void main() {
-  late Directory tempDir;
-
-  setUpAll(() async {
-    tempDir = Directory.systemTemp.createTempSync('bd_test_network_');
-    Hive.init(tempDir.path);
-    await Hive.openBox<String>(SettingsController.boxName);
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    tempDir.deleteSync(recursive: true);
-  });
+  setUpTestHive();
 
   void useTallView(WidgetTester tester) {
     tester.view.physicalSize = const Size(900, 2600);
