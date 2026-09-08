@@ -1,32 +1,12 @@
-import 'dart:async';
-
-import 'package:bitcoin_dashboard/app.dart';
 import 'package:bitcoin_dashboard/core/theme/app_colors.dart';
 import 'package:bitcoin_dashboard/core/widgets/app_header.dart';
 import 'package:bitcoin_dashboard/core/widgets/brand_icon.dart';
-import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/harness.dart';
-
-/// The whole app, with the live price stream replaced by one that never
-/// emits — the header is what is under test, not the price.
-Widget _app() {
-  return ProviderScope(
-    overrides: [
-      priceLiveProvider.overrideWith((ref) {
-        final controller = StreamController<dynamic>();
-        ref.onDispose(controller.close);
-        return controller.stream.cast();
-      }),
-    ],
-    child: const BitcoinDashboardApp(),
-  );
-}
 
 Finder _gearIcon = find.descendant(
   of: find.byType(AppHeader),
@@ -39,7 +19,7 @@ void main() {
   setUpTestHive(clearBetweenTests: true);
 
   testWidgets('the header names the app, never the section', (tester) async {
-    await tester.pumpWidget(_app());
+    await pumpAppRoot(tester);
     await tester.pumpAndSettle();
 
     expect(find.byType(AppHeader), findsOneWidget);
@@ -58,7 +38,7 @@ void main() {
   });
 
   testWidgets('the gear opens settings and closes it again', (tester) async {
-    await tester.pumpWidget(_app());
+    await pumpAppRoot(tester);
     await tester.pumpAndSettle();
 
     expect(find.byType(PriceScreen), findsOneWidget);
@@ -82,7 +62,7 @@ void main() {
   testWidgets('the pill is on the section header and not on settings', (
     tester,
   ) async {
-    await tester.pumpWidget(_app());
+    await pumpAppRoot(tester);
     await tester.pumpAndSettle();
 
     // USD is the first-launch default in AppSettings.defaults().
@@ -99,7 +79,7 @@ void main() {
   testWidgets('the gear marks the settings screen while it is open', (
     tester,
   ) async {
-    await tester.pumpWidget(_app());
+    await pumpAppRoot(tester);
     await tester.pumpAndSettle();
 
     expect(_gear(tester).color, AppColors.lightOnSurfaceVariant);
@@ -113,22 +93,27 @@ void main() {
   testWidgets('the header keeps its composition across the breakpoints', (
     tester,
   ) async {
-    addTearDown(tester.view.reset);
-    tester.view.devicePixelRatio = 1;
-
     // A phone, a tablet and a desktop window: 768 and 1024 are where the
     // navigation changes shape (#65), and the header does not follow it.
-    for (final width in <double>[390, 900, 1400]) {
-      tester.view.physicalSize = Size(width, 1000);
+    for (final size in const <Size>[
+      TestView.phone,
+      TestView.tablet,
+      TestView.desktop,
+    ]) {
+      useView(tester, size);
 
-      await tester.pumpWidget(_app());
+      await pumpAppRoot(tester);
       await tester.pumpAndSettle();
 
-      expect(_gearIcon, findsOneWidget, reason: 'gear at $width px');
+      expect(
+        _gearIcon,
+        findsOneWidget,
+        reason: 'gear at ${size.width.toInt()} px',
+      );
       expect(
         find.text('USD / BTC'),
         findsOneWidget,
-        reason: 'currency pill at $width px',
+        reason: 'currency pill at ${size.width.toInt()} px',
       );
     }
   });

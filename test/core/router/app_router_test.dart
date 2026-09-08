@@ -1,46 +1,14 @@
-import 'dart:async';
-
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
-import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
 import 'package:bitcoin_dashboard/features/navigation/presentation/app_navigation.dart';
-import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../support/harness.dart';
-
-Widget _harness(GoRouter router) {
-  return ProviderScope(
-    overrides: [
-      // Keep the test offline and deterministic: the live stream never emits.
-      priceLiveProvider.overrideWith((ref) {
-        final controller = StreamController<dynamic>();
-        ref.onDispose(controller.close);
-        return controller.stream.cast();
-      }),
-    ],
-    child: MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark(),
-      locale: const Locale('en'),
-      supportedLocales: AppL10n.supportedLocales,
-      localizationsDelegates: const [
-        AppL10n.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      routerConfig: router,
-    ),
-  );
-}
 
 /// Index of the destination the navigation marks as active. The tests below
 /// run at a width where the rail is the expression; which expression appears
@@ -57,14 +25,14 @@ void main() {
   });
 
   Future<GoRouter> pumpAt(WidgetTester tester, String location) async {
-    tester.view.physicalSize = const Size(900, 1600);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+    // Wide enough for the rail, tall enough that the settings screen does
+    // not have to scroll before a finder can reach it.
+    useView(tester, TestView.tallTablet);
 
     final router = createAppRouter(initialLocation: location);
     addTearDown(router.dispose);
 
-    await tester.pumpWidget(_harness(router));
+    await pumpRouterApp(tester, router: router);
     await tester.pumpAndSettle();
     return router;
   }

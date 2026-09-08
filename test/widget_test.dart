@@ -1,11 +1,5 @@
-import 'dart:async';
-
-import 'package:bitcoin_dashboard/app.dart';
 import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
 import 'package:bitcoin_dashboard/features/navigation/presentation/app_shell.dart';
-import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
-import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
-import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/data/settings_controller.dart';
 import 'package:flutter/material.dart';
@@ -14,28 +8,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/harness.dart';
 
-Widget _app() {
-  return ProviderScope(
-    overrides: [
-      // Replace the live polling stream with one that never emits and
-      // never schedules a Timer — keeps the smoke test deterministic
-      // and offline-safe.
-      priceLiveProvider.overrideWith((ref) {
-        final controller = StreamController<dynamic>();
-        ref.onDispose(controller.close);
-        return controller.stream.cast();
-      }),
-      // The network section reads the CDN. Left alone it would make a
-      // real request the moment a test navigates there; this future never
-      // completes, so the section stays in its loading state.
-      networkPoolsProvider.overrideWith(
-        (ref) => Completer<NetworkHealthSnapshot>().future,
-      ),
-    ],
-    child: const BitcoinDashboardApp(),
-  );
-}
-
 /// Reads the container of the running app so a test can drive settings the
 /// way the settings screen does.
 ProviderContainer _containerOf(WidgetTester tester) =>
@@ -43,15 +15,6 @@ ProviderContainer _containerOf(WidgetTester tester) =>
       tester.element(find.byType(AppShell)),
       listen: false,
     );
-
-/// A phone-width window, so these tests always meet the bottom bar rather
-/// than the rail or the drawer — which expression appears at which width is
-/// covered in the navigation's own tests.
-void _usePhoneView(WidgetTester tester) {
-  tester.view.physicalSize = const Size(390, 900);
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
-}
 
 /// The bar uppercases its labels, as the design system's `text-transform`
 /// does.
@@ -67,9 +30,9 @@ void main() {
   testWidgets('app boots into the price section with its navigation', (
     tester,
   ) async {
-    _usePhoneView(tester);
+    useView(tester, TestView.phone);
 
-    await tester.pumpWidget(_app());
+    await pumpAppRoot(tester);
     await tester.pump(); // first frame
 
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -82,9 +45,9 @@ void main() {
   });
 
   testWidgets('switching the theme does not reset the section', (tester) async {
-    _usePhoneView(tester);
+    useView(tester, TestView.phone);
 
-    await tester.pumpWidget(_app());
+    await pumpAppRoot(tester);
     await tester.pumpAndSettle();
 
     // Leave the initial section.
@@ -116,9 +79,9 @@ void main() {
   });
 
   testWidgets('the section survives a restart and restore', (tester) async {
-    _usePhoneView(tester);
+    useView(tester, TestView.phone);
 
-    await tester.pumpWidget(_app());
+    await pumpAppRoot(tester);
     await tester.pumpAndSettle();
 
     await tester.tap(_destination('News'));
@@ -143,9 +106,9 @@ void main() {
   testWidgets('a fresh start without restoration data opens the home section', (
     tester,
   ) async {
-    _usePhoneView(tester);
+    useView(tester, TestView.phone);
 
-    await tester.pumpWidget(_app());
+    await pumpAppRoot(tester);
     await tester.pumpAndSettle();
 
     expect(find.byType(PriceScreen), findsOneWidget);

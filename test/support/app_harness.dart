@@ -16,6 +16,11 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+// Riverpod exports `Override` from `misc.dart` rather than from its main
+// barrel. Re-exported so a test that names the type in a helper signature
+// does not have to know that.
+export 'package:flutter_riverpod/misc.dart' show Override;
+
 /// Pumps [child] inside the wiring the app gives every screen: a
 /// [ProviderScope] that cannot reach the network, the app theme, the four
 /// localisation delegates, and a [Scaffold] to sit in.
@@ -31,10 +36,6 @@ import 'package:go_router/go_router.dart';
 /// [overrides] wins over the offline defaults for the same provider — see
 /// [_merge]. [now] freezes [clockProvider], which is what a test needs
 /// whenever it asserts on the age of a payload.
-///
-/// [mediaQuerySize] sets the size the widgets *read* without resizing the
-/// window they are laid out in. Only type that scales with the viewport
-/// needs it; everything else states its window through [useView].
 Future<void> pumpApp(
   WidgetTester tester, {
   required Widget child,
@@ -42,24 +43,16 @@ Future<void> pumpApp(
   Locale locale = const Locale('en'),
   Brightness brightness = Brightness.dark,
   DateTime? now,
-  Size? mediaQuerySize,
 }) {
-  final app = _app(
-    locale: locale,
-    brightness: brightness,
-    home: Scaffold(body: child),
-  );
-
   return tester.pumpWidget(
     _scope(
       overrides: overrides,
       now: now,
-      child: mediaQuerySize == null
-          ? app
-          : MediaQuery(
-              data: MediaQueryData(size: mediaQuerySize),
-              child: app,
-            ),
+      child: _app(
+        locale: locale,
+        brightness: brightness,
+        home: Scaffold(body: child),
+      ),
     ),
   );
 }
