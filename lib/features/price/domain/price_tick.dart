@@ -7,15 +7,30 @@ class PriceTick {
     required this.observedAt,
   });
 
-  factory PriceTick.fromBinanceTicker(Map<String, dynamic> json) {
+  /// Reads a Binance `ticker/price` body, stamped with [observedAt].
+  ///
+  /// **The moment is a parameter because it is not in the payload.**
+  /// Binance answers with a symbol and a price and says nothing about
+  /// when; "when" is whenever this app happened to ask. Reading the clock
+  /// here would put that decision in a domain factory, where no test can
+  /// reach it — the caller passes `clockProvider`'s answer instead.
+  ///
+  /// Normalised to UTC on the way in, so every [PriceTick] carries the
+  /// same kind of instant no matter which clock produced it.
+  factory PriceTick.fromBinanceTicker(
+    Map<String, dynamic> json, {
+    required DateTime observedAt,
+  }) {
     return PriceTick(
       symbol: json['symbol'] as String,
       price: double.parse(json['price'] as String),
-      observedAt: DateTime.now().toUtc(),
+      observedAt: observedAt.toUtc(),
     );
   }
 
   final String symbol;
   final double price;
+
+  /// When the app received this observation, in UTC.
   final DateTime observedAt;
 }
