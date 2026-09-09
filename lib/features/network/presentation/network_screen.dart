@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/time/clock.dart';
 import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/brand_icon.dart';
+import '../../../core/widgets/progress_meter.dart';
 import '../../../core/widgets/statement.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../navigation/domain/nav_section.dart';
@@ -445,11 +446,13 @@ class _FigureColumn extends StatelessWidget {
   }
 }
 
-/// The bar with the two threshold ticks drawn on it.
+/// The shared [ProgressMeter] with this statement's two threshold ticks
+/// drawn over it.
 ///
 /// **The ticks are what make the figure readable as a judgement.** Without
 /// them a 57.9 % bar is just over half full; with them it is visibly short
-/// of the line where the verdict would change.
+/// of the line where the verdict would change. They stay here rather than
+/// in [ProgressMeter] because only a figure that has thresholds has them.
 class _ThresholdMeter extends StatelessWidget {
   const _ThresholdMeter({
     required this.value,
@@ -482,22 +485,10 @@ class _ThresholdMeter extends StatelessWidget {
                 top: tickOverhang,
                 left: 0,
                 right: 0,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: Container(
-                    height: trackHeight,
-                    color: scheme.surfaceContainerHighest,
-                    alignment: Alignment.centerLeft,
-                    child: FractionallySizedBox(
-                      widthFactor: (value / 100).clamp(0.0, 1.0),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: fill,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ),
-                  ),
+                child: ProgressMeter(
+                  percent: value,
+                  fill: fill,
+                  height: trackHeight,
                 ),
               ),
               _Tick(
