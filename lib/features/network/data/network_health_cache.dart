@@ -1,40 +1,31 @@
-import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
-/// A payload as it was last stored, with the moment the app stored it.
-///
-/// [cachedAt] is the app's own fetch time and answers "may I skip the
-/// network call". It is not the producer's `_meta.fetchedAt`, which
-/// answers "is what I am showing still current" — the two ages are
-/// independent and are never substituted for one another.
-class CachedPayload {
-  const CachedPayload({required this.cachedAt, required this.payload});
+import '../../../core/http/cdn_cache.dart';
 
-  final DateTime cachedAt;
-  final Map<String, dynamic> payload;
-}
+export '../../../core/http/cdn_cache.dart' show CachedPayload;
 
 /// On-device copy of the last `network-health.json` the app fetched.
 ///
-/// Two jobs, both of them offline-first:
+/// Storage, envelope and failure behaviour are [CdnCache]'s. What stays
+/// here are the two numbers that belong to *this* document, so a caller
+/// asks for "the network-health cache" rather than restating the key and
+/// the TTL at every call site.
 ///
-///  * inside [ttl] the cached copy is served without touching the network;
-///  * when a fetch fails, the cached copy is served at any age, so a
-///    reader on a train sees yesterday's shares with an age hint rather
-///    than an error.
+/// It wraps [CdnCache] rather than extending it. A subclass would put
+/// `key` and `ttl` into this class's interface, and every test double
+/// standing in for this cache would then have to implement two fields it
+/// has no use for.
 ///
-/// Nothing personal is written here — the file is the same world-readable
-/// document the CDN serves everyone.
+/// The constructor stays non-`const`: making it `const` would turn every
+/// existing `NetworkHealthCache()` into a lint, and this extraction is
+/// supposed to leave its callers alone.
 class NetworkHealthCache {
   NetworkHealthCache();
 
-  /// Hive box for cached CDN documents. Versioned in the name so a
-  /// payload change can retire the old copies by opening a new box.
-  static const String boxName = 'cdn_cache_v1';
-
-  static const String _key = 'network-health';
+  /// Hive box for cached CDN documents — [CdnCache.boxName], restated so
+  /// a caller that knows this cache does not have to know what it is
+  /// built on.
+  static const String boxName = CdnCache.boxName;
 
   /// How long a stored copy is reused before the CDN is asked again.
   ///
@@ -44,41 +35,12 @@ class NetworkHealthCache {
   /// lives with the snapshot and is six times longer.
   static const Duration ttl = Duration(minutes: 60);
 
-  Future<Box<String>> _box() async {
-    if (Hive.isBoxOpen(boxName)) return Hive.box<String>(boxName);
-    return Hive.openBox<String>(boxName);
-  }
+  static const CdnCache _cache = CdnCache(key: 'network-health', ttl: ttl);
 
-  /// The stored copy, or `null` when there is none or it cannot be read.
-  ///
-  /// A corrupt or half-written entry is treated as absent rather than
-  /// raised: the caller's remedy for both is the same — fetch — and a
-  /// cache must not be able to break the screen it exists to protect.
-  Future<CachedPayload?> read() async {
-    final raw = (await _box()).get(_key);
-    if (raw == null) return null;
-    try {
-      final envelope = jsonDecode(raw) as Map<String, dynamic>;
-      return CachedPayload(
-        cachedAt: DateTime.parse(envelope['cachedAt'] as String).toUtc(),
-        payload: envelope['payload'] as Map<String, dynamic>,
-      );
-    } on Object {
-      return null;
-    }
-  }
+  Future<CachedPayload?> read() => _cache.read();
 
-  /// Replaces the stored copy with [payload], stamped [now].
-  ///
-  /// Written as one envelope rather than two keys so a cached document
-  /// can never end up carrying another document's timestamp.
-  Future<void> write(Map<String, dynamic> payload, DateTime now) async {
-    final envelope = jsonEncode({
-      'cachedAt': now.toUtc().toIso8601String(),
-      'payload': payload,
-    });
-    await (await _box()).put(_key, envelope);
-  }
+  Future<void> write(Map<String, dynamic> payload, DateTime now) =>
+      _cache.write(payload, now);
 }
 
 final networkHealthCacheProvider = Provider<NetworkHealthCache>((ref) {
