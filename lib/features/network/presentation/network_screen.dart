@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/time/clock.dart';
 import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/brand_icon.dart';
+import '../../../core/widgets/loading_skeleton.dart';
 import '../../../core/widgets/progress_meter.dart';
 import '../../../core/widgets/statement.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -724,7 +725,7 @@ class _LoadingFigures extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Skeleton(width: 240, height: 36),
+        LoadingSkeleton(width: 240, height: 36),
         SizedBox(height: AppSpacing.s5),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,11 +748,11 @@ class _SkeletonFigure extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Skeleton(width: 110, height: 10),
+        LoadingSkeleton(width: 110, height: 10),
         SizedBox(height: AppSpacing.s3),
-        _Skeleton(width: 150, height: 34),
+        LoadingSkeleton(width: 150, height: 34),
         SizedBox(height: AppSpacing.s3),
-        _Skeleton(height: 10),
+        LoadingSkeleton(height: 10),
       ],
     );
   }
@@ -775,38 +776,17 @@ class _LoadingEvidence extends StatelessWidget {
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _Skeleton(width: 180, height: 10),
+            LoadingSkeleton(width: 180, height: 10),
             SizedBox(height: AppSpacing.s4),
-            _Skeleton(height: 10),
+            LoadingSkeleton(height: 10),
             SizedBox(height: AppSpacing.s3),
-            _Skeleton(height: 10),
+            LoadingSkeleton(height: 10),
             SizedBox(height: AppSpacing.s3),
-            _Skeleton(height: 10),
+            LoadingSkeleton(height: 10),
             SizedBox(height: AppSpacing.s4),
-            _Skeleton(width: 200, height: 44, radius: 999),
+            LoadingSkeleton(width: 200, height: 44, radius: 999),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Skeleton extends StatelessWidget {
-  const _Skeleton({this.width, required this.height, this.radius = 4});
-
-  final double? width;
-  final double height;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }
