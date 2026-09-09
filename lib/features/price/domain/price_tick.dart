@@ -44,7 +44,14 @@ class PriceTick {
   /// code rather than a symbol, which is the honest outcome: better a
   /// price labelled with letters nobody expected than one labelled with
   /// the wrong symbol.
-  String get quoteCurrency {
+  String get quoteCurrency => quoteCurrencyOf(symbol);
+
+  /// [quoteCurrency] for a pair the app has not observed yet.
+  ///
+  /// The screen has to name a currency before the first tick arrives —
+  /// the pill sits in the header from the first frame — and the pair the
+  /// app asks for is known at that point even though its price is not.
+  static String quoteCurrencyOf(String symbol) {
     const base = 'BTC';
     final quote = symbol.startsWith(base)
         ? symbol.substring(base.length)

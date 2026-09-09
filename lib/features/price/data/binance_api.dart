@@ -16,10 +16,16 @@ class BinanceApi {
 
   static const String _base = 'https://api.binance.com';
 
+  /// The pair the app asks for unless a caller says otherwise.
+  ///
+  /// Public because the screen needs to name the price's currency before
+  /// the first tick has arrived — see [PriceTick.quoteCurrencyOf].
+  static const String defaultSymbol = 'BTCUSDT';
+
   final Dio _dio;
   final Clock _now;
 
-  Future<PriceTick> tickerPrice({String symbol = 'BTCUSDT'}) async {
+  Future<PriceTick> tickerPrice({String symbol = defaultSymbol}) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '$_base/api/v3/ticker/price',
       queryParameters: {'symbol': symbol},

@@ -1,15 +1,16 @@
 import 'package:intl/intl.dart';
 
+import '../../../core/format/percent_format.dart';
+
+export '../../../core/format/percent_format.dart' show formatThreshold;
+
 /// Percentages in the statement: one decimal.
 ///
-/// The two headline figures are read at a glance and compared against
-/// thresholds written as whole numbers, so a second decimal adds noise
-/// without adding meaning.
-String formatShare(String locale, double value) =>
-    NumberFormat.decimalPatternDigits(
-      locale: locale,
-      decimalDigits: 1,
-    ).format(value);
+/// The shared [formatPercent] under its name in this statement. Both
+/// price statements need the same figure, so the definition moved to
+/// `core/format/` and this stayed as the name the network screen reads
+/// with.
+String formatShare(String locale, double value) => formatPercent(locale, value);
 
 /// Percentages in the evidence: two decimals, as the payload carries them.
 ///
@@ -33,7 +34,3 @@ String formatPoints(String locale, double value) =>
       locale: locale,
       decimalDigits: 1,
     ).format(value);
-
-/// A threshold as it is written in the issue's matrix: a whole number.
-String formatThreshold(String locale, double value) =>
-    NumberFormat.decimalPattern(locale).format(value);
