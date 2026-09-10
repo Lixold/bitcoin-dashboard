@@ -236,6 +236,10 @@ class _TrendSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final range = ref.watch(selectedPriceRangeProvider);
     final historyAsync = ref.watch(historyProvider(range));
+    // Read here rather than inside the `data` branch: a `when` callback
+    // runs during this build, but a watch that only happens on one branch
+    // reads as conditional and is the shape riverpod_lint warns about.
+    final now = ref.watch(clockProvider)();
 
     return historyAsync.when(
       loading: () => _TrendLoading(range: range),
@@ -245,11 +249,8 @@ class _TrendSection extends ConsumerWidget {
       // the way out.
       error: (_, _) =>
           _TrendError(onRetry: () => ref.invalidate(historyProvider(range))),
-      data: (history) => _TrendStatement(
-        history: history,
-        range: range,
-        now: ref.watch(clockProvider)(),
-      ),
+      data: (history) =>
+          _TrendStatement(history: history, range: range, now: now),
     );
   }
 }

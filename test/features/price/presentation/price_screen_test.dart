@@ -1215,6 +1215,49 @@ void _trendTests() {
     });
   });
 
+  group('rebuilds', () {
+    testWidgets('a price tick does not rebuild the curve', (tester) async {
+      // The hero updates whenever the socket speaks. The movement section
+      // reads neither the socket nor the market payload, and it is a
+      // `const` child of the screen so that the element for it — and the
+      // 721-point chart under it — is left alone when they change.
+      useView(tester, TestView.tallPhone);
+      final ticks = StreamController<PriceTick>();
+      addTearDown(ticks.close);
+
+      await pumpApp(
+        tester,
+        child: const PriceScreen(),
+        now: _historyFresh,
+        overrides: [
+          priceLiveProvider.overrideWith((ref) => ticks.stream),
+          marketProvider.overrideWith(asyncData(_snapshot())),
+          historyProvider.overrideWith((ref, range) async => _capture('1M')),
+        ],
+      );
+      ticks.add(_tick);
+      await tester.pumpAndSettle();
+
+      final before = tester.element(find.byType(PriceTrendChart));
+
+      ticks.add(
+        PriceTick(
+          symbol: 'BTCUSDT',
+          price: 96500,
+          observedAt: DateTime.utc(2026, 5, 14, 14, 33),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining(r'$96,500.00'), findsOneWidget);
+      expect(
+        tester.element(find.byType(PriceTrendChart)),
+        same(before),
+        reason: 'the same element — the chart was not rebuilt',
+      );
+    });
+  });
+
   group('narrow viewport', () {
     testWidgets('lays out on a 390 px phone without overflowing', (
       tester,
