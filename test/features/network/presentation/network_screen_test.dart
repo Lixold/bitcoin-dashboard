@@ -67,7 +67,8 @@ void main() {
       await tester.pump();
 
       expect(find.textContaining('MINING POOL CONCENTRATION'), findsOneWidget);
-      expect(find.textContaining('Loading the distribution'), findsOneWidget);
+      // The qualifier line is set in caps, like the subject above it.
+      expect(find.textContaining('LOADING THE DISTRIBUTION'), findsOneWidget);
       // No verdict and no figures while there is nothing to judge.
       expect(find.byType(StatementVerdict), findsNothing);
       expect(find.byType(InsightPill), findsNothing);

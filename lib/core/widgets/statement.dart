@@ -80,8 +80,13 @@ class Statement extends StatelessWidget {
   }
 }
 
-/// The eyebrow above a statement: an optional live dot, the subject, and
-/// trailing qualifiers.
+/// The eyebrow above a statement: an optional live dot and the subject,
+/// with the qualifiers on a second line beneath.
+///
+/// **Two lines, not one that wraps.** The design gives the stamp its own
+/// line at a step below the subject — putting both in one run makes the
+/// break depend on the window width, so the same screen reads as one
+/// line on a desktop and as a wrapped label on a phone.
 class StatementCategory extends StatelessWidget {
   const StatementCategory({
     super.key,
@@ -96,28 +101,45 @@ class StatementCategory extends StatelessWidget {
   /// is current — a stale or absent payload must not claim liveness.
   final bool isLive;
 
-  /// Qualifiers appended after a `·`, e.g. the data stamp.
+  /// What qualifies the subject right now — the data stamp, its age, a
+  /// loading note. They share the second line, joined by `·`.
   final List<String>? trailing;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final style = AppTypography.monoCaption.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
+    final qualifiers = trailing ?? const <String>[];
 
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 6,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isLive)
-          Padding(
-            padding: const EdgeInsets.only(right: 2),
-            child: LiveDot(color: AppColors.positiveFor(theme.brightness)),
+        Row(
+          children: [
+            if (isLive) ...[
+              LiveDot(color: AppColors.positiveFor(theme.brightness)),
+              const SizedBox(width: AppSpacing.s2),
+            ],
+            Flexible(
+              child: Text(
+                label.toUpperCase(),
+                style: AppTypography.monoCaption.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (qualifiers.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s1),
+          Text(
+            qualifiers.join(' · ').toUpperCase(),
+            // A step down from the subject and in the neutral colour:
+            // this is metadata about the figures, not a second heading.
+            style: AppTypography.monoLabel.copyWith(
+              color: AppColors.neutralFor(theme.brightness),
+            ),
           ),
-        Text(label.toUpperCase(), style: style),
-        for (final qualifier in trailing ?? const <String>[])
-          Text('· $qualifier', style: style),
+        ],
       ],
     );
   }

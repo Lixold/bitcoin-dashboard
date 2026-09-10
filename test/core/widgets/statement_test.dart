@@ -67,16 +67,25 @@ void main() {
       );
     });
 
-    testWidgets('appends qualifiers after a separator', (tester) async {
+    testWidgets('puts the qualifiers on a line of their own', (tester) async {
+      // Not appended to the subject: the design gives the stamp its own
+      // line, so where it breaks cannot depend on the window width.
       await tester.pumpWidget(
         _harness(
           const StatementCategory(
             label: 'Subject',
-            trailing: ['As of yesterday'],
+            trailing: ['As of yesterday', '4 min ago'],
           ),
         ),
       );
-      expect(find.text('· As of yesterday'), findsOneWidget);
+
+      expect(find.text('SUBJECT'), findsOneWidget);
+      expect(find.text('AS OF YESTERDAY · 4 MIN AGO'), findsOneWidget);
+
+      final subject = tester.getTopLeft(find.text('SUBJECT'));
+      final stamp = tester.getTopLeft(find.text('AS OF YESTERDAY · 4 MIN AGO'));
+      expect(stamp.dy, greaterThan(subject.dy));
+      expect(stamp.dx, subject.dx);
     });
   });
 
