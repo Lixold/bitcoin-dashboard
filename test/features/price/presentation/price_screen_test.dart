@@ -140,24 +140,17 @@ void _marketTests() {
       expect(find.text('% below the high'), findsOneWidget);
     });
 
-    testWidgets('every figure carries the sentence that reads it', (
-      tester,
-    ) async {
+    testWidgets('neither figure carries an insight pill', (tester) async {
       useView(tester, TestView.tallPhone);
       await _pumpMarket(tester);
       await tester.pumpAndSettle();
 
-      // CLAUDE.md §5: a number without its sentence is a placeholder by
-      // another name. Both figures on this screen have one.
-      expect(
-        find.textContaining('23.5 % below the all-time high'),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('of the entire crypto market value'),
-        findsOneWidget,
-      );
-      expect(find.byType(InsightPill), findsNWidgets(2));
+      // The screen design leaves the insight slot of both statements
+      // empty: the verdict word, its badge and the evidence carry the
+      // reading, and two tinted blocks under two figures is what the
+      // price screen is meant not to look like. The slot itself stays —
+      // the network screen still fills it.
+      expect(find.byType(InsightPill), findsNothing);
     });
 
     testWidgets('names the record the distance is measured from', (
@@ -311,12 +304,11 @@ void _marketTests() {
       expect(find.text('—'), findsNothing);
     });
 
-    testWidgets('a high without a date still reads as a sentence', (
+    testWidgets('a high without a date keeps the distance and drops the row', (
       tester,
     ) async {
-      // The clause naming the date drops out; a dash in its place would
-      // be the placeholder §5 rules out, inside a sentence rather than
-      // in a figure slot.
+      // The date is evidence, not the figure. Without it the row falls
+      // away; a dash in its place would be the placeholder §5 rules out.
       useView(tester, TestView.tallPhone);
       await _pumpMarket(
         tester,
@@ -328,13 +320,12 @@ void _marketTests() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('23.5 % below the all-time high.'),
-        findsOneWidget,
-      );
+      expect(find.text('Below the high'), findsOneWidget);
+      expect(find.text('23.5'), findsOneWidget);
+      expect(find.text('DATE'), findsNothing);
       // The em dash the meter label carries is typography; this is about
       // the one that would sit where the date was meant to be.
-      expect(find.textContaining('set on —'), findsNothing);
+      expect(find.text('—'), findsNothing);
     });
 
     testWidgets('with neither figure the section is simply not there', (
@@ -350,7 +341,6 @@ void _marketTests() {
       await tester.pumpAndSettle();
 
       expect(find.byType(Statement), findsNothing);
-      expect(find.byType(InsightPill), findsNothing);
     });
 
     testWidgets('without a live price the distance cannot be stated', (
@@ -379,7 +369,7 @@ void _marketTests() {
       await tester.pump();
 
       expect(find.byType(LoadingSkeleton), findsWidgets);
-      expect(find.byType(InsightPill), findsNothing);
+      expect(find.byType(StatementVerdict), findsNothing);
     });
 
     testWidgets('never shows a zero that reads like a price', (tester) async {
@@ -437,7 +427,7 @@ void _marketTests() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(InsightPill), findsNothing);
+      expect(find.byType(Statement), findsNothing);
     });
   });
 
@@ -450,10 +440,7 @@ void _marketTests() {
       expect(find.text('Unter dem Hoch'), findsOneWidget);
       expect(find.text('23,5'), findsOneWidget);
       expect(find.text('58,4'), findsOneWidget);
-      expect(
-        find.textContaining('des gesamten Kryptomarktwerts'),
-        findsOneWidget,
-      );
+      expect(find.text('MARKTKAPITALISIERUNG'), findsOneWidget);
     });
 
     testWidgets('the short form is a Billion in German, not a trillion', (

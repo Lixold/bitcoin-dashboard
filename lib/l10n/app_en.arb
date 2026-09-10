@@ -76,10 +76,6 @@
   "priceMarketErrorBody": "The published market data could not be reached. The live price is unaffected — it comes straight from Binance.",
   "priceMarketRetry": "Try again",
 
-  "priceInsightCategoryAttention": "Attention",
-  "priceInsightCategoryContext": "Context",
-  "priceInsightCategoryStatus": "Status",
-
   "priceAthVerdictAtOrAbove": "At the high",
   "priceAthVerdictNear": "Near the high",
   "priceAthVerdictCorrection": "Below the high",
@@ -88,43 +84,6 @@
   "priceAthBadgeNear": "Narrow range",
   "priceAthBadgeCorrection": "Correction",
   "priceAthBadgeDeep": "Deep correction",
-  "priceAthInsightAtOrAbove": "The price is at or above the last published all-time high, set on {date}. That high comes from a file written every fifteen minutes, so a new record only appears here at the next write.",
-  "@priceAthInsightAtOrAbove": {
-    "description": "Reachable in normal operation: the payload lags the live price by up to fifteen minutes. It is the one ATH sentence that does not say 'below the high'.",
-    "placeholders": {
-      "date": { "type": "String" }
-    }
-  },
-  "priceAthInsightNear": "The price is only {distance} % below the all-time high set on {date} — inside the {threshold} % mark at which this statement reads the room above as narrow.",
-  "@priceAthInsightNear": {
-    "placeholders": {
-      "distance": { "type": "String" },
-      "date": { "type": "String" },
-      "threshold": { "type": "String" }
-    }
-  },
-  "priceAthInsightNoDate": "The price is {distance} % below the all-time high.",
-  "@priceAthInsightNoDate": {
-    "description": "Used when the payload carries a high but no date for it. The sentence drops the clause rather than printing an empty slot inside it.",
-    "placeholders": {
-      "distance": { "type": "String" }
-    }
-  },
-  "priceAthInsightCorrection": "The price is {distance} % below the all-time high set on {date}.",
-  "@priceAthInsightCorrection": {
-    "placeholders": {
-      "distance": { "type": "String" },
-      "date": { "type": "String" }
-    }
-  },
-  "priceAthInsightDeep": "The price is {distance} % below the all-time high set on {date} — beyond the {threshold} % mark at which this statement switches from correction to deep correction.",
-  "@priceAthInsightDeep": {
-    "placeholders": {
-      "distance": { "type": "String" },
-      "date": { "type": "String" },
-      "threshold": { "type": "String" }
-    }
-  },
   "priceAthFigureUnit": "% below the high",
   "priceAthInfoTrigger": "The distance is the drop from the highest price ever paid, not from the yearly high.",
   "priceAthMeterNow": "At {share} % of the high",
@@ -150,28 +109,6 @@
   "priceDominanceBadgeHigh": "Share high",
   "priceDominanceBadgeStable": "Share stable",
   "priceDominanceBadgeLow": "Share low",
-  "priceDominanceInsightHigh": "{share} % of the entire crypto market value sits in Bitcoin — above the {threshold} % mark at which this statement switches from leading to dominant.",
-  "@priceDominanceInsightHigh": {
-    "placeholders": {
-      "share": { "type": "String" },
-      "threshold": { "type": "String" }
-    }
-  },
-  "priceDominanceInsightStable": "{share} % of the entire crypto market value sits in Bitcoin — between the {low} and {high} % marks that this statement reads as a leading share.",
-  "@priceDominanceInsightStable": {
-    "placeholders": {
-      "share": { "type": "String" },
-      "low": { "type": "String" },
-      "high": { "type": "String" }
-    }
-  },
-  "priceDominanceInsightLow": "{share} % of the entire crypto market value sits in Bitcoin — below the {low} % mark at which this statement reads the share as declining.",
-  "@priceDominanceInsightLow": {
-    "placeholders": {
-      "share": { "type": "String" },
-      "low": { "type": "String" }
-    }
-  },
   "priceDominanceEvidenceBitcoin": "Bitcoin",
   "priceDominanceEvidenceRest": "Rest",
   "priceDominanceEvidenceMarketCap": "Market capitalisation",

@@ -285,7 +285,6 @@ class _AthStatement extends StatelessWidget {
     final l10n = AppL10n.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final tone = _tone(distance.verdict);
-    final athDate = snapshot.athDate;
 
     return Statement(
       category: StatementCategory(
@@ -307,8 +306,8 @@ class _AthStatement extends StatelessWidget {
         // rather than promising a sheet — see [InfoTrigger].
         infoLabel: l10n.priceAthInfoTrigger,
       ),
-      // At or above the published high there is no distance to print. The
-      // verdict word and the sentence carry the reading instead: a `0`
+      // At or above the published high there is no distance to print.
+      // The verdict word and its badge carry the reading instead: a `0`
       // under "% below the high" would be a figure claiming something the
       // price is not doing.
       figures: distance.verdict == AthVerdict.atOrAbove
@@ -317,11 +316,6 @@ class _AthStatement extends StatelessWidget {
               value: formatPercent(locale, distance.percentBelow),
               unit: l10n.priceAthFigureUnit,
             ),
-      insight: InsightPill(
-        category: _insightCategory(l10n, distance.verdict),
-        text: _insightText(l10n, locale, distance, athDate),
-        tone: tone,
-      ),
       evidence: _AthEvidence(
         distance: distance,
         snapshot: snapshot,
@@ -353,47 +347,6 @@ class _AthStatement extends StatelessWidget {
     AthVerdict.correction => l10n.priceAthBadgeCorrection,
     AthVerdict.deep => l10n.priceAthBadgeDeep,
   };
-
-  String _insightCategory(AppL10n l10n, AthVerdict verdict) =>
-      switch (verdict) {
-        AthVerdict.atOrAbove ||
-        AthVerdict.near => l10n.priceInsightCategoryAttention,
-        AthVerdict.correction ||
-        AthVerdict.deep => l10n.priceInsightCategoryContext,
-      };
-
-  String _insightText(
-    AppL10n l10n,
-    String locale,
-    AthDistance distance,
-    DateTime? athDate,
-  ) {
-    final date = athDate == null
-        ? null
-        : DateFormat.yMMMd(locale).format(athDate.toLocal());
-    final percent = formatPercent(locale, distance.percentBelow);
-
-    // Without the date the sentence drops the clause that names it. The
-    // alternative — printing a dash where the date belongs — is the
-    // placeholder CLAUDE.md §5 rules out, inside a sentence rather than
-    // in a figure slot.
-    if (date == null) return l10n.priceAthInsightNoDate(percent);
-
-    return switch (distance.verdict) {
-      AthVerdict.atOrAbove => l10n.priceAthInsightAtOrAbove(date),
-      AthVerdict.near => l10n.priceAthInsightNear(
-        percent,
-        date,
-        formatThreshold(locale, AthDistance.nearThreshold),
-      ),
-      AthVerdict.correction => l10n.priceAthInsightCorrection(percent, date),
-      AthVerdict.deep => l10n.priceAthInsightDeep(
-        percent,
-        date,
-        formatThreshold(locale, AthDistance.deepThreshold),
-      ),
-    };
-  }
 }
 
 /// The record the distance is measured from, and how far along it the
@@ -501,13 +454,6 @@ class _DominanceStatement extends StatelessWidget {
         value: formatPercent(locale, dominance.share),
         unit: '%',
       ),
-      insight: InsightPill(
-        category: dominance.verdict == DominanceVerdict.low
-            ? l10n.priceInsightCategoryAttention
-            : l10n.priceInsightCategoryStatus,
-        text: _insightText(l10n, locale, dominance),
-        tone: tone,
-      ),
       evidence: _DominanceEvidence(
         dominance: dominance,
         snapshot: snapshot,
@@ -535,22 +481,6 @@ class _DominanceStatement extends StatelessWidget {
         DominanceVerdict.stable => l10n.priceDominanceBadgeStable,
         DominanceVerdict.low => l10n.priceDominanceBadgeLow,
       };
-
-  String _insightText(AppL10n l10n, String locale, MarketDominance dominance) {
-    final share = formatPercent(locale, dominance.share);
-    final low = formatThreshold(locale, MarketDominance.lowThreshold);
-    final high = formatThreshold(locale, MarketDominance.highThreshold);
-
-    return switch (dominance.verdict) {
-      DominanceVerdict.high => l10n.priceDominanceInsightHigh(share, high),
-      DominanceVerdict.stable => l10n.priceDominanceInsightStable(
-        share,
-        low,
-        high,
-      ),
-      DominanceVerdict.low => l10n.priceDominanceInsightLow(share, low),
-    };
-  }
 }
 
 /// The two bars, and the size the share is a share of.
