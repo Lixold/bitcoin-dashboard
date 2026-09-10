@@ -12,9 +12,13 @@ Widget _harness(Widget child) => MaterialApp(
 AppSegmentedControl<ThemeMode> _control({
   required ThemeMode selected,
   required ValueChanged<ThemeMode> onSelected,
+  SegmentedDensity density = SegmentedDensity.comfortable,
+  bool block = false,
 }) => AppSegmentedControl<ThemeMode>(
   selected: selected,
   onSelected: onSelected,
+  density: density,
+  block: block,
   segments: const [
     AppSegment(value: ThemeMode.system, label: 'System'),
     AppSegment(value: ThemeMode.light, label: 'Light'),
@@ -82,7 +86,7 @@ void main() {
     // segment is 40 px, which is under the touch minimum.
     expect(
       tester.getSize(find.byType(SegmentedButton<ThemeMode>)).height,
-      AppSegmentedControl.optionHeight,
+      SegmentedDensity.comfortable.optionHeight,
     );
     for (final label in <String>['System', 'Light', 'Dark']) {
       expect(
@@ -96,9 +100,86 @@ void main() {
                   .first,
             )
             .height,
-        AppSegmentedControl.optionHeight,
+        SegmentedDensity.comfortable.optionHeight,
         reason: 'option $label',
       );
     }
+  });
+
+  testWidgets('the compact density is shorter than the comfortable one', (
+    tester,
+  ) async {
+    // The range strip sits inside a statement rather than being one, and
+    // a second 44 px bar above the verdict would read as a heading. 34 px
+    // is still over the 24 px minimum target size.
+    await tester.pumpWidget(
+      _harness(
+        _control(
+          selected: ThemeMode.system,
+          onSelected: (_) {},
+          density: SegmentedDensity.compact,
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byType(SegmentedButton<ThemeMode>)).height,
+      SegmentedDensity.compact.optionHeight,
+    );
+    expect(
+      SegmentedDensity.compact.optionHeight,
+      lessThan(SegmentedDensity.comfortable.optionHeight),
+    );
+  });
+
+  testWidgets('a block control fills the row in equal parts', (tester) async {
+    await tester.pumpWidget(
+      _harness(
+        SizedBox(
+          width: 300,
+          child: _control(
+            selected: ThemeMode.system,
+            onSelected: (_) {},
+            density: SegmentedDensity.compact,
+            block: true,
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.getSize(find.byType(SegmentedButton<ThemeMode>)).width, 300);
+    final widths = <double>[
+      for (final label in <String>['System', 'Light', 'Dark'])
+        tester
+            .getSize(
+              find
+                  .ancestor(
+                    of: find.text(label),
+                    matching: find.byType(SizedBox),
+                  )
+                  .first,
+            )
+            .width,
+    ];
+    expect(widths.toSet(), hasLength(1), reason: 'every option the same width');
+  });
+
+  testWidgets('without block it stays at its intrinsic width', (tester) async {
+    // Wider than the three labels need. Inside a box narrow enough to
+    // squeeze them, both forms fill it — the difference only shows where
+    // there is room to leave.
+    await tester.pumpWidget(
+      _harness(
+        SizedBox(
+          width: 900,
+          child: _control(selected: ThemeMode.system, onSelected: (_) {}),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byType(SegmentedButton<ThemeMode>)).width,
+      lessThan(900),
+    );
   });
 }

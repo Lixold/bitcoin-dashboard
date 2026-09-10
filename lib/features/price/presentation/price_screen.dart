@@ -14,26 +14,36 @@ import '../../../core/widgets/loading_skeleton.dart';
 import '../../../core/widgets/progress_meter.dart';
 import '../../../core/widgets/statement.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/widgets/segmented_control.dart';
 import '../data/binance_api.dart';
+import '../data/history_provider.dart';
 import '../data/market_provider.dart';
 import '../data/price_live_provider.dart';
 import '../domain/ath_distance.dart';
 import '../domain/market_dominance.dart';
 import '../domain/market_snapshot.dart';
+import '../domain/price_history.dart';
+import '../domain/price_range.dart';
 import '../domain/price_tick.dart';
+import '../domain/price_trend.dart';
+import 'price_trend_chart.dart';
 
 /// Price overview — main landing screen (German label: "Kurs").
 ///
 ///   * **Header** — the shared [AppHeader]: brand lockup, currency pill,
 ///     settings gear
 ///   * **Hero**   — live price (display serif) with observation timestamp
+///   * **Market movement** — which way the price has gone over the range
+///     the reader picked, with the curve underneath as its evidence
 ///   * **Two statements** — how far below the all-time high the price
 ///     stands, and how much of the crypto market Bitcoin holds
 ///
-/// The live price comes from [priceLiveProvider], the two statements from
-/// [marketProvider]. The chart between them is #31 and is not stubbed
-/// here; a screen with one finished statement and a grey rectangle where
-/// the next one goes is what CLAUDE.md §5 rules out.
+/// Three sources, and they fail independently. The live price comes from
+/// [priceLiveProvider] over a socket, the movement from
+/// [historyProvider] for the selected range, the two statements below it
+/// from [marketProvider]. Each section states its own age and shows its
+/// own error, because a CDN document being unreachable says nothing about
+/// the other two.
 class PriceScreen extends ConsumerWidget {
   const PriceScreen({super.key});
 
@@ -58,7 +68,11 @@ class PriceScreen extends ConsumerWidget {
         onRefresh: () async {
           ref
             ..invalidate(priceLiveProvider)
-            ..invalidate(marketProvider);
+            ..invalidate(marketProvider)
+            // The family, not one range: a pull to refresh is a request
+            // for current figures, and the four ranges the reader is not
+            // looking at are exactly what a later tap will show.
+            ..invalidate(historyProvider);
         },
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -83,6 +97,8 @@ class PriceScreen extends ConsumerWidget {
                       AppHeader(currency: quoteCurrency),
                       const SizedBox(height: AppSpacing.s6),
                       _PriceHero(tickAsync: tickAsync, currency: quoteCurrency),
+                      const SizedBox(height: AppSpacing.s7),
+                      const _TrendSection(),
                       const SizedBox(height: AppSpacing.s7),
                       marketAsync.when(
                         loading: () => const _MarketLoading(),
@@ -204,6 +220,334 @@ class _PriceLine extends StatelessWidget {
   }
 }
 
+// -- Market movement --------------------------------------------------------
+
+/// Which way the price has gone over the range the reader picked.
+///
+/// **The range strip is part of the statement, not part of the chart.**
+/// Picking `1W` instead of `1Y` changes the verdict word, the figure and
+/// the sentence, not just what the curve is drawn from — so the control
+/// sits above the verdict, in the slot [Statement.selection] exists for.
+/// A strip in the chart header would say it only re-draws a picture.
+class _TrendSection extends ConsumerWidget {
+  const _TrendSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final range = ref.watch(selectedPriceRangeProvider);
+    final historyAsync = ref.watch(historyProvider(range));
+
+    return historyAsync.when(
+      loading: () => _TrendLoading(range: range),
+      // The one state where the range strip goes too: the document behind
+      // every range comes from the same place, so a reader who could
+      // switch would only reach the same failure five times. The retry is
+      // the way out.
+      error: (_, _) =>
+          _TrendError(onRetry: () => ref.invalidate(historyProvider(range))),
+      data: (history) => _TrendStatement(
+        history: history,
+        range: range,
+        now: ref.watch(clockProvider)(),
+      ),
+    );
+  }
+}
+
+/// The movement statement, in each of the four shapes its series can take.
+///
+/// | series | verdict and figure | evidence |
+/// |---|---|---|
+/// | full | stated | the curve |
+/// | full, past the age threshold | stated | the curve, in neutral |
+/// | under [PriceTrend.minPoints] | dropped | the points, dashed |
+/// | none at all | dropped | nothing — no empty frame |
+///
+/// **A short series is not a thin trend, it is no trend.** A line through
+/// five points looks exactly like a direction and is not one, so the
+/// verdict and the figure fall away together and the sentence says why.
+/// The other ranges stay selectable throughout: a strip that disappeared
+/// on the one range that is short would strand the reader on it.
+class _TrendStatement extends StatelessWidget {
+  const _TrendStatement({
+    required this.history,
+    required this.range,
+    required this.now,
+  });
+
+  final PriceHistory history;
+  final PriceRange range;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final freshness = history.freshnessAt(now);
+    final trend = PriceTrend.from(history);
+    final points = history.points.length;
+    final tone = trend == null ? StatementTone.warning : _tone(trend.verdict);
+
+    return Statement(
+      category: StatementCategory(
+        label: l10n.priceTrendCategory,
+        isLive: freshness == PayloadFreshness.fresh,
+        trailing: [
+          l10n.priceMarketAsOf(_stamp(locale, history.fetchedAt)),
+          _age(l10n, history.ageAt(now)),
+        ],
+      ),
+      selection: _RangePicker(selected: range),
+      notice: _notice(l10n, locale, freshness, trend, points),
+      verdict: trend == null
+          ? null
+          : StatementVerdict(
+              verdict: _verdictLabel(l10n, trend.verdict),
+              badgeLabel: _badgeLabel(l10n, trend.verdict),
+              tone: tone,
+              // Short enough for a tooltip, so the trigger carries the
+              // whole explanation rather than promising a sheet.
+              infoLabel: l10n.priceTrendInfo,
+            ),
+      figures: trend == null
+          ? null
+          : _Figure(
+              // The sign belongs to the figure: "9.6 %" over a period
+              // does not say which way, and this statement is only about
+              // which way.
+              value: '${formatSignedPercent(locale, trend.changePercent)} %',
+              unit: l10n.priceTrendPeriod(_period(l10n, trend)),
+            ),
+      insight: InsightPill(
+        category: trend == null
+            ? l10n.priceTrendSparseCategory
+            : l10n.priceTrendInsightCategory,
+        text: _insightText(l10n, locale, trend, points),
+        tone: tone,
+      ),
+      // No points, no card. An outlined box with nothing drawn in it is
+      // the empty frame CLAUDE.md §5 rules out; the sentence above
+      // already says there is nothing to show.
+      evidence: points == 0
+          ? null
+          : PriceTrendChart(
+              history: history,
+              range: range,
+              tone: trend == null
+                  ? TrendChartTone.sparse
+                  : freshness == PayloadFreshness.fresh
+                  ? TrendChartTone.current
+                  : TrendChartTone.aged,
+            ),
+    );
+  }
+
+  /// The notices this statement can carry, in the order they are read.
+  ///
+  /// **Both can be true at once.** A series can be short *and* older than
+  /// the threshold, and the two say different things — one about what the
+  /// series can support, one about when it was written. Neither replaces
+  /// the other, so both are shown.
+  Widget? _notice(
+    AppL10n l10n,
+    String locale,
+    PayloadFreshness freshness,
+    PriceTrend? trend,
+    int points,
+  ) {
+    final notices = <Widget>[
+      if (points == 0)
+        _NoticePill(
+          text: l10n.priceTrendEmptyNotice.toUpperCase(),
+          showAlert: true,
+        )
+      else if (trend == null)
+        _NoticePill(
+          text: l10n
+              .priceTrendSparseNotice(points, PriceTrend.minPoints)
+              .toUpperCase(),
+          showAlert: true,
+        ),
+      if (freshness != PayloadFreshness.fresh)
+        _StaleNotice(
+          fetchedAt: history.fetchedAt,
+          age: history.ageAt(now),
+          freshness: freshness,
+        ),
+    ];
+
+    if (notices.isEmpty) return null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < notices.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.s3),
+          notices[i],
+        ],
+      ],
+    );
+  }
+
+  /// The span the change was measured over, said in the unit that reads.
+  String _period(AppL10n l10n, PriceTrend trend) => trend.readsInHours
+      ? l10n.priceTrendSpanHours(trend.spanHours)
+      : l10n.priceTrendSpanDays(trend.spanDays);
+
+  String _insightText(
+    AppL10n l10n,
+    String locale,
+    PriceTrend? trend,
+    int points,
+  ) {
+    if (points == 0) return l10n.priceTrendEmptyInsight;
+    if (trend == null) {
+      // The expected count is what this statement needs, not what the
+      // producer published: the per-range counts move from day to day, so
+      // a reader compared against one of those would be told they are
+      // missing points nobody promised.
+      return l10n.priceTrendSparseInsight(points, PriceTrend.minPoints);
+    }
+
+    final period = _period(l10n, trend);
+    // The sentence names the size of the move; the verdict beside it
+    // already carries the direction, and "gained −9.6 %" is not a
+    // sentence.
+    final change = formatPercent(locale, trend.changePercent.abs());
+    final band = formatThreshold(locale, PriceTrend.flatBandPercent);
+
+    return switch (trend.verdict) {
+      TrendVerdict.rising => l10n.priceTrendInsightUp(period, change, band),
+      TrendVerdict.sideways => l10n.priceTrendInsightFlat(period, change, band),
+      TrendVerdict.falling => l10n.priceTrendInsightDown(period, change, band),
+    };
+  }
+
+  StatementTone _tone(TrendVerdict verdict) => switch (verdict) {
+    TrendVerdict.rising => StatementTone.positive,
+    // Neutral, not warning: no direction is not a caution, and the design
+    // draws its marker in the neutral grey.
+    TrendVerdict.sideways => StatementTone.neutral,
+    TrendVerdict.falling => StatementTone.negative,
+  };
+
+  String _verdictLabel(AppL10n l10n, TrendVerdict verdict) => switch (verdict) {
+    TrendVerdict.rising => l10n.priceTrendVerdictUp,
+    TrendVerdict.sideways => l10n.priceTrendVerdictFlat,
+    TrendVerdict.falling => l10n.priceTrendVerdictDown,
+  };
+
+  String _badgeLabel(AppL10n l10n, TrendVerdict verdict) => switch (verdict) {
+    TrendVerdict.rising => l10n.priceTrendBadgeUp,
+    TrendVerdict.sideways => l10n.priceTrendBadgeFlat,
+    TrendVerdict.falling => l10n.priceTrendBadgeDown,
+  };
+}
+
+/// The five ranges, as one connected strip across the statement.
+///
+/// The labels are translation keys rather than literals: German
+/// abbreviates day and year as `T` and `J`, and the placeholder version
+/// of this strip shipped them as German literals in code.
+class _RangePicker extends ConsumerWidget {
+  const _RangePicker({required this.selected});
+
+  final PriceRange selected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppL10n.of(context);
+
+    return Semantics(
+      container: true,
+      // Five two-character labels are not a name a screen reader can
+      // announce a group by.
+      label: l10n.priceTrendRangeLabel,
+      child: AppSegmentedControl<PriceRange>(
+        density: SegmentedDensity.compact,
+        block: true,
+        segments: [
+          for (final range in PriceRange.values)
+            AppSegment(value: range, label: _label(l10n, range)),
+        ],
+        selected: selected,
+        onSelected: (range) =>
+            ref.read(selectedPriceRangeProvider.notifier).select(range),
+      ),
+    );
+  }
+
+  String _label(AppL10n l10n, PriceRange range) => switch (range) {
+    PriceRange.oneDay => l10n.priceRange1D,
+    PriceRange.oneWeek => l10n.priceRange1W,
+    PriceRange.oneMonth => l10n.priceRange1M,
+    PriceRange.threeMonths => l10n.priceRange3M,
+    PriceRange.oneYear => l10n.priceRange1Y,
+  };
+}
+
+/// The movement section while its document is in flight.
+///
+/// The range strip stays: it is driven by the reader's choice rather than
+/// by the payload, and a control that vanished on every tap would flicker
+/// once per range switch. The skeletons hold the height the verdict, the
+/// sentence and the curve will take, so nothing below moves when the
+/// series lands.
+class _TrendLoading extends StatelessWidget {
+  const _TrendLoading({required this.range});
+
+  final PriceRange range;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+
+    return Statement(
+      category: StatementCategory(
+        label: l10n.priceTrendCategory,
+        trailing: [l10n.priceTrendLoadingLabel],
+      ),
+      selection: _RangePicker(selected: range),
+      figures: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LoadingSkeleton(width: 240, height: 34),
+          SizedBox(height: AppSpacing.s5),
+          LoadingSkeleton(width: 180, height: 44),
+        ],
+      ),
+      insight: const LoadingSkeleton(height: 44, radius: 4),
+      evidence: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Statement.evidenceMaxWidth),
+        child: LoadingSkeleton(
+          height: PriceTrendChart.heightFor(MediaQuery.sizeOf(context).width),
+          radius: AppSpacing.cardRadius,
+        ),
+      ),
+    );
+  }
+}
+
+/// The published history could not be reached and nothing was cached.
+///
+/// The statement and its range strip go together, and the copy names what
+/// still works: the hero above is a live socket to Binance and is not
+/// affected by a CDN document being unreachable.
+class _TrendError extends StatelessWidget {
+  const _TrendError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    return _ErrorBlock(
+      title: l10n.priceTrendErrorTitle,
+      body: l10n.priceTrendErrorBody,
+      onRetry: onRetry,
+    );
+  }
+}
+
 // -- Market statements ------------------------------------------------------
 
 /// The two statements `market.json` carries, in the order the design puts
@@ -297,7 +641,11 @@ class _AthStatement extends StatelessWidget {
       ),
       notice: freshness == PayloadFreshness.fresh
           ? null
-          : _StaleNotice(snapshot: snapshot, freshness: freshness, now: now),
+          : _StaleNotice(
+              fetchedAt: snapshot.fetchedAt,
+              age: snapshot.ageAt(now),
+              freshness: freshness,
+            ),
       verdict: StatementVerdict(
         verdict: _verdictLabel(l10n, distance.verdict),
         badgeLabel: _badgeLabel(l10n, distance.verdict),
@@ -442,7 +790,11 @@ class _DominanceStatement extends StatelessWidget {
       ),
       notice: freshness == PayloadFreshness.fresh
           ? null
-          : _StaleNotice(snapshot: snapshot, freshness: freshness, now: now),
+          : _StaleNotice(
+              fetchedAt: snapshot.fetchedAt,
+              age: snapshot.ageAt(now),
+              freshness: freshness,
+            ),
       // No info trigger here: the design gives one to the distance, where
       // "all-time high" needs saying, and none to a share of a market.
       verdict: StatementVerdict(
@@ -679,29 +1031,28 @@ class _EvidenceRow extends StatelessWidget {
   }
 }
 
-/// The age hint, in its two stages.
+/// The lozenge every notice on this screen is set in: an amber outline,
+/// mono caps, and the alert glyph when the state has earned it.
 ///
-/// Past 45 minutes the line turns amber and the live dot is already gone.
-/// Past 24 hours it gains the alert glyph: three quarters of an hour is a
-/// hiccup, a full day means nobody is writing. **The figures stay in both
-/// stages** — this says how old they are, it does not withdraw them.
-class _StaleNotice extends StatelessWidget {
-  const _StaleNotice({
-    required this.snapshot,
-    required this.freshness,
-    required this.now,
-  });
+/// Three statements sit on this screen and each can qualify its figures.
+/// One shape for all of them is what keeps "this is three quarters of an
+/// hour old" and "this series is too short" reading as the same *kind* of
+/// remark, told apart by what they say rather than by how they look.
+class _NoticePill extends StatelessWidget {
+  const _NoticePill({required this.text, this.showAlert = false});
 
-  final MarketSnapshot snapshot;
-  final PayloadFreshness freshness;
-  final DateTime now;
+  /// Already localised and already upper-cased by its caller — the copy
+  /// differs per notice and so does where the casing belongs.
+  final String text;
+
+  /// The glyph is the second stage, not decoration: it marks the notices
+  /// that mean something is wrong rather than merely old.
+  final bool showAlert;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final l10n = AppL10n.of(context);
-    final locale = Localizations.localeOf(context).toLanguageTag();
     final warning = AppColors.warningFor(theme.brightness);
 
     return Align(
@@ -718,18 +1069,13 @@ class _StaleNotice extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (freshness == PayloadFreshness.longStale) ...[
+            if (showAlert) ...[
               BrandIcon(UiGlyph.alert, size: 16, color: warning),
               const SizedBox(width: 10),
             ],
             Flexible(
               child: Text(
-                l10n
-                    .priceMarketStaleNotice(
-                      _age(l10n, snapshot.ageAt(now)),
-                      _stamp(locale, snapshot.fetchedAt),
-                    )
-                    .toUpperCase(),
+                text,
                 style: AppTypography.monoCaption.copyWith(
                   color: scheme.onSurface,
                   letterSpacing: 0.6,
@@ -739,6 +1085,40 @@ class _StaleNotice extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The age hint, in its two stages.
+///
+/// Past 45 minutes the line turns amber and the live dot is already gone.
+/// Past 24 hours it gains the alert glyph: three quarters of an hour is a
+/// hiccup, a full day means nobody is writing. **The figures stay in both
+/// stages** — this says how old they are, it does not withdraw them.
+///
+/// It takes the stamp and the age rather than a payload: three documents
+/// on this screen report an age and they are not the same type.
+class _StaleNotice extends StatelessWidget {
+  const _StaleNotice({
+    required this.fetchedAt,
+    required this.age,
+    required this.freshness,
+  });
+
+  final DateTime fetchedAt;
+  final Duration age;
+  final PayloadFreshness freshness;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+
+    return _NoticePill(
+      text: l10n
+          .priceMarketStaleNotice(_age(l10n, age), _stamp(locale, fetchedAt))
+          .toUpperCase(),
+      showAlert: freshness == PayloadFreshness.longStale,
     );
   }
 }
@@ -753,6 +1133,36 @@ class _StaleNotice extends StatelessWidget {
 class _MarketError extends StatelessWidget {
   const _MarketError({required this.onRetry});
 
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    return _ErrorBlock(
+      title: l10n.priceMarketErrorTitle,
+      body: l10n.priceMarketErrorBody,
+      onRetry: onRetry,
+    );
+  }
+}
+
+/// One section's failure: the glyph, what could not be reached, what is
+/// unaffected, and a retry the reader chooses.
+///
+/// Two documents feed this screen and either can fail on its own, so the
+/// block takes its copy rather than naming a source. Both failing at once
+/// shows two of these, which is the truth — they are two documents, and
+/// a single merged message would hide that one of them may have come
+/// back.
+class _ErrorBlock extends StatelessWidget {
+  const _ErrorBlock({
+    required this.title,
+    required this.body,
+    required this.onRetry,
+  });
+
+  final String title;
+  final String body;
   final VoidCallback onRetry;
 
   @override
@@ -776,7 +1186,7 @@ class _MarketError extends StatelessWidget {
               const SizedBox(width: AppSpacing.s3),
               Flexible(
                 child: Text(
-                  l10n.priceMarketErrorTitle,
+                  title,
                   style: AppTypography.displaySmall.copyWith(
                     color: scheme.onSurface,
                   ),
@@ -786,7 +1196,7 @@ class _MarketError extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s3),
           Text(
-            l10n.priceMarketErrorBody,
+            body,
             style: AppTypography.bodyLarge.copyWith(
               color: scheme.onSurfaceVariant,
             ),
