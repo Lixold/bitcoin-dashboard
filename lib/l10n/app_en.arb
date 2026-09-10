@@ -34,6 +34,85 @@
   "priceError": "Could not fetch price",
   "priceRetry": "Retry",
 
+  "priceAthCategory": "Distance to all-time high",
+  "@priceAthCategory": {
+    "description": "Statement eyebrow: how far the live price stands below the highest price ever recorded."
+  },
+  "priceDominanceCategory": "Bitcoin's share of the crypto market",
+  "priceMarketAsOf": "As of {timestamp}",
+  "@priceMarketAsOf": {
+    "placeholders": {
+      "timestamp": { "type": "String" }
+    }
+  },
+  "priceMarketAgeMinutes": "{minutes} min ago",
+  "@priceMarketAgeMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "priceMarketAgeHours": "{hours} h ago",
+  "@priceMarketAgeHours": {
+    "placeholders": {
+      "hours": { "type": "int" }
+    }
+  },
+  "priceMarketAgeDays": "{days} d ago",
+  "@priceMarketAgeDays": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "priceMarketLoadingLabel": "Loading the market snapshot…",
+  "priceMarketStaleNotice": "Data {age} old · no update since {timestamp}",
+  "@priceMarketStaleNotice": {
+    "description": "Age hint once the payload is past the 45-minute threshold. The figures stay on screen; this says how old they are.",
+    "placeholders": {
+      "age": { "type": "String" },
+      "timestamp": { "type": "String" }
+    }
+  },
+  "priceMarketErrorTitle": "Market data unreachable",
+  "priceMarketErrorBody": "The published market data could not be reached. The live price is unaffected — it comes straight from Binance.",
+  "priceMarketRetry": "Try again",
+
+  "priceAthVerdictAtOrAbove": "At the high",
+  "priceAthVerdictNear": "Near the high",
+  "priceAthVerdictCorrection": "Below the high",
+  "priceAthVerdictDeep": "Well below",
+  "priceAthBadgeAtOrAbove": "Record standing",
+  "priceAthBadgeNear": "Narrow range",
+  "priceAthBadgeCorrection": "Correction",
+  "priceAthBadgeDeep": "Deep correction",
+  "priceAthFigureUnit": "% below the high",
+  "priceAthInfoTrigger": "The distance is the drop from the highest price ever paid, not from the yearly high.",
+  "priceAthMeterNow": "At {share} % of the high",
+  "@priceAthMeterNow": {
+    "placeholders": {
+      "share": { "type": "String" }
+    }
+  },
+  "priceAthMeterTop": "100 % — all-time high",
+  "priceAthEvidenceAth": "All-time high",
+  "priceAthEvidenceDate": "Date",
+  "priceAthEvidenceDateValue": "{date} · {days} days ago",
+  "@priceAthEvidenceDateValue": {
+    "placeholders": {
+      "date": { "type": "String" },
+      "days": { "type": "int" }
+    }
+  },
+
+  "priceDominanceVerdictHigh": "Dominant",
+  "priceDominanceVerdictStable": "Leading",
+  "priceDominanceVerdictLow": "Share declining",
+  "priceDominanceBadgeHigh": "Share high",
+  "priceDominanceBadgeStable": "Share stable",
+  "priceDominanceBadgeLow": "Share low",
+  "priceDominanceEvidenceBitcoin": "Bitcoin",
+  "priceDominanceEvidenceRest": "Rest",
+  "priceDominanceEvidenceMarketCap": "Market capitalisation",
+
   "currencyPair": "{currency} / BTC",
   "@currencyPair": {
     "description": "The unit shown in the header pill: the fiat code over BTC.",

@@ -5,7 +5,9 @@ import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/core/time/clock.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
+import 'package:bitcoin_dashboard/features/price/data/market_provider.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
+import 'package:bitcoin_dashboard/features/price/domain/market_snapshot.dart';
 import 'package:bitcoin_dashboard/features/price/domain/price_tick.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -154,13 +156,14 @@ Widget _app({
 /// remember: a screen reached by navigating, not by being pumped, is easy
 /// to miss, and the test that misses it passes locally and turns CI flaky.
 ///
-/// Both stand-ins hold their provider in `AsyncLoading` forever, which is
+/// The stand-ins hold their provider in `AsyncLoading` forever, which is
 /// the honest default — a test that wants a different state says so.
 List<Override> _offlineDefaults() => [
   priceLiveProvider.overrideWith(_silentPriceStream),
   networkPoolsProvider.overrideWith(
     (ref) => Completer<NetworkHealthSnapshot>().future,
   ),
+  marketProvider.overrideWith((ref) => Completer<MarketSnapshot>().future),
 ];
 
 /// A price stream that never emits and never schedules a timer.

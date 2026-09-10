@@ -51,6 +51,14 @@ Two forms, and no others:
 - **Numeric epochs inside data series** are **milliseconds, UTC**. The only
   such field today is `timestamps` in `history-{range}.json`.
 
+One documented exception: `athDate` and `atlDate` in `market.json` are passed
+through from CoinGecko unchanged and arrive in the `Z` form with milliseconds
+(`2025-10-06T10:57:42.000Z`) rather than the `+00:00` form above. They are not
+produced by `isoUtcSeconds`, and normalising them in the Worker would rewrite a
+source value for cosmetics. Clients parse both — `DateTime.parse` in the app
+accepts either — so this is a note about what the payload *is*, not a licence
+for new fields to pick a form.
+
 Numeric epochs must never be passed through a bitwise operator in a Worker:
 JavaScript converts to a signed 32-bit integer first, and a millisecond
 epoch (~1.79e12) wraps. `Number(p[0]) | 0` in `cron-history` shipped exactly
@@ -63,20 +71,38 @@ lost monotonicity because the wraparound fell inside the array.
 
 ```json
 {
-  "fetchedAt": "2026-05-12T08:00:00+00:00",
+  "fetchedAt": "2026-09-09T18:30:59+00:00",
   "currency": "usd",
-  "marketCap": 1873000000000,
-  "volume24h": 42000000000,
-  "ath": 109000,
-  "athDate": "2025-01-20",
+  "marketCap": 1578083556466,
+  "volume24h": 34469991545,
+  "ath": 126080,
+  "athDate": "2025-10-06T10:57:42.000Z",
   "atl": 67.81,
-  "atlDate": "2013-07-06",
-  "circulatingSupply": 19750000,
-  "totalSupply": 19750000,
+  "atlDate": "2013-07-05T16:00:00.000Z",
+  "circulatingSupply": 20081962,
+  "totalSupply": 20081975,
   "maxSupply": 21000000,
-  "btcDominance": 54.3
+  "btcDominance": 58.38111273322796
 }
 ```
+
+Verified against the live CDN on 2026-09-09; `test/support/fixtures/market.json`
+is the capture that reading is taken from.
+
+Three things this example is here to pin down, because each one has already
+been read the other way:
+
+- **`ath` is an integer**, and `marketCap`, `volume24h` and the supply figures
+  are too. Only `atl`, `btcDominance` and any future ratio arrive fractional.
+  A client that types `ath` as a floating-point field is right by accident;
+  one that types it as `int` breaks the day CoinGecko returns a fraction. Parse
+  the numeric fields as numbers.
+- **`circulatingSupply` and `totalSupply` are no longer equal.** They were on
+  2026-08-28 and are not now. Whoever shows them must not treat them as one
+  value.
+- **`currency` says what every amount in the file is quoted in.** It is the
+  field a client formats against; the app does not assume USD, and until FX
+  conversion ships it renders what this field says.
 
 ### `data/history-{range}.json`
 

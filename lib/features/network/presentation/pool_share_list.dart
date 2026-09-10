@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/widgets/progress_meter.dart';
 import '../../../core/widgets/statement.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../domain/mining_pool.dart';
@@ -249,22 +250,11 @@ class _PoolRow extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.s3),
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: Container(
-              height: faint ? 8 : 10,
-              color: scheme.surfaceContainerHighest,
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: (pool.hashratePercent / 100).clamp(0.0, 1.0),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: faint ? color.withValues(alpha: 0.45) : color,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-            ),
+          child: ProgressMeter(
+            percent: pool.hashratePercent,
+            fill: faint ? color.withValues(alpha: 0.45) : color,
+            height: faint ? 8 : 10,
+            radius: 4,
           ),
         ),
         const SizedBox(width: AppSpacing.s3),
@@ -340,6 +330,9 @@ class _CoverageTrack extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: FractionallySizedBox(
         widthFactor: (share / 100).clamp(0.0, 1.0),
+        // See [ProgressMeter]: without the height factor the fill is
+        // laid out zero pixels high inside the aligned track.
+        heightFactor: 1,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: color,

@@ -15,7 +15,10 @@ Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news 
 - **Network Health** — Reachable node count (Bitnodes) and chain tip status (mempool.space)
 - **Fear & Greed Index** — Daily sentiment score via alternative.me
 - **Price History** — Charts for 1D / 1W / 1M / 3M / 1Y timeframes
-- **Market Snapshot** — Market cap, 24 h volume, supply, and 24 h change
+- **Market Snapshot** — How far below its all-time high the price stands, and how
+  much of the crypto market Bitcoin holds, each with the sentence that reads it.
+  Amounts are shown in the currency the source publishes (USD) until client-side
+  conversion ships
 - **Multilingual News** — RSS-based news; EN and DE available today, 13 more languages planned (ES, PT-BR, FR, IT, JA, KO, ZH, TR, …)
 - **Currency Conversion** — ~30 fiat currencies via daily ECB reference rates
 - **Prognosis Models** — Stock-to-Flow and additional valuation models *(roadmap)*

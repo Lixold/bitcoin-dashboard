@@ -80,8 +80,13 @@ class Statement extends StatelessWidget {
   }
 }
 
-/// The eyebrow above a statement: an optional live dot, the subject, and
-/// trailing qualifiers.
+/// The eyebrow above a statement: an optional live dot and the subject,
+/// with the qualifiers on a second line beneath.
+///
+/// **Two lines, not one that wraps.** The design gives the stamp its own
+/// line at a step below the subject — putting both in one run makes the
+/// break depend on the window width, so the same screen reads as one
+/// line on a desktop and as a wrapped label on a phone.
 class StatementCategory extends StatelessWidget {
   const StatementCategory({
     super.key,
@@ -96,28 +101,45 @@ class StatementCategory extends StatelessWidget {
   /// is current — a stale or absent payload must not claim liveness.
   final bool isLive;
 
-  /// Qualifiers appended after a `·`, e.g. the data stamp.
+  /// What qualifies the subject right now — the data stamp, its age, a
+  /// loading note. They share the second line, joined by `·`.
   final List<String>? trailing;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final style = AppTypography.monoCaption.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
+    final qualifiers = trailing ?? const <String>[];
 
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 6,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isLive)
-          Padding(
-            padding: const EdgeInsets.only(right: 2),
-            child: LiveDot(color: AppColors.positiveFor(theme.brightness)),
+        Row(
+          children: [
+            if (isLive) ...[
+              LiveDot(color: AppColors.positiveFor(theme.brightness)),
+              const SizedBox(width: AppSpacing.s2),
+            ],
+            Flexible(
+              child: Text(
+                label.toUpperCase(),
+                style: AppTypography.monoCaption.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (qualifiers.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s1),
+          Text(
+            qualifiers.join(' · ').toUpperCase(),
+            // A step down from the subject and in the neutral colour:
+            // this is metadata about the figures, not a second heading.
+            style: AppTypography.monoLabel.copyWith(
+              color: AppColors.neutralFor(theme.brightness),
+            ),
           ),
-        Text(label.toUpperCase(), style: style),
-        for (final qualifier in trailing ?? const <String>[])
-          Text('· $qualifier', style: style),
+        ],
       ],
     );
   }
@@ -154,7 +176,13 @@ class StatementVerdict extends StatelessWidget {
   final String verdict;
   final String badgeLabel;
   final StatementTone tone;
+
+  /// Opens the long explanation. Null leaves [infoLabel] as the whole
+  /// explanation, shown in a tooltip — see [InfoTrigger].
   final VoidCallback? onInfo;
+
+  /// What the trigger explains. Null means the verdict carries no
+  /// trigger at all.
   final String? infoLabel;
 
   @override
@@ -179,8 +207,7 @@ class StatementVerdict extends StatelessWidget {
           ),
         ),
         StatusBadge(label: badgeLabel, tone: tone, color: toneColor),
-        if (onInfo != null && infoLabel != null)
-          InfoTrigger(label: infoLabel!, onTap: onInfo!),
+        if (infoLabel != null) InfoTrigger(label: infoLabel!, onTap: onInfo),
       ],
     );
   }
@@ -294,13 +321,25 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-/// The 20 px "?" that opens an explanation.
+/// The 20 px glyph that explains a term.
+///
+/// **The glyph follows the behaviour, and the behaviour follows the
+/// length of the explanation.** An explanation that fits in a tooltip is
+/// an "i" and needs no [onTap]; one long enough to need a sheet is a "?"
+/// and opens it. The design system draws the same distinction, and a "?"
+/// that answers itself in a tooltip would promise a page that never
+/// arrives.
 class InfoTrigger extends StatelessWidget {
-  const InfoTrigger({super.key, required this.label, required this.onTap});
+  const InfoTrigger({super.key, required this.label, this.onTap});
 
-  /// Accessible name and tooltip — what the explanation answers.
+  /// Accessible name and tooltip — what the explanation answers, or the
+  /// explanation itself when there is nothing further to open.
   final String label;
-  final VoidCallback onTap;
+
+  /// Opens the long form. Null means [label] *is* the explanation, and
+  /// the tooltip is then reachable by tap as well as by hover, because a
+  /// phone has no hover.
+  final VoidCallback? onTap;
 
   /// Edge of the touch target. The visible ring is [ringSize]; the target
   /// around it is what a finger has to hit.
@@ -315,6 +354,7 @@ class InfoTrigger extends StatelessWidget {
       label: label,
       child: Tooltip(
         message: label,
+        triggerMode: onTap == null ? TooltipTriggerMode.tap : null,
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
@@ -332,7 +372,7 @@ class InfoTrigger extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  '?',
+                  onTap == null ? 'i' : '?',
                   style: AppTypography.monoCaption.copyWith(
                     color: scheme.onSurfaceVariant,
                     letterSpacing: 0,
