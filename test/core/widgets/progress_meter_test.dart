@@ -14,15 +14,17 @@ Widget _harness(Widget child) => MaterialApp(
 
 /// The width the fill actually occupies, which is what the reader sees —
 /// asserting on the `widthFactor` would only restate the argument.
-double _fillWidth(WidgetTester tester) {
+Size _fillSize(WidgetTester tester) {
   final fill = tester.renderObject<RenderBox>(
     find.descendant(
       of: find.byType(FractionallySizedBox),
       matching: find.byType(DecoratedBox),
     ),
   );
-  return fill.size.width;
+  return fill.size;
 }
+
+double _fillWidth(WidgetTester tester) => _fillSize(tester).width;
 
 void main() {
   testWidgets('fills the share of the track the figure is', (tester) async {
@@ -31,6 +33,18 @@ void main() {
     );
 
     expect(_fillWidth(tester), 50);
+  });
+
+  testWidgets('fills the track it sits in from top to bottom', (tester) async {
+    // The regression this guards: the fill is a childless `DecoratedBox`,
+    // and the alignment on the track loosens its constraints, so without
+    // a height factor it takes the smallest height on offer — zero — and
+    // every bar in the app draws an empty track.
+    await tester.pumpWidget(
+      _harness(const ProgressMeter(percent: 25, fill: Colors.amber)),
+    );
+
+    expect(_fillSize(tester).height, 10);
   });
 
   testWidgets('measures against the track, not against another bar', (

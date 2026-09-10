@@ -67,6 +67,12 @@ class ProgressMeter extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: FractionallySizedBox(
           widthFactor: (percent / 100).clamp(0.0, 1.0),
+          // Both factors, never only the width. The alignment above
+          // loosens what the fill is offered, and a `DecoratedBox` with
+          // no child inside it takes the smallest size it is given — so
+          // without this the fill lays out zero pixels high and the
+          // track draws empty at every percentage.
+          heightFactor: 1,
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: fill,

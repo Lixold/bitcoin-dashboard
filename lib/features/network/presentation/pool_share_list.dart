@@ -330,6 +330,9 @@ class _CoverageTrack extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: FractionallySizedBox(
         widthFactor: (share / 100).clamp(0.0, 1.0),
+        // See [ProgressMeter]: without the height factor the fill is
+        // laid out zero pixels high inside the aligned track.
+        heightFactor: 1,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: color,
