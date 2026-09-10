@@ -82,31 +82,6 @@
   "@priceTrendPeriod": {
     "placeholders": { "span": { "type": "String" } }
   },
-  "priceTrendInsightCategory": "Dynamik",
-  "priceTrendInsightUp": "Über {period} hat der Kurs {change} % gewonnen — über dem {band}-%-Band, ab dem dieses Statement von ohne Richtung auf aufwärts wechselt.",
-  "@priceTrendInsightUp": {
-    "placeholders": {
-      "period": { "type": "String" },
-      "change": { "type": "String" },
-      "band": { "type": "String" }
-    }
-  },
-  "priceTrendInsightFlat": "Über {period} hat sich der Kurs um {change} % bewegt — innerhalb des {band}-%-Bands, das dieses Statement als ohne Richtung liest.",
-  "@priceTrendInsightFlat": {
-    "placeholders": {
-      "period": { "type": "String" },
-      "change": { "type": "String" },
-      "band": { "type": "String" }
-    }
-  },
-  "priceTrendInsightDown": "Über {period} hat der Kurs {change} % verloren — jenseits des {band}-%-Bands, ab dem dieses Statement von ohne Richtung auf abwärts wechselt.",
-  "@priceTrendInsightDown": {
-    "placeholders": {
-      "period": { "type": "String" },
-      "change": { "type": "String" },
-      "band": { "type": "String" }
-    }
-  },
   "priceTrendInfo": "Die Veränderung misst den ersten gegen den letzten Punkt des Bereichs. Der letzte Punkt ist immer „jetzt“.",
   "priceTrendChartTitle": "Kursverlauf",
   "priceTrendPoints": "{count} Punkte",

@@ -157,32 +157,6 @@
       "span": { "type": "String" }
     }
   },
-  "priceTrendInsightCategory": "Momentum",
-  "priceTrendInsightUp": "Over {period} the price gained {change} % — above the {band} % band at which this statement switches from no direction to upward.",
-  "@priceTrendInsightUp": {
-    "description": "The insight sentence on a rising reading. The band is a placeholder rather than a literal so the sentence cannot drift away from PriceTrend.flatBandPercent.",
-    "placeholders": {
-      "period": { "type": "String" },
-      "change": { "type": "String" },
-      "band": { "type": "String" }
-    }
-  },
-  "priceTrendInsightFlat": "Over {period} the price moved by {change} % — inside the {band} % band this statement reads as no direction.",
-  "@priceTrendInsightFlat": {
-    "placeholders": {
-      "period": { "type": "String" },
-      "change": { "type": "String" },
-      "band": { "type": "String" }
-    }
-  },
-  "priceTrendInsightDown": "Over {period} the price lost {change} % — beyond the {band} % band at which this statement switches from no direction to downward.",
-  "@priceTrendInsightDown": {
-    "placeholders": {
-      "period": { "type": "String" },
-      "change": { "type": "String" },
-      "band": { "type": "String" }
-    }
-  },
   "priceTrendInfo": "The change measures the first against the last point of the range. The last point is always \"now\".",
   "priceTrendChartTitle": "Price history",
   "priceTrendPoints": "{count} points",

@@ -299,7 +299,7 @@ class _TrendStatement extends StatelessWidget {
         ],
       ),
       selection: _RangePicker(selected: range),
-      notice: _notice(l10n, locale, freshness, trend, points),
+      notice: _notice(l10n, freshness, trend, points),
       verdict: trend == null
           ? null
           : StatementVerdict(
@@ -319,13 +319,30 @@ class _TrendStatement extends StatelessWidget {
               value: '${formatSignedPercent(locale, trend.changePercent)} %',
               unit: l10n.priceTrendPeriod(_period(l10n, trend)),
             ),
-      insight: InsightPill(
-        category: trend == null
-            ? l10n.priceTrendSparseCategory
-            : l10n.priceTrendInsightCategory,
-        text: _insightText(l10n, locale, trend, points),
-        tone: tone,
-      ),
+      // **The insight slot stays empty while there is a verdict.** The
+      // word, its badge and the unit under the figure already say what
+      // "+21.5 %" means, and a tinted block repeating it would be the
+      // third one down this screen — which is what the price screen is
+      // meant not to look like. The two market statements below leave
+      // the slot empty for the same reason.
+      //
+      // It is filled only where the verdict is gone: a series too short
+      // or too empty to carry a direction has nothing else to explain
+      // why nothing is being claimed.
+      insight: trend != null
+          ? null
+          : InsightPill(
+              category: l10n.priceTrendSparseCategory,
+              text: points == 0
+                  ? l10n.priceTrendEmptyInsight
+                  // The expected count is what this statement needs, not
+                  // what the producer published: the per-range counts
+                  // move from day to day, so a reader compared against
+                  // one of those would be told they are missing points
+                  // nobody promised.
+                  : l10n.priceTrendSparseInsight(points, PriceTrend.minPoints),
+              tone: tone,
+            ),
       // No points, no card. An outlined box with nothing drawn in it is
       // the empty frame CLAUDE.md §5 rules out; the sentence above
       // already says there is nothing to show.
@@ -351,7 +368,6 @@ class _TrendStatement extends StatelessWidget {
   /// the other, so both are shown.
   Widget? _notice(
     AppL10n l10n,
-    String locale,
     PayloadFreshness freshness,
     PriceTrend? trend,
     int points,
@@ -393,35 +409,6 @@ class _TrendStatement extends StatelessWidget {
   String _period(AppL10n l10n, PriceTrend trend) => trend.readsInHours
       ? l10n.priceTrendSpanHours(trend.spanHours)
       : l10n.priceTrendSpanDays(trend.spanDays);
-
-  String _insightText(
-    AppL10n l10n,
-    String locale,
-    PriceTrend? trend,
-    int points,
-  ) {
-    if (points == 0) return l10n.priceTrendEmptyInsight;
-    if (trend == null) {
-      // The expected count is what this statement needs, not what the
-      // producer published: the per-range counts move from day to day, so
-      // a reader compared against one of those would be told they are
-      // missing points nobody promised.
-      return l10n.priceTrendSparseInsight(points, PriceTrend.minPoints);
-    }
-
-    final period = _period(l10n, trend);
-    // The sentence names the size of the move; the verdict beside it
-    // already carries the direction, and "gained −9.6 %" is not a
-    // sentence.
-    final change = formatPercent(locale, trend.changePercent.abs());
-    final band = formatThreshold(locale, PriceTrend.flatBandPercent);
-
-    return switch (trend.verdict) {
-      TrendVerdict.rising => l10n.priceTrendInsightUp(period, change, band),
-      TrendVerdict.sideways => l10n.priceTrendInsightFlat(period, change, band),
-      TrendVerdict.falling => l10n.priceTrendInsightDown(period, change, band),
-    };
-  }
 
   StatementTone _tone(TrendVerdict verdict) => switch (verdict) {
     TrendVerdict.rising => StatementTone.positive,
@@ -516,7 +503,6 @@ class _TrendLoading extends StatelessWidget {
           LoadingSkeleton(width: 180, height: 44),
         ],
       ),
-      insight: const LoadingSkeleton(height: 44, radius: 4),
       evidence: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Statement.evidenceMaxWidth),
         child: LoadingSkeleton(

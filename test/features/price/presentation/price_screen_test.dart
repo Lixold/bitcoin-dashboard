@@ -637,7 +637,7 @@ void _trendTests() {
       expect(find.text('over 30 days'), findsOneWidget);
     });
 
-    testWidgets('the figure carries the sentence that reads it', (
+    testWidgets('the figure is read by its verdict, not by a tinted block', (
       tester,
     ) async {
       useView(tester, TestView.tallPhone);
@@ -647,11 +647,15 @@ void _trendTests() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(InsightPill), findsOneWidget);
-      expect(find.textContaining('the price gained 21.7 %'), findsOneWidget);
-      // The band is in the sentence as a number, from the constant rather
-      // than typed into the copy.
-      expect(find.textContaining('above the 5 % band'), findsOneWidget);
+      // The insight slot stays empty wherever a verdict stands. "+21.7 %"
+      // is not a bare number for it: the word above it, the badge beside
+      // it and the unit under it are what read it, and a third tinted
+      // block down this screen is what the price design decided against.
+      expect(find.byType(InsightPill), findsNothing);
+      expect(find.text('Rising'), findsOneWidget);
+      expect(find.text('UPWARD'), findsOneWidget);
+      expect(find.text('+21.7 %'), findsOneWidget);
+      expect(find.text('over 30 days'), findsOneWidget);
     });
 
     testWidgets('the curve is the evidence, counted from the series', (
@@ -774,8 +778,8 @@ void _trendTests() {
       expect(find.text('−5.5 %'), findsOneWidget);
       expect(find.text('over 7 days'), findsOneWidget);
       expect(find.text('169 POINTS'), findsOneWidget);
-      expect(find.textContaining('the price lost 5.5 %'), findsOneWidget);
       expect(find.text('Rising'), findsNothing);
+      expect(find.text('UPWARD'), findsNothing);
     });
 
     testWidgets('a selected range survives leaving the screen and coming '
@@ -905,7 +909,6 @@ void _trendTests() {
       expect(find.text('Sideways'), findsOneWidget);
       expect(find.text('NO DIRECTION'), findsOneWidget);
       expect(find.text('+1.0 %'), findsOneWidget);
-      expect(find.textContaining('inside the 5 % band'), findsOneWidget);
     });
 
     testWidgets('a change of nothing takes no sign', (tester) async {
@@ -992,6 +995,9 @@ void _trendTests() {
       expect(find.text('Rising'), findsNothing);
       expect(find.text('Sideways'), findsNothing);
       expect(find.text('Falling'), findsNothing);
+      // The one state that keeps the block: with no verdict and no
+      // figure, nothing else says why nothing is being claimed.
+      expect(find.byType(InsightPill), findsOneWidget);
       expect(find.textContaining('Only 3 of 30 points'), findsOneWidget);
     });
 
@@ -1100,6 +1106,7 @@ void _trendTests() {
 
       expect(find.text('LOADING THE HISTORY…'), findsOneWidget);
       expect(find.byType(PriceTrendChart), findsNothing);
+      expect(find.byType(InsightPill), findsNothing);
       expect(
         find.descendant(of: _movement, matching: find.byType(StatementVerdict)),
         findsNothing,
@@ -1188,6 +1195,7 @@ void _trendTests() {
       expect(find.text('Steigend'), findsOneWidget);
       expect(find.text('+21,7 %'), findsOneWidget);
       expect(find.text('über 30 Tage'), findsOneWidget);
+      expect(find.byType(InsightPill), findsNothing);
     });
 
     testWidgets('the shortest range is said in hours, not in one day', (
