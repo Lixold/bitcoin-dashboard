@@ -135,18 +135,31 @@ Currency conversion happens client-side using `fx-rates.json`.
 ```json
 {
   "_meta": {
-    "fetchedAt": "2026-05-12T16:25:00+00:00",
-    "date": "2026-05-12",
+    "fetchedAt": "2026-09-10T16:15:46+00:00",
+    "date": "2026-09-10",
     "source": "ECB",
-    "currencies": ["AUD","BGN","...","ZAR"]
+    "currencies": ["AUD","BRL","...","ZAR"]
   },
-  "EUR": { "USD": 1.08, "CHF": 0.92, "...": 0, "EUR": 1.0 },
-  "USD": { "EUR": 0.926, "...": 0, "USD": 1.0 }
+  "EUR": { "EUR": 1, "USD": 1.1616, "...": 0 },
+  "USD": { "EUR": 0.86088154, "USD": 1, "...": 0 }
 }
 ```
 
+Verified against the live CDN on 2026-09-10; `test/support/fixtures/fx-rates.json`
+is the capture that reading is taken from, kept whole rather than reduced to the
+row the app reads.
+
 The Worker materialises the full base→quote matrix so the app does not
-have to invert rates.
+have to invert rates. Three properties the client depends on:
+
+- **`_meta.currencies` lists 30 codes and the matrix is 30 × 30.** Every code
+  appears both as a base and as a quote of every base, so a conversion is one
+  lookup and never a walk through a base currency.
+- **An identity rate is the integer `1`**, not `1.0`. A row is therefore `num`
+  and a client that casts to `double` throws on the diagonal.
+- **`_meta.fetchedAt` is the only field the client treats as required.** It is
+  what dates the rate on screen, and a rate whose age cannot be stated is worse
+  than an absent one.
 
 ### `data/news-{lang}.json`
 
@@ -205,8 +218,10 @@ GET https://mempool.space/api/v1/difficulty-adjustment
 GET https://api.alternative.me/fng/?limit=30
 ```
 
-The app reads `fx-rates.json` once per session and converts client-side:
-`price_local = price_usd × fx_rates["USD"][selected_currency]`.
+The app converts client-side: `price_local = price_usd ×
+fx_rates["USD"][selected_currency]`. One document serves every currency, so
+changing the selection is immediate and costs no request — the fetch is
+governed by the cache below, not by the picker.
 
 ## Hive cache strategy
 
@@ -215,7 +230,7 @@ The app reads `fx-rates.json` once per session and converts client-side:
 | `settings` | language, currency, theme, news languages | persistent |
 | `cache_market` | last `market.json` | 15 min |
 | `cache_history_{range}` | last `history-{range}.json` | 15 min |
-| `cache_fx_rates` | last `fx-rates.json` | 24 h |
+| `cache_fx_rates` | last `fx-rates.json` | 3 h |
 | `cache_news_{lang}` | last `news-{lang}.json` | 15 min |
 | `cache_network_health` | last `network-health.json` | 24 h |
 | `cache_feargreed` | last F&G value | 1 h |
@@ -226,6 +241,17 @@ fifteen-minute run, so a longer TTL for the long ranges would not save a
 stale-free request — it would serve `1Y` as current while a newer copy of
 it sat on the CDN. The span a document covers and the rate it is rewritten
 at are different things.
+
+The FX TTL is the one that does **not** follow its producer's cadence, and
+deliberately. Everywhere else the two coincide: a document rewritten every
+fifteen minutes is asked for every fifteen minutes, and a copy is never more
+than one run behind. `cron-fx-rates` runs once a day at 16:15 UTC, and there a
+matching TTL comes apart — a copy taken at 16:00 would be held until 16:00 the
+next day and would miss the rate published fifteen minutes after it was stored,
+by almost a full day. Three hours bounds that miss to part of an afternoon, at
+a cost of at most eight requests a day for an 18 kB document, without making
+the cache reason about the publication time. It is not the staleness threshold:
+that one asks whether the ECB is still current and is four days.
 
 Offline behaviour: the app boots from cache first, then refreshes in
 the background. With no connectivity it surfaces a "Last updated X min

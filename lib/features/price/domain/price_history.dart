@@ -22,9 +22,10 @@ class PricePoint {
 /// and `prices`. `range` is not parsed — the caller asked for a range and
 /// already knows which one — and `currency` is not parsed either, because
 /// nothing this statement renders is an amount: the figure is a
-/// percentage and the chart carries no axis values. #32 is what gives
-/// amounts on this screen a currency, and it does not reach this
-/// document.
+/// percentage and the chart carries no axis values. The display currency
+/// the rest of the screen converts into therefore never reaches this
+/// document: the curve has the same shape in every currency, and the
+/// change over a range is the same number in all of them.
 ///
 /// **Two ways a payload is unreadable, and they are the only two.**
 /// Without `fetchedAt` nothing on screen can say how old the series is.

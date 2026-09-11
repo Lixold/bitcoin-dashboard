@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../router/app_router.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'brand_icon.dart';
@@ -26,16 +27,26 @@ class AppHeader extends StatelessWidget {
   ///
   /// [currency] is nullable so a section that has no currency to show can
   /// pass `null`; it is `required` so the omission is always deliberate.
-  const AppHeader({super.key, required this.currency}) : isSettingsOpen = false;
+  ///
+  /// [onCurrencyTap] is what turns the pill from a label into a control.
+  /// It stays optional because a section may well have a unit to name
+  /// without owning the sheet that changes it — and a pill that opens
+  /// nothing must not look as though it would.
+  const AppHeader({super.key, required this.currency, this.onCurrencyTap})
+    : isSettingsOpen = false;
 
   /// The header of the settings screen itself: no pill — the currency is
   /// set on this screen — and the gear marks the open screen and closes it.
   const AppHeader.settings({super.key})
     : currency = null,
+      onCurrencyTap = null,
       isSettingsOpen = true;
 
   /// ISO 4217 code shown in the pill, or `null` for no pill.
   final String? currency;
+
+  /// Opens the currency picker. `null` leaves the pill a label.
+  final VoidCallback? onCurrencyTap;
 
   /// Whether this header sits on the settings screen. The gear then renders
   /// in `primary` and leads back instead of forward.
@@ -53,7 +64,7 @@ class AppHeader extends StatelessWidget {
       children: [
         const Expanded(child: _BrandLockup()),
         if (currency != null) ...[
-          _CurrencyPill(currency: currency!),
+          _CurrencyPill(currency: currency!, onTap: onCurrencyTap),
           const SizedBox(width: AppSpacing.s1),
         ],
         _SettingsGear(isOpen: isSettingsOpen),
@@ -111,20 +122,33 @@ class _BrandLockup extends StatelessWidget {
 
 // -- Currency pill ----------------------------------------------------------
 
-/// The unit the screen's figures are quoted in.
+/// The unit the screen's figures are quoted in, and the way to change it.
 ///
-/// It is a label, not a control, until the currency picker lands with #32 —
-/// so it carries no tap target and no chevron.
+/// **It names the unit the figures are actually in, never the one the
+/// setting asks for.** The two part company whenever the rates cannot be
+/// read: the setting stays where the reader put it, the amounts fall back
+/// to the currency their sources publish, and a pill reading EUR over
+/// dollar figures would be the one thing this app must not do. Its caller
+/// resolves that — the pill renders what it is handed.
+///
+/// With [onTap] it carries the tap target and the chevron the design gives
+/// it; without one it is the label it was before the picker existed.
 class _CurrencyPill extends StatelessWidget {
-  const _CurrencyPill({required this.currency});
+  const _CurrencyPill({required this.currency, this.onTap});
 
   final String currency;
+  final VoidCallback? onTap;
+
+  /// Edge of the chevron, per the design system's `.currency-pill svg`.
+  static const double chevronSize = 12;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final l10n = AppL10n.of(context);
-    return Container(
+
+    final pill = Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s3,
         vertical: 6,
@@ -134,9 +158,38 @@ class _CurrencyPill extends StatelessWidget {
         border: Border.all(color: scheme.outline),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        l10n.currencyPair(currency),
-        style: AppTypography.monoCaption.copyWith(color: scheme.onSurface),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.currencyPair(currency),
+            style: AppTypography.monoCaption.copyWith(color: scheme.onSurface),
+          ),
+          if (onTap != null) ...[
+            const SizedBox(width: AppSpacing.s2),
+            // The set owns one chevron and turns it where it has to
+            // point. `SettingsRow` rotates it a quarter turn to lead into
+            // a row; here it stays as drawn, because what it opens rises
+            // from the bottom of the screen.
+            BrandIcon(
+              UiGlyph.chevronDown,
+              size: chevronSize,
+              color: AppColors.neutralFor(theme.brightness),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    if (onTap == null) return pill;
+
+    return Semantics(
+      button: true,
+      label: l10n.settingsCurrency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: pill,
       ),
     );
   }

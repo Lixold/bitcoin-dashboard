@@ -83,7 +83,7 @@ applied on a Unicode-folded copy of title + description.
 
 ### Currency conversion
 
-Client-side only: `price_in_local = price_usd × fx_rates["LOCAL"]`. The
+Client-side only: `price_in_local = price_usd × fx_rates["USD"]["LOCAL"]`. The
 ECB feed publishes rates against EUR; the Worker materialises the full
 cross-rate matrix so the app needs no inversion logic.
 

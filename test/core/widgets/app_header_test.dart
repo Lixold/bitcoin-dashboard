@@ -8,10 +8,19 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/harness.dart';
 
-Finder _gearIcon = find.descendant(
+/// The gear, told apart by its glyph.
+///
+/// The header carries two glyphs since the currency pill became a control
+/// — the gear and the pill's chevron — so "the icon in the header" is no
+/// longer a description of one widget.
+Finder _glyphInHeader(UiGlyph glyph) => find.descendant(
   of: find.byType(AppHeader),
-  matching: find.byType(BrandIcon),
+  matching: find.byWidgetPredicate(
+    (widget) => widget is BrandIcon && widget.glyph == glyph,
+  ),
 );
+
+final Finder _gearIcon = _glyphInHeader(UiGlyph.settings);
 
 BrandIcon _gear(WidgetTester tester) => tester.widget<BrandIcon>(_gearIcon);
 

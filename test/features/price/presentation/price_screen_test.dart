@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import 'package:bitcoin_dashboard/core/format/money_display_provider.dart';
+import 'package:bitcoin_dashboard/core/format/money_format.dart';
+import 'package:bitcoin_dashboard/core/fx/fx_rates.dart';
+import 'package:bitcoin_dashboard/core/theme/app_colors.dart';
 import 'package:bitcoin_dashboard/core/theme/app_typography.dart';
 import 'package:bitcoin_dashboard/core/widgets/brand_icon.dart';
 import 'package:bitcoin_dashboard/core/widgets/loading_skeleton.dart';
@@ -16,6 +20,7 @@ import 'package:bitcoin_dashboard/features/price/domain/price_tick.dart';
 import 'package:bitcoin_dashboard/features/price/domain/price_trend.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_trend_chart.dart';
+import 'package:bitcoin_dashboard/features/settings/presentation/currency_picker_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -98,6 +103,7 @@ void main() {
 
   _trendTests();
   _marketTests();
+  _currencyTests();
 }
 
 // -- Market statements ------------------------------------------------------
@@ -485,8 +491,10 @@ void _marketTests() {
     testWidgets('the amounts stay in the currency the data is quoted in', (
       tester,
     ) async {
-      // Until #32 converts, a German reader sees German digits under a
-      // dollar sign — the number is dollars and the symbol has to say so.
+      // USD is the first-launch default, so nothing is converted here: a
+      // German reader sees German digits under a dollar sign, because the
+      // number is dollars and the symbol has to say so. What happens once
+      // the reader picks something else is `_currencyTests`.
       useView(tester, TestView.tallPhone);
       await _pumpMarket(tester, locale: const Locale('de'));
       await tester.pumpAndSettle();
@@ -1298,3 +1306,354 @@ void _trendTests() {
     });
   });
 }
+
+// -- Currency and sats ------------------------------------------------------
+
+/// The rate the CDN published on 10 September 2026, 16:15 UTC.
+FxRates _fxAt(String fetchedAt) => FxRates.fromJson(<String, dynamic>{
+  '_meta': <String, dynamic>{
+    'fetchedAt': fetchedAt,
+    'currencies': const <String>['EUR', 'USD'],
+  },
+  'USD': const <String, dynamic>{'EUR': 0.86088154, 'USD': 1},
+});
+
+/// Half past eight in the evening of the day the rate was published.
+final DateTime _sameDay = DateTime.utc(2026, 9, 10, 20, 30);
+
+/// Pumps the screen with the display currency already resolved.
+///
+/// The screen reads one provider for this, so the four states are set by
+/// overriding that one rather than by driving the settings box and the CDN
+/// into each combination — `money_display_provider_test.dart` is where the
+/// two are put together.
+Future<void> _pumpMoney(
+  WidgetTester tester,
+  MoneyDisplay money, {
+  DateTime? now,
+  Locale locale = const Locale('en'),
+  bool withPrice = true,
+}) => pumpApp(
+  tester,
+  child: const PriceScreen(),
+  locale: locale,
+  now: now ?? _sameDay,
+  overrides: [
+    if (withPrice) priceLiveProvider.overrideWith(_oneTick),
+    marketProvider.overrideWith(asyncData(_snapshot())),
+    moneyDisplayProvider.overrideWithValue(money),
+  ],
+);
+
+MoneyDisplay _inEuros({String fetchedAt = '2026-09-10T16:15:46+00:00'}) =>
+    MoneyDisplay.resolve(
+      wanted: 'EUR',
+      rates: _fxAt(fetchedAt),
+      isLoading: false,
+    );
+
+void _currencyTests() {
+  group('currency', () {
+    testWidgets('every amount reads in the currency that was picked', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(tester, _inEuros());
+      await tester.pumpAndSettle();
+
+      // The hero, the record it is measured against and the market
+      // capitalisation: three figures, one unit, one rate.
+      expect(find.textContaining('€83,025.57'), findsOneWidget);
+      expect(find.text('€108,539.94'), findsOneWidget);
+      expect(find.textContaining('€1.36T'), findsOneWidget);
+      expect(
+        find.textContaining(r'$'),
+        findsNothing,
+        reason: 'a dollar left on the screen is a figure that did not convert',
+      );
+    });
+
+    testWidgets('the percentages are unitless and do not move', (tester) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(tester, _inEuros());
+      await tester.pumpAndSettle();
+
+      // The distance to the high and the market share are ratios. Reading
+      // them in euros would be the same number with a wrong label on it.
+      expect(find.text('23.5'), findsOneWidget);
+      expect(find.text('58.4'), findsOneWidget);
+    });
+
+    testWidgets('the pill names the unit the figures are in', (tester) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(tester, _inEuros());
+      await tester.pumpAndSettle();
+
+      expect(find.text('EUR / BTC'), findsOneWidget);
+    });
+
+    testWidgets('the pill opens the picker', (tester) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(tester, _inEuros());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('EUR / BTC'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CurrencyPickerSheet), findsOneWidget);
+    });
+
+    testWidgets('the source currency says there was nothing to convert', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        MoneyDisplay.resolve(
+          wanted: 'USD',
+          rates: _fxAt('2026-09-10T16:15:46+00:00'),
+          isLoading: false,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('USD / BTC'), findsOneWidget);
+      expect(
+        find.text('SOURCE CURRENCY · NO CONVERSION NEEDED'),
+        findsOneWidget,
+      );
+      expect(
+        _noticeTone(tester, 'SOURCE CURRENCY · NO CONVERSION NEEDED'),
+        AppColors.darkOnSurfaceVariant,
+        reason: 'nothing is wrong — the reader simply picked the source',
+      );
+    });
+
+    testWidgets('without a rate the figures stay in the source currency', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        MoneyDisplay.resolve(wanted: 'EUR', rates: null, isLoading: false),
+      );
+      await tester.pumpAndSettle();
+
+      // Never euro figures under a dollar sign, and never the other way
+      // round: the pill follows the amounts down to the source currency.
+      expect(find.textContaining(r'$96,442.50'), findsOneWidget);
+      expect(find.text('USD / BTC'), findsOneWidget);
+      expect(find.text('CONVERSION UNAVAILABLE · SHOWING USD'), findsOneWidget);
+      expect(
+        _noticeTone(tester, 'CONVERSION UNAVAILABLE · SHOWING USD'),
+        AppColors.darkOnSurface,
+        reason: 'the reader asked for euros and is not getting them',
+      );
+      expect(find.textContaining('€'), findsNothing);
+    });
+
+    testWidgets('a rate still on its way prints no amount at all', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        MoneyDisplay.resolve(wanted: 'EUR', rates: null, isLoading: true),
+      );
+      await tester.pumpAndSettle();
+
+      // Dollars under a euro heading would be the wrong number, and a
+      // failure notice would be untrue while the fetch is still running.
+      expect(find.textContaining('96,442.50'), findsNothing);
+      expect(find.byType(LoadingSkeleton), findsWidgets);
+      expect(find.text('CONVERSION UNAVAILABLE · SHOWING USD'), findsNothing);
+      expect(
+        find.textContaining('126,080'),
+        findsNothing,
+        reason: 'the amount row waits with the hero rather than half-filling',
+      );
+    });
+  });
+
+  group('the age of the rate', () {
+    testWidgets('a rate from today is dated without its weekday', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(tester, _inEuros());
+      await tester.pumpAndSettle();
+
+      // Stamped in UTC and labelled as such, so the line does not change
+      // meaning with the reader's zone.
+      expect(find.text('ECB RATE OF SEP 10, 2026 · 16:15 UTC'), findsOneWidget);
+    });
+
+    testWidgets('an older rate names the weekday that explains the gap', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      // Friday's rate, read on the Sunday. Normal, and the weekday is
+      // what says why there is no newer one.
+      await _pumpMoney(
+        tester,
+        _inEuros(fetchedAt: '2026-09-11T16:15:46+00:00'),
+        now: DateTime.utc(2026, 9, 13, 11),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('FRIDAY'), findsOneWidget);
+      expect(
+        _noticeTone(tester, 'ECB RATE OF FRIDAY, SEP 11, 2026 · 16:15 UTC'),
+        AppColors.darkOnSurfaceVariant,
+        reason: 'a weekend is not a missed publication',
+      );
+    });
+
+    testWidgets('exactly four days has not yet earned the hint', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        _inEuros(),
+        now: DateTime.utc(2026, 9, 14, 16, 15, 46),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('ECB RATE OF'), findsOneWidget);
+      expect(find.textContaining('AMOUNTS MAY DIFFER'), findsNothing);
+    });
+
+    testWidgets('past four days it says so and keeps the amounts', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(tester, _inEuros(), now: DateTime.utc(2026, 9, 15, 20));
+      await tester.pumpAndSettle();
+
+      expect(find.text('RATE 5 DAYS OLD · AMOUNTS MAY DIFFER'), findsOneWidget);
+      expect(
+        _noticeTone(tester, 'RATE 5 DAYS OLD · AMOUNTS MAY DIFFER'),
+        AppColors.darkOnSurface,
+        reason: 'the ECB skipped a working day — this one is amber',
+      );
+      expect(
+        find.textContaining('€83,025.57'),
+        findsOneWidget,
+        reason: 'an old rate qualifies the figures, it does not withdraw them',
+      );
+    });
+  });
+
+  group('the rate note in German', () {
+    testWidgets('dates the rate and says when it is too old', (tester) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(tester, _inEuros(), locale: const Locale('de'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('EZB-KURS VOM'), findsOneWidget);
+
+      await _pumpMoney(
+        tester,
+        _inEuros(),
+        now: DateTime.utc(2026, 9, 15, 20),
+        locale: const Locale('de'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('KURS 5 TAGE ALT · BETRÄGE KÖNNEN ABWEICHEN'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('names the fallback in German too', (tester) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        MoneyDisplay.resolve(wanted: 'EUR', rates: null, isLoading: false),
+        locale: const Locale('de'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('UMRECHNUNG NICHT VERFÜGBAR · ANZEIGE IN USD'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('sats', () {
+    testWidgets('the price is read back in sats per unit', (tester) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        MoneyDisplay.resolve(wanted: 'USD', rates: null, isLoading: false),
+      );
+      await tester.pumpAndSettle();
+
+      // 100,000,000 sats divided by $96,442.50 a bitcoin.
+      expect(find.text(r'1 $ = 1,037 sats'), findsOneWidget);
+    });
+
+    testWidgets('it follows the currency the price is shown in', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(tester, _inEuros());
+      await tester.pumpAndSettle();
+
+      expect(find.text('1 € = 1,204 sats'), findsOneWidget);
+    });
+
+    testWidgets('it stays through the fallback to the source currency', (
+      tester,
+    ) async {
+      // It is computed from the price on screen, not from the ECB rate,
+      // so losing the rate costs the conversion and not this line.
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        MoneyDisplay.resolve(wanted: 'EUR', rates: null, isLoading: false),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(r'1 $ = 1,037 sats'), findsOneWidget);
+    });
+
+    testWidgets('without a price there is nothing to read back', (
+      tester,
+    ) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        MoneyDisplay.resolve(wanted: 'USD', rates: null, isLoading: false),
+        withPrice: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('sats'), findsNothing);
+    });
+
+    testWidgets('German groups the figure its own way', (tester) async {
+      useView(tester, TestView.tallPhone);
+      await _pumpMoney(
+        tester,
+        MoneyDisplay.resolve(wanted: 'USD', rates: null, isLoading: false),
+        locale: const Locale('de'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(r'1 $ = 1.037 sats'), findsOneWidget);
+    });
+  });
+}
+
+/// The colour one notice sets its text in.
+///
+/// Which of the two tones a notice carries, asked of the notice itself.
+/// Counting alert glyphs on the screen would answer a different question:
+/// three statements sit here and each can qualify its own figures, so the
+/// glyphs are not this notice's to count.
+Color? _noticeTone(WidgetTester tester, String text) =>
+    tester.widget<Text>(find.text(text)).style?.color;

@@ -10,17 +10,18 @@ Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news 
 
 ## Features
 
-- **Live Price** — Real-time BTC price via Binance public API, ~30 currencies supported
+- **Live Price** — Real-time BTC price via Binance public API, in the currency
+  you picked, with what one unit of it buys in sats
 - **On-Chain Metrics** — Mempool, fees, hashrate, difficulty via mempool.space
 - **Network Health** — Reachable node count (Bitnodes) and chain tip status (mempool.space)
 - **Fear & Greed Index** — Daily sentiment score via alternative.me
 - **Price History** — Charts for 1D / 1W / 1M / 3M / 1Y timeframes
 - **Market Snapshot** — How far below its all-time high the price stands, and how
-  much of the crypto market Bitcoin holds, each with the sentence that reads it.
-  Amounts are shown in the currency the source publishes (USD) until client-side
-  conversion ships
+  much of the crypto market Bitcoin holds, each with the sentence that reads it
 - **Multilingual News** — RSS-based news; EN and DE available today, 13 more languages planned (ES, PT-BR, FR, IT, JA, KO, ZH, TR, …)
-- **Currency Conversion** — ~30 fiat currencies via daily ECB reference rates
+- **Currency Conversion** — ~30 fiat currencies via daily ECB reference rates,
+  applied on the device; where a rate is unavailable amounts stay in the currency
+  the source publishes and the screen says so
 - **Prognosis Models** — Stock-to-Flow and additional valuation models *(roadmap)*
 - **Dark & Light Mode** — Native theme support on all platforms
 - **Settings on Every Screen** — Language, appearance and currency behind the gear in the screen header; on macOS also via ⌘,
@@ -181,7 +182,8 @@ checks a PR has to pass — live in [CLAUDE.md](CLAUDE.md).
 | Network Stats | CDN `/data/network-stats.json` | Cloudflare Worker → Bitnodes + mempool.space |
 | Prognosis Models *(roadmap)* | CDN `/data/prognosis-{model}.json` | Cloudflare Worker |
 
-Currency conversion is performed **client-side**: `price_local = price_usd × fx_rates["EUR"]`
+Currency conversion is performed **client-side**:
+`price_local = price_usd × fx_rates["USD"][selected_currency]`
 
 ---
 
