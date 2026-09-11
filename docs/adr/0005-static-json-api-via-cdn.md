@@ -214,11 +214,18 @@ The app reads `fx-rates.json` once per session and converts client-side:
 |---|---|---|
 | `settings` | language, currency, theme, news languages | persistent |
 | `cache_market` | last `market.json` | 15 min |
-| `cache_history_{range}` | last `history-{range}.json` | range-dependent |
+| `cache_history_{range}` | last `history-{range}.json` | 15 min |
 | `cache_fx_rates` | last `fx-rates.json` | 24 h |
 | `cache_news_{lang}` | last `news-{lang}.json` | 15 min |
 | `cache_network_health` | last `network-health.json` | 24 h |
 | `cache_feargreed` | last F&G value | 1 h |
+
+The history TTL is not range-dependent, although it reads as though it
+should be. `cron-history` writes all five range documents on the same
+fifteen-minute run, so a longer TTL for the long ranges would not save a
+stale-free request — it would serve `1Y` as current while a newer copy of
+it sat on the CDN. The span a document covers and the rate it is rewritten
+at are different things.
 
 Offline behaviour: the app boots from cache first, then refreshes in
 the background. With no connectivity it surfaces a "Last updated X min

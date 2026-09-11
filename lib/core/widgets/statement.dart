@@ -19,13 +19,18 @@ enum StatementTone { positive, warning, negative, neutral }
 ///
 ///   1. [category] — the eyebrow: what this statement is about, plus
 ///      whatever qualifies it right now (a timestamp, a loading note).
-///   2. [notice] — a state that changes how the figures should be read
+///   2. [selection] — a control that picks *what the statement is about*,
+///      such as the price screen's range strip. It sits above the verdict
+///      rather than inside the evidence because it chooses the subject,
+///      not the drawing: pick a different range and the verdict, the
+///      figure and the sentence all change with it.
+///   3. [notice] — a state that changes how the figures should be read
 ///      without invalidating them, such as an age hint.
-///   3. [verdict] — the one-word answer, its badge and the info trigger.
-///   4. [figures] — the numbers the verdict rests on.
-///   5. [insight] — the sentence. Never optional when figures are shown;
+///   4. [verdict] — the one-word answer, its badge and the info trigger.
+///   5. [figures] — the numbers the verdict rests on.
+///   6. [insight] — the sentence. Never optional when figures are shown;
 ///      CLAUDE.md §5 makes a figure without its sentence a placeholder.
-///   6. [evidence] — the detail a reader can check the claim against.
+///   7. [evidence] — the detail a reader can check the claim against.
 ///
 /// Every slot is nullable because the states differ — loading has no
 /// verdict, empty has no insight — but the order never does.
@@ -33,6 +38,7 @@ class Statement extends StatelessWidget {
   const Statement({
     super.key,
     required this.category,
+    this.selection,
     this.notice,
     this.verdict,
     this.figures,
@@ -49,6 +55,7 @@ class Statement extends StatelessWidget {
   static const double evidenceMaxWidth = 720;
 
   final Widget category;
+  final Widget? selection;
   final Widget? notice;
   final Widget? verdict;
   final Widget? figures;
@@ -61,6 +68,10 @@ class Statement extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         category,
+        if (selection != null) ...[
+          const SizedBox(height: AppSpacing.s5),
+          selection!,
+        ],
         if (notice != null) ...[const SizedBox(height: AppSpacing.s4), notice!],
         if (verdict != null) ...[const SizedBox(height: 14), verdict!],
         if (figures != null) ...[

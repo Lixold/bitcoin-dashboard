@@ -27,3 +27,21 @@ String formatPercent(String locale, double value) =>
 /// A threshold as it is written in an issue's matrix: a whole number.
 String formatThreshold(String locale, double value) =>
     NumberFormat.decimalPattern(locale).format(value);
+
+/// A change, at one decimal, with the sign a reader needs to know which
+/// way it went.
+///
+/// **The minus is U+2212, not a hyphen.** The hyphen is a word-breaking
+/// character and renders narrower than the plus it has to line up with;
+/// at the display size the figure is set in, the difference is visible.
+/// `intl` emits the locale's own minus, so the sign is normalised here
+/// rather than trusted.
+///
+/// Exactly zero takes no sign. "+0.0 %" and "−0.0 %" both claim a
+/// direction the figure does not have.
+String formatSignedPercent(String locale, double value) {
+  final formatted = formatPercent(locale, value.abs());
+  if (value > 0) return '+$formatted';
+  if (value < 0) return '−$formatted';
+  return formatted;
+}

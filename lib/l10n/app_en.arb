@@ -113,6 +113,81 @@
   "priceDominanceEvidenceRest": "Rest",
   "priceDominanceEvidenceMarketCap": "Market capitalisation",
 
+  "priceTrendCategory": "Market movement",
+  "@priceTrendCategory": {
+    "description": "Eyebrow of the trend statement: which way the price has moved over the selected range."
+  },
+  "priceTrendRangeLabel": "Time range",
+  "@priceTrendRangeLabel": {
+    "description": "Accessible name of the range control. The five options are labels short enough to be unreadable to a screen reader on their own."
+  },
+  "priceRange1D": "1D",
+  "priceRange1W": "1W",
+  "priceRange1M": "1M",
+  "priceRange3M": "3M",
+  "priceRange1Y": "1Y",
+  "@priceRange1D": {
+    "description": "Range option. A translation key rather than a literal: German abbreviates day and year as T and J, and the previous version of this control shipped German literals in code."
+  },
+  "priceTrendLoadingLabel": "Loading the history…",
+  "priceTrendVerdictUp": "Rising",
+  "priceTrendVerdictFlat": "Sideways",
+  "priceTrendVerdictDown": "Falling",
+  "priceTrendBadgeUp": "Upward",
+  "priceTrendBadgeFlat": "No direction",
+  "priceTrendBadgeDown": "Downward",
+  "priceTrendSpanHours": "{hours} hours",
+  "@priceTrendSpanHours": {
+    "description": "The measured span of the series, said in hours. Only the shortest range reads this way.",
+    "placeholders": {
+      "hours": { "type": "int" }
+    }
+  },
+  "priceTrendSpanDays": "{days} days",
+  "@priceTrendSpanDays": {
+    "description": "The measured span of the series, said in days.",
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "priceTrendPeriod": "over {span}",
+  "@priceTrendPeriod": {
+    "description": "Unit under the change figure. The span is a separate key because the insight sentences say it without the preposition.",
+    "placeholders": {
+      "span": { "type": "String" }
+    }
+  },
+  "priceTrendInfo": "The change measures the first against the last point of the range. The last point is always \"now\".",
+  "priceTrendChartTitle": "Price history",
+  "priceTrendPoints": "{count} points",
+  "@priceTrendPoints": {
+    "description": "Point count in the chart header. It is read from the series, never from a constant — the counts vary by day.",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "priceTrendNow": "now",
+  "priceTrendSparseCategory": "Caution",
+  "priceTrendSparseNotice": "Series incomplete · {have} of {expected} points",
+  "@priceTrendSparseNotice": {
+    "description": "Notice on a series too short to carry a direction. `expected` is the minimum this statement needs, PriceTrend.minPoints — not a per-range count, because those vary from day to day and no reader is owed a number the producer never promised.",
+    "placeholders": {
+      "have": { "type": "int" },
+      "expected": { "type": "int" }
+    }
+  },
+  "priceTrendSparseInsight": "Only {have} of {expected} points are available for this range. The prices there are shown below; a direction cannot be read from them.",
+  "@priceTrendSparseInsight": {
+    "placeholders": {
+      "have": { "type": "int" },
+      "expected": { "type": "int" }
+    }
+  },
+  "priceTrendEmptyNotice": "No points for this range",
+  "priceTrendEmptyInsight": "Nothing has been published for this range. The other ranges are unaffected and stay selectable.",
+  "priceTrendErrorTitle": "History unreachable",
+  "priceTrendErrorBody": "The published history could not be reached. The live price is unaffected — it comes straight from Binance.",
+
   "currencyPair": "{currency} / BTC",
   "@currencyPair": {
     "description": "The unit shown in the header pill: the fiat code over BTC.",

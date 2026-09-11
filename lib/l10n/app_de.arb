@@ -56,6 +56,59 @@
   "priceDominanceEvidenceRest": "Rest",
   "priceDominanceEvidenceMarketCap": "Marktkapitalisierung",
 
+  "priceTrendCategory": "Marktentwicklung",
+  "priceTrendRangeLabel": "Zeitraum",
+  "priceRange1D": "1T",
+  "priceRange1W": "1W",
+  "priceRange1M": "1M",
+  "priceRange3M": "3M",
+  "priceRange1Y": "1J",
+  "priceTrendLoadingLabel": "Verlauf wird geladen…",
+  "priceTrendVerdictUp": "Steigend",
+  "priceTrendVerdictFlat": "Seitwärts",
+  "priceTrendVerdictDown": "Fallend",
+  "priceTrendBadgeUp": "Aufwärts",
+  "priceTrendBadgeFlat": "Ohne Richtung",
+  "priceTrendBadgeDown": "Abwärts",
+  "priceTrendSpanHours": "{hours} Stunden",
+  "@priceTrendSpanHours": {
+    "placeholders": { "hours": { "type": "int" } }
+  },
+  "priceTrendSpanDays": "{days} Tage",
+  "@priceTrendSpanDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "priceTrendPeriod": "über {span}",
+  "@priceTrendPeriod": {
+    "placeholders": { "span": { "type": "String" } }
+  },
+  "priceTrendInfo": "Die Veränderung misst den ersten gegen den letzten Punkt des Bereichs. Der letzte Punkt ist immer „jetzt“.",
+  "priceTrendChartTitle": "Kursverlauf",
+  "priceTrendPoints": "{count} Punkte",
+  "@priceTrendPoints": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "priceTrendNow": "jetzt",
+  "priceTrendSparseCategory": "Achtung",
+  "priceTrendSparseNotice": "Reihe unvollständig · {have} von {expected} Punkten",
+  "@priceTrendSparseNotice": {
+    "placeholders": {
+      "have": { "type": "int" },
+      "expected": { "type": "int" }
+    }
+  },
+  "priceTrendSparseInsight": "Für diesen Bereich liegen nur {have} von {expected} Punkten vor. Die vorhandenen Kurse stehen unten, eine Richtung lässt sich daraus nicht ablesen.",
+  "@priceTrendSparseInsight": {
+    "placeholders": {
+      "have": { "type": "int" },
+      "expected": { "type": "int" }
+    }
+  },
+  "priceTrendEmptyNotice": "Keine Punkte für diesen Bereich",
+  "priceTrendEmptyInsight": "Für diesen Bereich wurde nichts veröffentlicht. Die anderen Bereiche sind davon nicht betroffen und bleiben wählbar.",
+  "priceTrendErrorTitle": "Verlauf nicht erreichbar",
+  "priceTrendErrorBody": "Die veröffentlichten Verlaufsdaten waren nicht erreichbar. Der Live-Kurs ist davon nicht betroffen — er kommt direkt von Binance.",
+
   "currencyPair": "{currency} / BTC",
 
   "comingSoon": "In Kürze verfügbar",

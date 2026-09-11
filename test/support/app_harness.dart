@@ -5,9 +5,11 @@ import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/core/time/clock.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
+import 'package:bitcoin_dashboard/features/price/data/history_provider.dart';
 import 'package:bitcoin_dashboard/features/price/data/market_provider.dart';
 import 'package:bitcoin_dashboard/features/price/data/price_live_provider.dart';
 import 'package:bitcoin_dashboard/features/price/domain/market_snapshot.dart';
+import 'package:bitcoin_dashboard/features/price/domain/price_history.dart';
 import 'package:bitcoin_dashboard/features/price/domain/price_tick.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -164,6 +166,13 @@ List<Override> _offlineDefaults() => [
     (ref) => Completer<NetworkHealthSnapshot>().future,
   ),
   marketProvider.overrideWith((ref) => Completer<MarketSnapshot>().future),
+  // The family, so all five ranges are covered by one entry: a test that
+  // taps a range the author did not think about must not reach the CDN.
+  // `Override.origin` of a family override is the family itself, so
+  // [_merge] still lets a test replace it.
+  historyProvider.overrideWith(
+    (ref, range) => Completer<PriceHistory>().future,
+  ),
 ];
 
 /// A price stream that never emits and never schedules a timer.
