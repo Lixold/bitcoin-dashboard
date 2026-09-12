@@ -10,6 +10,7 @@ import '../../../core/widgets/app_header.dart';
 import '../../../core/widgets/segmented_control.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../data/settings_controller.dart';
+import 'currency_picker_sheet.dart';
 import 'language_picker_sheet.dart';
 import 'settings_section.dart';
 
@@ -71,6 +72,12 @@ class SettingsScreen extends ConsumerWidget {
                       const SizedBox(height: AppSpacing.s6),
                       _LanguageAndRegionSection(
                         locale: settings.locale,
+                        // The setting, not the currency the figures are
+                        // currently in. When the rates cannot be read the
+                        // price screen falls back to USD and says so —
+                        // this row keeps showing what the reader chose,
+                        // because that is what takes effect again as soon
+                        // as a rate arrives.
                         currency: settings.fiatCurrency,
                         onLocaleChanged: controller.setLocale,
                       ),
@@ -196,11 +203,14 @@ class _LanguageAndRegionSection extends StatelessWidget {
             onSelect: onLocaleChanged,
           ),
         ),
-        // A label, not a control: the picker behind it arrives with #32.
+        // The same sheet the header pill opens, not a second one: one
+        // picker with two entries keeps the list, its order and the
+        // selected marker in step by construction.
         SettingsRow(
           label: l10n.settingsCurrency,
           description: l10n.settingsCurrencyDescription,
           value: currency,
+          onTap: () => CurrencyPickerSheet.show(context),
         ),
         SettingsRow(
           label: l10n.settingsNumberFormat,

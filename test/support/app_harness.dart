@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:bitcoin_dashboard/app.dart';
+import 'package:bitcoin_dashboard/core/fx/fx_provider.dart';
+import 'package:bitcoin_dashboard/core/fx/fx_rates.dart';
 import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/core/time/clock.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
@@ -166,6 +168,7 @@ List<Override> _offlineDefaults() => [
     (ref) => Completer<NetworkHealthSnapshot>().future,
   ),
   marketProvider.overrideWith((ref) => Completer<MarketSnapshot>().future),
+  fxRatesProvider.overrideWith((ref) => Completer<FxRates>().future),
   // The family, so all five ranges are covered by one entry: a test that
   // taps a range the author did not think about must not reach the CDN.
   // `Override.origin` of a family override is the family itself, so

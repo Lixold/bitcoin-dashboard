@@ -109,6 +109,37 @@
   "priceTrendErrorTitle": "Verlauf nicht erreichbar",
   "priceTrendErrorBody": "Die veröffentlichten Verlaufsdaten waren nicht erreichbar. Der Live-Kurs ist davon nicht betroffen — er kommt direkt von Binance.",
 
+  "priceSatsPerUnit": "1 {symbol} = {sats} sats",
+  "@priceSatsPerUnit": {
+    "placeholders": {
+      "symbol": { "type": "String" },
+      "sats": { "type": "String" }
+    }
+  },
+  "priceFxAsOf": "EZB-Kurs vom {date} · {time} UTC",
+  "@priceFxAsOf": {
+    "placeholders": {
+      "date": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  },
+  "priceFxAsOfWeekday": "EZB-Kurs von {weekday}, {date} · {time} UTC",
+  "@priceFxAsOfWeekday": {
+    "placeholders": {
+      "weekday": { "type": "String" },
+      "date": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  },
+  "priceFxStale": "Kurs {days} Tage alt · Beträge können abweichen",
+  "@priceFxStale": {
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "priceFxUnavailable": "Umrechnung nicht verfügbar · Anzeige in USD",
+  "priceFxSourceCurrency": "Quellwährung · keine Umrechnung nötig",
+
   "currencyPair": "{currency} / BTC",
 
   "comingSoon": "In Kürze verfügbar",
@@ -134,6 +165,8 @@
 
   "settingsCurrency": "Währung",
   "settingsCurrencyDescription": "Bezugswährung für alle Kurse.",
+  "settingsCurrencyPickerTitle": "Währung wählen",
+  "settingsCurrencyPickerUnavailable": "Die Währungsliste konnte nicht geladen werden. Beträge bleiben in USD, bis sie wieder da ist.",
   "settingsNumberFormat": "Zahlenformat",
   "settingsNumberFormatDescription": "Folgt der gewählten Sprache.",
 

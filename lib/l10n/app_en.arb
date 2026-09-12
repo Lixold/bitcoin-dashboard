@@ -188,6 +188,47 @@
   "priceTrendErrorTitle": "History unreachable",
   "priceTrendErrorBody": "The published history could not be reached. The live price is unaffected — it comes straight from Binance.",
 
+  "priceSatsPerUnit": "1 {symbol} = {sats} sats",
+  "@priceSatsPerUnit": {
+    "description": "The price read the other way round, under the hero: how many satoshis one unit of the reader's currency buys. Evidence for the price, not a statement of its own.",
+    "placeholders": {
+      "symbol": { "type": "String" },
+      "sats": { "type": "String" }
+    }
+  },
+  "priceFxAsOf": "ECB rate of {date} · {time} UTC",
+  "@priceFxAsOf": {
+    "description": "Dates the rate the amounts were converted with. The time is stated in UTC because that is the zone the ECB publishes in and the zone the stamp is kept in.",
+    "placeholders": {
+      "date": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  },
+  "priceFxAsOfWeekday": "ECB rate of {weekday}, {date} · {time} UTC",
+  "@priceFxAsOfWeekday": {
+    "description": "priceFxAsOf for a rate that is not from today. The weekday is what explains the gap: the ECB publishes on working days only, so a Friday rate is the current one all weekend.",
+    "placeholders": {
+      "weekday": { "type": "String" },
+      "date": { "type": "String" },
+      "time": { "type": "String" }
+    }
+  },
+  "priceFxStale": "Rate {days} days old · amounts may differ",
+  "@priceFxStale": {
+    "description": "Shown once the rate has outlived four days, which means the ECB skipped a working day. The amounts stay on screen. `days` is never below four here, so the plural always holds.",
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+  "priceFxUnavailable": "Conversion unavailable · showing USD",
+  "@priceFxUnavailable": {
+    "description": "The rates could not be read. Amounts stay in the currency the sources publish, which is USD for both of them. The reader's setting is untouched and applies again as soon as a rate arrives."
+  },
+  "priceFxSourceCurrency": "Source currency · no conversion needed",
+  "@priceFxSourceCurrency": {
+    "description": "Shown when the reader's currency is the one the data already arrives in. No rate was used, so there is no rate to date."
+  },
+
   "currencyPair": "{currency} / BTC",
   "@currencyPair": {
     "description": "The unit shown in the header pill: the fiat code over BTC.",
@@ -240,6 +281,14 @@
 
   "settingsCurrency": "Currency",
   "settingsCurrencyDescription": "Reference currency for all prices.",
+  "settingsCurrencyPickerTitle": "Choose a currency",
+  "@settingsCurrencyPickerTitle": {
+    "description": "Header of the sheet that lists the currencies the published rates can convert into."
+  },
+  "settingsCurrencyPickerUnavailable": "The currency list could not be loaded. Amounts stay in USD until it is back.",
+  "@settingsCurrencyPickerUnavailable": {
+    "description": "Stands in for the list when fx-rates.json is unreachable or quotes nothing. The current setting is not changed by this."
+  },
   "settingsNumberFormat": "Number format",
   "settingsNumberFormatDescription": "Follows the selected language.",
 

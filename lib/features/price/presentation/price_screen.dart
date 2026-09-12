@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/format/money_display_provider.dart';
 import '../../../core/format/money_format.dart';
 import '../../../core/format/percent_format.dart';
+import '../../../core/fx/fx_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -15,7 +17,7 @@ import '../../../core/widgets/progress_meter.dart';
 import '../../../core/widgets/statement.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/widgets/segmented_control.dart';
-import '../data/binance_api.dart';
+import '../../settings/presentation/currency_picker_sheet.dart';
 import '../data/history_provider.dart';
 import '../data/market_provider.dart';
 import '../data/price_live_provider.dart';
@@ -26,24 +28,33 @@ import '../domain/price_history.dart';
 import '../domain/price_range.dart';
 import '../domain/price_tick.dart';
 import '../domain/price_trend.dart';
+import '../domain/sats_quote.dart';
 import 'price_trend_chart.dart';
 
 /// Price overview — main landing screen (German label: "Kurs").
 ///
 ///   * **Header** — the shared [AppHeader]: brand lockup, currency pill,
 ///     settings gear
-///   * **Hero**   — live price (display serif) with observation timestamp
+///   * **Hero**   — live price (display serif) with observation timestamp,
+///     the same price read back in sats, and where the rate that converted
+///     it comes from
 ///   * **Market movement** — which way the price has gone over the range
 ///     the reader picked, with the curve underneath as its evidence
 ///   * **Two statements** — how far below the all-time high the price
 ///     stands, and how much of the crypto market Bitcoin holds
 ///
-/// Three sources, and they fail independently. The live price comes from
+/// Four sources, and they fail independently. The live price comes from
 /// [priceLiveProvider] over a socket, the movement from
 /// [historyProvider] for the selected range, the two statements below it
-/// from [marketProvider]. Each section states its own age and shows its
+/// from [marketProvider], and the unit all three amounts are read in from
+/// [moneyDisplayProvider]. Each section states its own age and shows its
 /// own error, because a CDN document being unreachable says nothing about
-/// the other two.
+/// the others.
+///
+/// **Only the amounts follow the reader's currency.** The distance to the
+/// high, the market share and the change over a range are ratios: they are
+/// the same number in every currency, and putting a symbol on them would
+/// be a label the figure does not carry.
 class PriceScreen extends ConsumerWidget {
   const PriceScreen({super.key});
 
@@ -52,16 +63,14 @@ class PriceScreen extends ConsumerWidget {
     final tickAsync = ref.watch(priceLiveProvider);
     final marketAsync = ref.watch(marketProvider);
 
-    // **The pill names the currency of the data, not of the setting.**
-    // The app cannot convert yet (#32), so every amount on this screen is
-    // what the sources published — the Binance pair's quote currency for
-    // the hero, `market.json`'s own `currency` field for the amounts
-    // below. A pill reading EUR over dollar figures would not be a
-    // display preference, it would be a false statement about the number
-    // beneath it. #32 switches the value and the symbol together.
-    final quoteCurrency = PriceTick.quoteCurrencyOf(
-      tickAsync.value?.symbol ?? BinanceApi.defaultSymbol,
-    );
+    // **The pill names the currency the figures are in, not the one the
+    // setting asks for.** The two agree whenever the rates can be read,
+    // and part company when they cannot: the setting stays where the
+    // reader put it, the amounts fall back to what the sources publish,
+    // and the pill follows the amounts. A pill reading EUR over dollar
+    // figures would not be a display preference, it would be a false
+    // statement about the number beneath it.
+    final money = ref.watch(moneyDisplayProvider);
 
     return SafeArea(
       child: RefreshIndicator(
@@ -69,6 +78,10 @@ class PriceScreen extends ConsumerWidget {
           ref
             ..invalidate(priceLiveProvider)
             ..invalidate(marketProvider)
+            // The rate too: it is a figure like the others, and a reader
+            // who pulls after a day away wants today's, not the one the
+            // three-hour cache is still holding.
+            ..invalidate(fxRatesProvider)
             // The family, not one range: a pull to refresh is a request
             // for current figures, and the four ranges the reader is not
             // looking at are exactly what a later tap will show.
@@ -94,9 +107,12 @@ class PriceScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      AppHeader(currency: quoteCurrency),
+                      AppHeader(
+                        currency: money.currency,
+                        onCurrencyTap: () => CurrencyPickerSheet.show(context),
+                      ),
                       const SizedBox(height: AppSpacing.s6),
-                      _PriceHero(tickAsync: tickAsync, currency: quoteCurrency),
+                      _PriceHero(tickAsync: tickAsync),
                       const SizedBox(height: AppSpacing.s7),
                       const _TrendSection(),
                       const SizedBox(height: AppSpacing.s7),
@@ -124,18 +140,31 @@ class PriceScreen extends ConsumerWidget {
 
 // -- Price hero -------------------------------------------------------------
 
-class _PriceHero extends StatelessWidget {
-  const _PriceHero({required this.tickAsync, required this.currency});
+/// The price, in the reader's currency, with the sats line under it and
+/// the rate it was converted with dated below that.
+///
+/// **Two things have to arrive before there is an amount to show**: the
+/// observation from Binance and, when the reader has picked something
+/// other than the source currency, the rate from the CDN. A price shown
+/// before the rate lands would be dollars under a euro heading, or euros
+/// under a claim that the conversion failed; neither is true yet, so the
+/// hero waits with the skeleton it already had. A reader who never left
+/// USD waits for nothing — there is no rate in that path.
+class _PriceHero extends ConsumerWidget {
+  const _PriceHero({required this.tickAsync});
 
   final AsyncValue<PriceTick> tickAsync;
-  final String currency;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppL10n.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final money = ref.watch(moneyDisplayProvider);
+    final now = ref.watch(clockProvider)();
+
+    final tick = money.isPending ? null : tickAsync.value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,20 +172,21 @@ class _PriceHero extends StatelessWidget {
         Row(
           children: [
             // The dot claims the price is being observed right now, so it
-            // appears only when there is an observation to point at.
-            if (tickAsync.hasValue) ...[
+            // appears only when there is an observation to point at — and
+            // an observation the reader cannot be shown yet is not one.
+            if (tick != null) ...[
               LiveDot(color: AppColors.positiveFor(theme.brightness)),
               const SizedBox(width: AppSpacing.s2),
             ],
             Expanded(
               child: Text(
-                switch (tickAsync) {
-                  AsyncValue(:final value?) => l10n.priceHeroLabel(
+                switch ((tick, tickAsync)) {
+                  (final PriceTick observed, _) => l10n.priceHeroLabel(
                     DateFormat.yMMMd(
                       locale,
-                    ).add_Hm().format(value.observedAt.toLocal()),
+                    ).add_Hm().format(observed.observedAt.toLocal()),
                   ),
-                  AsyncError() => l10n.priceError,
+                  (_, AsyncError()) => l10n.priceError,
                   _ => l10n.priceLoading,
                 },
                 style: AppTypography.monoCaption.copyWith(
@@ -169,19 +199,145 @@ class _PriceHero extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.s2),
-        switch (tickAsync) {
-          AsyncValue(:final value?) => _PriceLine(
-            price: formatMoney(locale, value.price, currency),
-          ),
-          // **No zero while loading.** A formatted `$0.00` in the hero is
-          // a number a reader can mistake for a price, which is the
-          // placeholder CLAUDE.md §5 rules out. The skeleton holds the
-          // same space and claims nothing.
-          AsyncError() => const SizedBox.shrink(),
-          _ => const _HeroSkeleton(),
-        },
+        if (tick != null)
+          _HeroAmount(tick: tick, money: money, now: now)
+        // **No zero while loading.** A formatted `$0.00` in the hero is
+        // a number a reader can mistake for a price, which is the
+        // placeholder CLAUDE.md §5 rules out. The skeleton holds the
+        // same space and claims nothing.
+        else if (tickAsync.hasError)
+          const SizedBox.shrink()
+        else
+          const _HeroSkeleton(),
       ],
     );
+  }
+}
+
+/// The figure, the sats line under it, and where the rate behind it comes
+/// from.
+///
+/// Only the figure is certain: the sats line falls away for a price that
+/// cannot be divided into, and the rate note for rates that have not
+/// arrived yet.
+class _HeroAmount extends StatelessWidget {
+  const _HeroAmount({
+    required this.tick,
+    required this.money,
+    required this.now,
+  });
+
+  final PriceTick tick;
+  final MoneyDisplay money;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppL10n.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final from = tick.quoteCurrency;
+    final displayed = money.displayedAmount(tick.price, from: from);
+    final sats = satsPerUnit(displayed);
+    final notice = _fxNotice(l10n, locale, money, now);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _PriceLine(price: money.format(locale, tick.price, from: from)),
+        if (sats != null) ...[
+          const SizedBox(height: AppSpacing.s3),
+          _SatsLine(
+            text: l10n.priceSatsPerUnit(
+              currencySymbol(locale, money.displayedCurrency(from)),
+              formatSats(locale, sats),
+            ),
+          ),
+        ],
+        if (notice != null) ...[const SizedBox(height: AppSpacing.s4), notice],
+      ],
+    );
+  }
+}
+
+/// The price read the other way round: what one unit of the reader's
+/// currency buys.
+///
+/// **Evidence for the price, not a statement of its own.** It reports the
+/// same fact in the other unit, so it carries no category, no verdict and
+/// no insight sentence — the sentence it would need is the one the price
+/// above it already has.
+class _SatsLine extends StatelessWidget {
+  const _SatsLine({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Text(
+      text,
+      style: AppTypography.monoValue.copyWith(
+        color: scheme.onSurfaceVariant,
+        fontFeatures: AppTypography.figureFeatures,
+      ),
+    );
+  }
+}
+
+/// Where the conversion stands, in the one shape this screen gives a
+/// remark.
+///
+/// One remark per state, and none at all while the rates are on their way:
+/// there is no amount on screen to qualify then, so it returns `null`
+/// rather than claiming either success or failure.
+///
+/// Two of the four are amber and carry the alert glyph — a rate the ECB
+/// failed to renew, and a conversion that could not be made at all. The
+/// other two state a fact about figures that are exactly as intended.
+Widget? _fxNotice(
+  AppL10n l10n,
+  String locale,
+  MoneyDisplay money,
+  DateTime now,
+) {
+  switch (money.state) {
+    case MoneyDisplayState.pending:
+      return null;
+
+    case MoneyDisplayState.source:
+      return _NoticePill(
+        text: l10n.priceFxSourceCurrency.toUpperCase(),
+        tone: _NoticeTone.neutral,
+      );
+
+    case MoneyDisplayState.unavailable:
+      return _NoticePill(
+        text: l10n.priceFxUnavailable.toUpperCase(),
+        showAlert: true,
+      );
+
+    case MoneyDisplayState.converted:
+      final rates = money.rates!;
+      if (rates.isStaleAt(now)) {
+        return _NoticePill(
+          text: l10n.priceFxStale(rates.ageAt(now).inDays).toUpperCase(),
+          showAlert: true,
+        );
+      }
+      // Formatted without `toLocal()`: the stamp is UTC and the line says
+      // so, because that is the zone the ECB publishes in. The weekday is
+      // added once the rate is not from today — it is what explains a gap
+      // the ECB's calendar left, and on the day itself it says nothing.
+      final date = DateFormat.yMMMd(locale).format(rates.fetchedAt);
+      final time = DateFormat.Hm(locale).format(rates.fetchedAt);
+      final text = rates.isFromDayOf(now)
+          ? l10n.priceFxAsOf(date, time)
+          : l10n.priceFxAsOfWeekday(
+              DateFormat.EEEE(locale).format(rates.fetchedAt),
+              date,
+              time,
+            );
+      return _NoticePill(text: text.toUpperCase(), tone: _NoticeTone.neutral);
   }
 }
 
@@ -686,7 +842,7 @@ class _AthStatement extends StatelessWidget {
 
 /// The record the distance is measured from, and how far along it the
 /// price stands.
-class _AthEvidence extends StatelessWidget {
+class _AthEvidence extends ConsumerWidget {
   const _AthEvidence({
     required this.distance,
     required this.snapshot,
@@ -700,10 +856,11 @@ class _AthEvidence extends StatelessWidget {
   final DateTime now;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppL10n.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final money = ref.watch(moneyDisplayProvider);
     final currency = snapshot.currency;
     final high = snapshot.ath;
     final athDate = snapshot.athDate;
@@ -724,11 +881,12 @@ class _AthEvidence extends StatelessWidget {
           const SizedBox(height: AppSpacing.s5),
           // The amount needs a currency to be labelled with, and the
           // payload is where that comes from. Without it the row is left
-          // out rather than shown under a guessed symbol.
-          if (high != null && currency != null)
+          // out rather than shown under a guessed symbol — and the same
+          // while the rate that would convert it is still on its way.
+          if (high != null && currency != null && !money.isPending)
             _EvidenceRow(
               label: l10n.priceAthEvidenceAth,
-              value: formatMoney(locale, high, currency),
+              value: money.format(locale, high, from: currency),
             ),
           if (athDate != null)
             _EvidenceRow(
@@ -823,7 +981,7 @@ class _DominanceStatement extends StatelessWidget {
 }
 
 /// The two bars, and the size the share is a share of.
-class _DominanceEvidence extends StatelessWidget {
+class _DominanceEvidence extends ConsumerWidget {
   const _DominanceEvidence({
     required this.dominance,
     required this.snapshot,
@@ -835,11 +993,12 @@ class _DominanceEvidence extends StatelessWidget {
   final StatementTone tone;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppL10n.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final neutral = AppColors.neutralFor(theme.brightness);
+    final money = ref.watch(moneyDisplayProvider);
     final marketCap = snapshot.marketCap;
     final currency = snapshot.currency;
 
@@ -861,14 +1020,14 @@ class _DominanceEvidence extends StatelessWidget {
             fill: neutral,
             locale: locale,
           ),
-          if (marketCap != null && currency != null) ...[
+          if (marketCap != null && currency != null && !money.isPending) ...[
             const SizedBox(height: AppSpacing.s5),
             _EvidenceRow(
               label: l10n.priceDominanceEvidenceMarketCap,
               // Short form: twelve digits are not read, they are
               // squinted at. `intl` owns the suffix, which differs by
               // more than the word between English and German.
-              value: formatMoneyCompact(locale, marketCap, currency),
+              value: money.formatCompact(locale, marketCap, from: currency),
             ),
           ],
         ],
@@ -1025,12 +1184,35 @@ class _EvidenceRow extends StatelessWidget {
 /// One shape for all of them is what keeps "this is three quarters of an
 /// hour old" and "this series is too short" reading as the same *kind* of
 /// remark, told apart by what they say rather than by how they look.
+/// Whether a notice reports something the reader should act on.
+///
+/// The amber outline is what makes a remark register at a glance, which is
+/// why not every remark may have it: a rate that is simply from Friday is
+/// the normal case, and a screen that flags it every weekend teaches the
+/// reader to ignore the colour when it does mean something.
+enum _NoticeTone {
+  /// States a fact about the figures — where the rate is from, that no
+  /// conversion was needed. Outline and text sit in the neutral pair.
+  neutral,
+
+  /// Something is old or missing. Amber outline, as everything on this
+  /// screen that qualifies a figure has been so far.
+  warning,
+}
+
 class _NoticePill extends StatelessWidget {
-  const _NoticePill({required this.text, this.showAlert = false});
+  const _NoticePill({
+    required this.text,
+    this.tone = _NoticeTone.warning,
+    this.showAlert = false,
+  });
 
   /// Already localised and already upper-cased by its caller — the copy
   /// differs per notice and so does where the casing belongs.
   final String text;
+
+  /// Whether the remark is a warning or a statement of fact.
+  final _NoticeTone tone;
 
   /// The glyph is the second stage, not decoration: it marks the notices
   /// that mean something is wrong rather than merely old.
@@ -1041,6 +1223,7 @@ class _NoticePill extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final warning = AppColors.warningFor(theme.brightness);
+    final isWarning = tone == _NoticeTone.warning;
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -1050,7 +1233,7 @@ class _NoticePill extends StatelessWidget {
           vertical: AppSpacing.s2,
         ),
         decoration: BoxDecoration(
-          border: Border.all(color: warning),
+          border: Border.all(color: isWarning ? warning : scheme.outline),
           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
         ),
         child: Row(
@@ -1064,7 +1247,7 @@ class _NoticePill extends StatelessWidget {
               child: Text(
                 text,
                 style: AppTypography.monoCaption.copyWith(
-                  color: scheme.onSurface,
+                  color: isWarning ? scheme.onSurface : scheme.onSurfaceVariant,
                   letterSpacing: 0.6,
                 ),
               ),

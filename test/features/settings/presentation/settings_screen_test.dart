@@ -1,7 +1,10 @@
 import 'package:bitcoin_dashboard/core/app_info.dart';
+import 'package:bitcoin_dashboard/core/fx/fx_provider.dart';
+import 'package:bitcoin_dashboard/core/fx/fx_rates.dart';
 import 'package:bitcoin_dashboard/core/links/url_opener.dart';
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/core/theme/app_typography.dart';
+import 'package:bitcoin_dashboard/features/settings/presentation/currency_picker_sheet.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_section.dart';
 import 'package:flutter/material.dart';
@@ -21,11 +24,13 @@ Future<void> _pumpSettings(
   WidgetTester tester, {
   UrlOpener? openUrl,
   Size view = TestView.tallTablet,
+  List<Override> overrides = const [],
 }) async {
   useView(tester, view);
   await pumpAppRoot(
     tester,
     overrides: [
+      ...overrides,
       appRouterProvider.overrideWith((ref) {
         final router = createAppRouter(initialLocation: settingsLocation);
         ref.onDispose(router.dispose);
@@ -37,6 +42,11 @@ Future<void> _pumpSettings(
     ],
   );
 }
+
+Override _ratesAre(FxRates rates) =>
+    fxRatesProvider.overrideWith(asyncData(rates));
+
+FxRates _published() => FxRates.fromJson(loadJsonFixture('fx-rates.json'));
 
 ThemeData _theme(WidgetTester tester) =>
     Theme.of(tester.element(find.byType(SettingsScreen)));
@@ -252,6 +262,66 @@ void main() {
       );
 
       handle.dispose();
+    });
+  });
+
+  group('the currency row', () {
+    testWidgets('opens the same picker the header pill opens', (tester) async {
+      await _pumpSettings(tester, overrides: [_ratesAre(_published())]);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Currency'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CurrencyPickerSheet), findsOneWidget);
+      expect(find.text('Choose a currency'), findsOneWidget);
+    });
+
+    testWidgets('shows what was picked, and keeps showing it', (tester) async {
+      await _pumpSettings(tester, overrides: [_ratesAre(_published())]);
+      await tester.pumpAndSettle();
+
+      expect(find.text('USD'), findsOneWidget);
+
+      await tester.tap(find.text('Currency'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('EUR'));
+      await tester.pumpAndSettle();
+      await _tapAndSettle(tester, find.text('EUR'));
+
+      expect(find.text('EUR'), findsOneWidget);
+      // The number-format sample follows the choice: it is the row that
+      // demonstrates the format, so it demonstrates the real one. It
+      // names the code rather than the symbol — that is `intl`'s
+      // `currency` against the `simpleCurrency` the figures use, and it
+      // is how the row has read since it was written.
+      expect(find.text('EUR1,234.56'), findsOneWidget);
+      expect(find.text('USD1,234.56'), findsNothing);
+    });
+
+    testWidgets('the row keeps the setting when no rate can apply it', (
+      tester,
+    ) async {
+      // The price screen falls back to dollars and says so. This row is
+      // not that screen: it states what the reader chose, because that is
+      // what takes effect again as soon as a rate arrives.
+      await _pumpSettings(tester, overrides: [_ratesAre(_published())]);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Currency'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('EUR'));
+      await tester.pumpAndSettle();
+      await _tapAndSettle(tester, find.text('EUR'));
+
+      await _pumpSettings(
+        tester,
+        overrides: [
+          fxRatesProvider.overrideWith(asyncError(Exception('offline'))),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('EUR'), findsOneWidget);
     });
   });
 }
