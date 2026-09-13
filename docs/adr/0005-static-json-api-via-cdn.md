@@ -1,8 +1,8 @@
 # ADR-0005 — Client ↔ CDN API: static JSON objects
 
 - **Date:** 2026-05-06
-- **Updated:** 2026-08-28 — v3: timestamp unit made explicit
-- **Status:** Accepted (v3 — aligned with [ADR-0003](0003-backend-cloudflare-workers-r2.md))
+- **Updated:** 2026-09-13 — v4: `aggregatedHealth` gains `unknown`
+- **Status:** Accepted (v4 — aligned with [ADR-0003](0003-backend-cloudflare-workers-r2.md))
 - **Decider:** Daniel Nagel
 
 ## Version history
@@ -12,6 +12,7 @@
 | v1 | 2026-05-06 | Initial contract: static JSON on R2 behind the CDN |
 | v2 | 2026-05-10 | Aligned with ADR-0003 (Cloudflare Workers) |
 | v3 | 2026-08-28 | Time representation stated explicitly (see below) |
+| v4 | 2026-09-13 | `aggregatedHealth` gains `unknown`; node source is BTCNodes.io |
 
 ## Context
 
@@ -197,7 +198,7 @@ sorted newest first. Each language ships its own file.
   "_meta": {
     "fetchedAt": "2026-05-12T01:13:00+00:00",
     "date": "2026-05-12",
-    "sources": ["Bitnodes.io", "Mempool.space"]
+    "sources": ["BTCNodes.io", "Mempool.space"]
   },
   "fullNodes": { "count": 17234, "percentChange24h": 0.21, "trend": "stable" },
   "miningPools": [
@@ -207,6 +208,19 @@ sorted newest first. Each language ships its own file.
   "aggregatedHealth": "good"
 }
 ```
+
+`fullNodes` is always present as an object, never dropped: when the node
+census cannot be read it is `{ "count": null, "percentChange24h": null,
+"trend": "unknown" }`, so the client keeps one code path. `trend` is one
+of `up`, `down`, `stable`, `unknown`; `unknown` also covers a count that
+arrived without a usable 24h reference point.
+
+`aggregatedHealth` is one of `good`, `warning`, `critical`, `unknown` —
+and `unknown` is **not** a fourth step on the severity scale. It means
+one of the two dimensions had no reading, so the reassuring answer cannot
+honestly be given. The verdict of the dimension that did arrive still
+wins: a pool share above 40 % reads `critical` whether or not the node
+count came in. A consumer must never render `unknown` as "not bad".
 
 ## Direct live calls
 
