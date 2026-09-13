@@ -209,6 +209,46 @@ Order of work within a slice:
 4. **Tests.** See §7.
 5. **PR.** See §6.
 
+### Thresholds are declared, not written as conditionals
+
+A metric that reads as one of several levels — the distance to the
+all-time high, mining-pool concentration, the sentiment index —
+declares its levels as a `BandScale` in
+`lib/core/bands/band_scale.dart` (#52). One `Band` per level: its key,
+its lower bound, whether that bound is inclusive, and the
+`StatementTone` a reading inside it carries.
+
+```dart
+const BandScale<SentimentBand> sentimentScale = BandScale<SentimentBand>([
+  Band(SentimentBand.extremeFear, from: 0, tone: StatementTone.negative),
+  Band(SentimentBand.fear, from: 26, tone: StatementTone.warning),
+  // …
+]);
+```
+
+Three rules follow from it:
+
+- **The tone belongs to the band.** A widget asks
+  `scale.bandFor(value)` and renders what comes back. A screen that
+  maps a verdict to a colour in its own `switch` is writing the fourth
+  copy of a decision the band already made.
+- **The key is an enum, and its copy lives in the ARB.** The enum
+  resolves its own label through `AppL10n`, next to the band
+  declaration in `domain/` — the way `NavSection.label` does. No
+  English string is assembled in a widget, and no band takes display
+  copy as a field.
+- **`fromIsInclusive` is not a formality.** The matrices already in
+  this repository are not symmetric: #30 writes "from 10 %", #68
+  writes "> 40 %" and "≥ 80 %" in the same matrix. Every band set is
+  unit-tested on both sides of each of its boundaries.
+
+The four verdict types that predate the mechanism — `AthVerdict`,
+`DominanceVerdict`, `TrendVerdict`, `ConcentrationVerdict` — still
+carry their own `verdictFor`. `test/core/bands/band_scale_test.dart`
+holds each of them against a scale that expresses the same matrix, so
+the abstraction is known to fit before anything migrates; migrating
+them is its own issue.
+
 **Definition of Done** — all of these, or it is not done:
 
 - No placeholders anywhere in the shipped code: no dummy values, no

@@ -19,12 +19,12 @@ class AppInfo {
 
   /// The public sources this build actually reads.
   ///
-  /// One entry, because one is what the app fetches today. The README and
-  /// [ADR-0002](docs/adr/0002-data-sources-and-apis.md) list every source
-  /// the product will use; naming those here would tell the user about
-  /// requests this binary never makes. Extend it in the slice that adds
-  /// the source, not before.
-  static const String dataSources = 'Binance Public API';
+  /// The README and [ADR-0002](docs/adr/0002-data-sources-and-apis.md) list
+  /// every source the product will use; naming those here would tell the
+  /// user about requests this binary never makes. Extend it in the slice
+  /// that adds the source, not before — the sentiment slice added the
+  /// second entry.
+  static const String dataSources = 'Binance Public API · alternative.me';
 
   static const String repository = 'github.com/Lixold/bitcoin-dashboard';
 

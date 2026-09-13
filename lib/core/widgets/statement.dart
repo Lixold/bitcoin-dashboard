@@ -178,14 +178,24 @@ class StatementVerdict extends StatelessWidget {
   const StatementVerdict({
     super.key,
     required this.verdict,
-    required this.badgeLabel,
     required this.tone,
+    this.badgeLabel,
     this.onInfo,
     this.infoLabel,
   });
 
   final String verdict;
-  final String badgeLabel;
+
+  /// The badge's short phrase, or `null` for no badge.
+  ///
+  /// **A second word only where it says something the first does not.**
+  /// The network statement's verdict is a level ("uncritical") and its
+  /// badge names the figure that set it; the sentiment statement's
+  /// verdict is already the band's own name, and a badge repeating it
+  /// would restate the word next to itself. The marker carries the tone
+  /// in both cases — through its shape, not through a second label.
+  final String? badgeLabel;
+
   final StatementTone tone;
 
   /// Opens the long explanation. Null leaves [infoLabel] as the whole
@@ -217,7 +227,8 @@ class StatementVerdict extends StatelessWidget {
             color: theme.colorScheme.onSurface,
           ),
         ),
-        StatusBadge(label: badgeLabel, tone: tone, color: toneColor),
+        if (badgeLabel != null)
+          StatusBadge(label: badgeLabel!, tone: tone, color: toneColor),
         if (infoLabel != null) InfoTrigger(label: infoLabel!, onTap: onInfo),
       ],
     );
