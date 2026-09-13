@@ -14,7 +14,9 @@ Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news 
   you picked, with what one unit of it buys in sats
 - **On-Chain Metrics** — Mempool, fees, hashrate, difficulty via mempool.space
 - **Network Health** — Reachable node count (Bitnodes) and chain tip status (mempool.space)
-- **Fear & Greed Index** — Daily sentiment score via alternative.me
+- **Fear & Greed Index** — Which of the five sentiment bands today's score
+  falls in and how the last 30 days ran, with the sentence that reads it, via
+  alternative.me
 - **Price History** — Charts for 1D / 1W / 1M / 3M / 1Y timeframes
 - **Market Snapshot** — How far below its all-time high the price stands, and how
   much of the crypto market Bitcoin holds, each with the sentence that reads it

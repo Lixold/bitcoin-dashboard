@@ -287,5 +287,86 @@
 
   "networkPoolsInfoTrigger": "Was ist ein Mining-Pool?",
   "networkPoolsInfoTitle": "Mining-Pool",
-  "networkPoolsInfoBody": "Ein Mining-Pool ist ein Zusammenschluss vieler Miner, die ihre Rechenleistung bündeln und den Blockertrag anteilig aufteilen. Der Betreiber stellt die Blöcke zusammen und entscheidet damit, welche Transaktionen aufgenommen werden. Entscheidend ist deshalb nicht die Zahl der Miner, sondern wie viel Hashrate auf einen einzelnen Betreiber entfällt."
+  "networkPoolsInfoBody": "Ein Mining-Pool ist ein Zusammenschluss vieler Miner, die ihre Rechenleistung bündeln und den Blockertrag anteilig aufteilen. Der Betreiber stellt die Blöcke zusammen und entscheidet damit, welche Transaktionen aufgenommen werden. Entscheidend ist deshalb nicht die Zahl der Miner, sondern wie viel Hashrate auf einen einzelnen Betreiber entfällt.",
+
+  "marketSentimentCategory": "Stimmung",
+  "marketSentimentAsOf": "Stand {timestamp}",
+  "@marketSentimentAsOf": {
+    "placeholders": {
+      "timestamp": { "type": "String" }
+    }
+  },
+  "marketSentimentLoadingLabel": "Wird geladen…",
+
+  "marketSentimentBandExtremeFear": "Extreme Angst",
+  "marketSentimentBandFear": "Angst",
+  "marketSentimentBandNeutral": "Neutral",
+  "marketSentimentBandGreed": "Gier",
+  "marketSentimentBandExtremeGreed": "Extreme Gier",
+
+  "marketSentimentFiguresLabel": "Stimmungsindex",
+  "marketSentimentScale": "Skala 0–100",
+  "marketSentimentUnit": "/ 100",
+
+  "marketSentimentInsightCategory": "Einordnung",
+  "marketSentimentClaimExtremeFear": "Der Markt ist stark unterkauft",
+  "marketSentimentClaimFear": "Der Markt ist unterkauft",
+  "marketSentimentClaimNeutral": "Der Markt ist ausgeglichen bewertet",
+  "marketSentimentClaimGreed": "Der Markt ist leicht überkauft",
+  "marketSentimentClaimExtremeGreed": "Der Markt ist deutlich überkauft",
+
+  "marketSentimentInsightSwitch": "{claim} – im Mittel der letzten 30 Tage {mean}, seit dem {date} durchgehend im {band}-Band.",
+  "@marketSentimentInsightSwitch": {
+    "placeholders": {
+      "claim": { "type": "String" },
+      "mean": { "type": "String" },
+      "band": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "marketSentimentInsightSteady": "{claim} – im Mittel der letzten 30 Tage {mean}, alle 30 Werte im {band}-Band.",
+  "@marketSentimentInsightSteady": {
+    "placeholders": {
+      "claim": { "type": "String" },
+      "mean": { "type": "String" },
+      "band": { "type": "String" }
+    }
+  },
+  "marketSentimentInsightShort": "{claim} – im Mittel der letzten 30 Tage {mean}, Spanne {min}–{max}.",
+  "@marketSentimentInsightShort": {
+    "placeholders": {
+      "claim": { "type": "String" },
+      "mean": { "type": "String" },
+      "min": { "type": "String" },
+      "max": { "type": "String" }
+    }
+  },
+
+  "marketSentimentEvidenceTitle": "30 Tage · {from}–{to}",
+  "@marketSentimentEvidenceTitle": {
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" }
+    }
+  },
+  "marketSentimentSpan": "Spanne {min}–{max}",
+  "@marketSentimentSpan": {
+    "placeholders": {
+      "min": { "type": "String" },
+      "max": { "type": "String" }
+    }
+  },
+  "marketSentimentOldest": "Ältester Punkt {date}",
+  "@marketSentimentOldest": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "marketSentimentSource": "Quelle: alternative.me",
+
+  "marketSentimentInfoTrigger": "Der Index fasst Volatilität, Momentum, Umfragen, Dominanz und Suchvolumen zu einer Zahl von 0 bis 100 zusammen. Er sagt nichts darüber, ob ein Kauf sinnvoll ist.",
+
+  "marketSentimentErrorTitle": "Stimmung konnte nicht geladen werden",
+  "marketSentimentErrorBody": "alternative.me hat nicht geantwortet. Kurs- und Netzwerkdaten sind nicht betroffen.",
+  "marketSentimentRetry": "Erneut versuchen"
 }

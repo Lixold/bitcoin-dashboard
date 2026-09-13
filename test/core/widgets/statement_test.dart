@@ -89,6 +89,41 @@ void main() {
     });
   });
 
+  group('StatementVerdict', () {
+    testWidgets('carries a badge when the statement has a second thing to '
+        'say', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          const StatementVerdict(
+            verdict: 'Uncritical',
+            badgeLabel: 'DISTRIBUTION BROAD',
+            tone: StatementTone.positive,
+          ),
+        ),
+      );
+
+      expect(find.text('Uncritical'), findsOneWidget);
+      expect(find.byType(StatusBadge), findsOneWidget);
+    });
+
+    testWidgets('omits it when the verdict word already says everything', (
+      tester,
+    ) async {
+      // The sentiment statement's verdict *is* the band's name — a pill
+      // beside it would restate the word next to itself. The marker still
+      // carries the tone, through its shape.
+      await tester.pumpWidget(
+        _harness(
+          const StatementVerdict(verdict: 'Greed', tone: StatementTone.warning),
+        ),
+      );
+
+      expect(find.text('Greed'), findsOneWidget);
+      expect(find.byType(StatusBadge), findsNothing);
+      expect(find.byType(VerdictMarker), findsOneWidget);
+    });
+  });
+
   group('VerdictMarker', () {
     testWidgets('draws a different shape per tone, not only a colour', (
       tester,

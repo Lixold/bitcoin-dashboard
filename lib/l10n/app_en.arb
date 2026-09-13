@@ -438,5 +438,105 @@
 
   "networkPoolsInfoTrigger": "What is a mining pool?",
   "networkPoolsInfoTitle": "Mining pool",
-  "networkPoolsInfoBody": "A mining pool is a group of miners that combine their computing power and split the block reward between them. The operator assembles the blocks and therefore decides which transactions go into them. What matters is not the number of miners, but how much hashrate sits with a single operator."
+  "networkPoolsInfoBody": "A mining pool is a group of miners that combine their computing power and split the block reward between them. The operator assembles the blocks and therefore decides which transactions go into them. What matters is not the number of miners, but how much hashrate sits with a single operator.",
+
+  "marketSentimentCategory": "Sentiment",
+  "@marketSentimentCategory": {
+    "description": "Statement eyebrow on the market screen: the Fear & Greed index published by alternative.me."
+  },
+  "marketSentimentAsOf": "As of {timestamp}",
+  "@marketSentimentAsOf": {
+    "description": "Qualifier under the eyebrow. The timestamp is the calendar day the value was published for, never the moment the app fetched it.",
+    "placeholders": {
+      "timestamp": { "type": "String" }
+    }
+  },
+  "marketSentimentLoadingLabel": "Loading…",
+
+  "marketSentimentBandExtremeFear": "Extreme Fear",
+  "@marketSentimentBandExtremeFear": {
+    "description": "Verdict word for the lowest of the five index bands. The five band names are also the labels on the sparkline's stripes."
+  },
+  "marketSentimentBandFear": "Fear",
+  "marketSentimentBandNeutral": "Neutral",
+  "marketSentimentBandGreed": "Greed",
+  "marketSentimentBandExtremeGreed": "Extreme Greed",
+
+  "marketSentimentFiguresLabel": "Sentiment index",
+  "marketSentimentScale": "Scale 0–100",
+  "marketSentimentUnit": "/ 100",
+  "@marketSentimentUnit": {
+    "description": "Unit beside the index value. A locale that writes the scale differently changes it here."
+  },
+
+  "marketSentimentInsightCategory": "Context",
+  "marketSentimentClaimExtremeFear": "The market is heavily oversold",
+  "@marketSentimentClaimExtremeFear": {
+    "description": "First half of the insight sentence, one per band. A statement about the market's pricing, never a suggestion to the reader."
+  },
+  "marketSentimentClaimFear": "The market is oversold",
+  "marketSentimentClaimNeutral": "The market is fairly balanced",
+  "marketSentimentClaimGreed": "The market is slightly overbought",
+  "marketSentimentClaimExtremeGreed": "The market is clearly overbought",
+
+  "marketSentimentInsightSwitch": "{claim} – {mean} on average over the last 30 days, inside the {band} band without interruption since {date}.",
+  "@marketSentimentInsightSwitch": {
+    "description": "Insight sentence when the current band has held for at least three days but not for the whole window.",
+    "placeholders": {
+      "claim": { "type": "String" },
+      "mean": { "type": "String" },
+      "band": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "marketSentimentInsightSteady": "{claim} – {mean} on average over the last 30 days, all 30 values inside the {band} band.",
+  "@marketSentimentInsightSteady": {
+    "description": "Insight sentence when every value in the window sits in the current band, so there is no date to name.",
+    "placeholders": {
+      "claim": { "type": "String" },
+      "mean": { "type": "String" },
+      "band": { "type": "String" }
+    }
+  },
+  "marketSentimentInsightShort": "{claim} – {mean} on average over the last 30 days, range {min}–{max}.",
+  "@marketSentimentInsightShort": {
+    "description": "Insight sentence when the current band is younger than three days: too short to date, so the window's range carries the context instead.",
+    "placeholders": {
+      "claim": { "type": "String" },
+      "mean": { "type": "String" },
+      "min": { "type": "String" },
+      "max": { "type": "String" }
+    }
+  },
+
+  "marketSentimentEvidenceTitle": "30 days · {from}–{to}",
+  "@marketSentimentEvidenceTitle": {
+    "placeholders": {
+      "from": { "type": "String" },
+      "to": { "type": "String" }
+    }
+  },
+  "marketSentimentSpan": "Range {min}–{max}",
+  "@marketSentimentSpan": {
+    "placeholders": {
+      "min": { "type": "String" },
+      "max": { "type": "String" }
+    }
+  },
+  "marketSentimentOldest": "Oldest point {date}",
+  "@marketSentimentOldest": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "marketSentimentSource": "Source: alternative.me",
+
+  "marketSentimentInfoTrigger": "The index condenses volatility, momentum, surveys, dominance and search volume into a single number from 0 to 100. It says nothing about whether buying is sensible.",
+  "@marketSentimentInfoTrigger": {
+    "description": "Tooltip on the info glyph beside the verdict. It is the whole explanation — there is no sheet behind it."
+  },
+
+  "marketSentimentErrorTitle": "Could not load sentiment",
+  "marketSentimentErrorBody": "alternative.me did not respond. Price and network data are not affected.",
+  "marketSentimentRetry": "Retry"
 }

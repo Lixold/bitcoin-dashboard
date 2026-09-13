@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/navigation/domain/nav_section.dart';
 import '../../features/navigation/presentation/app_shell.dart';
 import '../../features/navigation/presentation/coming_soon_screen.dart';
+import '../../features/market/presentation/market_screen.dart';
 import '../../features/network/presentation/network_screen.dart';
 import '../../features/price/presentation/price_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -88,8 +89,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
 Widget _screenFor(NavSection section) => switch (section) {
   NavSection.price => const PriceScreen(),
+  NavSection.market => const MarketScreen(),
   NavSection.network => const NetworkScreen(),
-  NavSection.market ||
   NavSection.forecast ||
   NavSection.miner ||
   NavSection.news => ComingSoonScreen(section: section),
