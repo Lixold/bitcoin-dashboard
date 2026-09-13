@@ -32,9 +32,12 @@ void _resize(WidgetTester tester, double width) =>
 /// the bar and the rail uppercase their labels the way the design system's
 /// `text-transform` does, the drawer does not.
 ///
-/// Scoped to the navigation because a section whose slice has not shipped
-/// prints its own name in the body — `find.text('News')` would match the
-/// destination and the `ComingSoon` screen behind it.
+/// Scoped to the navigation because this file's claims are about the
+/// navigation. A section body is free to use its own section's name — in a
+/// headline, a label, a statement — and an unscoped finder would start
+/// matching content and pass for the wrong reason. At rail and drawer
+/// widths the body is on screen next to the destinations, so there is
+/// nothing keeping the two apart but this scope.
 Finder _destination(String label) => find.descendant(
   of: find.byType(AppNavigation),
   matching: find.byWidgetPredicate(
@@ -123,7 +126,7 @@ void main() {
 
   group('destinations', () {
     for (final (name, width) in _expressions) {
-      testWidgets('the $name offers the four reachable sections and nothing '
+      testWidgets('the $name offers the reachable sections and nothing '
           'else', (tester) async {
         await pumpAt(tester, width: width);
 
@@ -135,10 +138,16 @@ void main() {
           );
         }
 
-        // Forecast and Miner have no shipped slice, so they have no route
-        // and are not destinations — and no "More" entry stands in for
-        // them. Settings is a task, reached from the header gear.
-        for (final absent in const ['Forecast', 'Miner', 'More', 'Settings']) {
+        // News, Forecast and Miner have no shipped slice, so they have no
+        // route and are not destinations — and no "More" entry stands in
+        // for them. Settings is a task, reached from the header gear.
+        for (final absent in const [
+          'News',
+          'Forecast',
+          'Miner',
+          'More',
+          'Settings',
+        ]) {
           expect(
             _destination(absent),
             findsNothing,
@@ -190,13 +199,13 @@ void main() {
       final router = await pumpAt(
         tester,
         width: 390,
-        initialLocation: NavSection.news.location,
+        initialLocation: NavSection.market.location,
       );
 
-      await tester.tap(_destination(NavSection.news.label(l10n)));
+      await tester.tap(_destination(NavSection.market.label(l10n)));
       await tester.pumpAndSettle();
 
-      expect(router.state.uri.path, NavSection.news.location);
+      expect(router.state.uri.path, NavSection.market.location);
     });
   });
 
@@ -247,19 +256,19 @@ void main() {
     testWidgets(
       'the selected destination follows the section across the drag',
       (tester) async {
-        final newsIndex = NavSection.visible().indexOf(NavSection.news);
+        // The last section in the list: an index the navigation has to
+        // carry across the drag intact, and the one an off-by-one at the
+        // end of the list would drop.
+        final lastIndex = NavSection.visible().length - 1;
+        final last = NavSection.visible().last;
 
-        await pumpAt(
-          tester,
-          width: 390,
-          initialLocation: NavSection.news.location,
-        );
+        await pumpAt(tester, width: 390, initialLocation: last.location);
 
         expect(
           tester
               .widget<NavigationBar>(find.byType(NavigationBar))
               .selectedIndex,
-          newsIndex,
+          lastIndex,
         );
 
         _resize(tester, 900);
@@ -268,7 +277,7 @@ void main() {
           tester
               .widget<NavigationRail>(find.byType(NavigationRail))
               .selectedIndex,
-          newsIndex,
+          lastIndex,
         );
 
         _resize(tester, 1200);
@@ -277,7 +286,7 @@ void main() {
           tester
               .widget<NavigationDrawer>(find.byType(NavigationDrawer))
               .selectedIndex,
-          newsIndex,
+          lastIndex,
         );
       },
     );
@@ -329,7 +338,7 @@ void main() {
         final handle = tester.ensureSemantics();
         final router = await pumpAt(tester, width: width);
 
-        router.go(NavSection.news.location);
+        router.go(NavSection.network.location);
         await tester.pumpAndSettle();
 
         for (final section in NavSection.visible()) {
@@ -339,8 +348,8 @@ void main() {
 
           expect(
             data.flagsCollection.isSelected.toBoolOrNull() ?? false,
-            section == NavSection.news,
-            reason: 'the $name should have moved its mark to News',
+            section == NavSection.network,
+            reason: 'the $name should have moved its mark to Network',
           );
         }
 
@@ -410,7 +419,7 @@ void main() {
     final priceFinder = find.byType(PriceScreen, skipOffstage: false);
     final priceElement = tester.element(priceFinder);
 
-    router.go(NavSection.news.location);
+    router.go(NavSection.market.location);
     await tester.pumpAndSettle();
 
     // Each branch has its own Navigator inside an IndexedStack: leaving Price

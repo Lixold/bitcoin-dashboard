@@ -2,32 +2,37 @@ import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('NavSection.isVisibleInPhase3', () {
-    test('Price, Market, Network, News are visible in Phase 3', () {
-      expect(NavSection.price.isVisibleInPhase3, isTrue);
-      expect(NavSection.market.isVisibleInPhase3, isTrue);
-      expect(NavSection.network.isVisibleInPhase3, isTrue);
-      expect(NavSection.news.isVisibleInPhase3, isTrue);
+  group('NavSection.hasShippedSlice', () {
+    test('Price, Market and Network have shipped their first slice', () {
+      expect(NavSection.price.hasShippedSlice, isTrue);
+      expect(NavSection.market.hasShippedSlice, isTrue);
+      expect(NavSection.network.hasShippedSlice, isTrue);
     });
 
-    test('Forecast and Miner are deferred (hidden) in Phase 3', () {
-      expect(NavSection.forecast.isVisibleInPhase3, isFalse);
-      expect(NavSection.miner.isVisibleInPhase3, isFalse);
+    test('News, Forecast and Miner have not shipped a slice', () {
+      // The flag says a slice is merged, not that a screen file exists.
+      // News is declared, localised and has a location; none of that puts
+      // it in the navigation.
+      expect(NavSection.news.hasShippedSlice, isFalse);
+      expect(NavSection.forecast.hasShippedSlice, isFalse);
+      expect(NavSection.miner.hasShippedSlice, isFalse);
     });
   });
 
   group('NavSection.visible()', () {
-    test('returns exactly the four Phase-3 sections in declaration order', () {
+    test('returns exactly the shipped sections in declaration order', () {
       expect(NavSection.visible(), const <NavSection>[
         NavSection.price,
         NavSection.market,
         NavSection.network,
-        NavSection.news,
       ]);
     });
 
-    test('count matches the design-system Phase-3 spec', () {
-      expect(NavSection.visible(), hasLength(4));
+    test('three of the six declared sections have shipped', () {
+      // Flipping a flag is how a section joins the navigation, so the two
+      // counts are worth pinning: the shipped three, and the six the enum
+      // declares whether they have shipped or not.
+      expect(NavSection.visible(), hasLength(3));
       expect(NavSection.values, hasLength(6));
     });
   });

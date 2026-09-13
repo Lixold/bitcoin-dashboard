@@ -1,6 +1,7 @@
 import 'package:bitcoin_dashboard/core/router/app_router.dart';
 import 'package:bitcoin_dashboard/features/navigation/domain/nav_section.dart';
 import 'package:bitcoin_dashboard/features/navigation/presentation/app_navigation.dart';
+import 'package:bitcoin_dashboard/features/network/presentation/network_screen.dart';
 import 'package:bitcoin_dashboard/features/price/presentation/price_screen.dart';
 import 'package:bitcoin_dashboard/features/settings/presentation/settings_screen.dart';
 import 'package:bitcoin_dashboard/l10n/generated/app_localizations.dart';
@@ -68,14 +69,113 @@ void main() {
 
     testWidgets('a section without a shipped slice has no route and lands on '
         'the home section', (tester) async {
-      // `forecast` and `miner` render a placeholder and cannot be reached from
-      // the UI. They deliberately get no route (CLAUDE.md §5) — a typed URL
-      // must not turn placeholder surface into a destination.
-      final router = await pumpAt(tester, NavSection.forecast.location);
+      // A section with no slice has nothing to show, so it deliberately gets
+      // no route (CLAUDE.md §5) — a typed URL must not open surface the
+      // navigation refuses to offer. `news` is the interesting one here: it
+      // was a destination until this section list stopped counting it, so
+      // the link exists in the wild.
+      for (final section in NavSection.values.where(
+        (section) => !section.hasShippedSlice,
+      )) {
+        final router = await pumpAt(tester, section.location);
 
-      expect(router.state.uri.path, homeLocation);
-      expect(find.byType(PriceScreen), findsOneWidget);
-      expect(find.text(l10n.navForecast.toUpperCase()), findsNothing);
+        expect(
+          router.state.uri.path,
+          homeLocation,
+          reason: '${section.id} has no slice and must not open',
+        );
+        expect(find.byType(PriceScreen), findsOneWidget);
+        expect(
+          find.text(section.label(l10n).toUpperCase()),
+          findsNothing,
+          reason: '${section.id} must not be offered as a destination',
+        );
+      }
+    });
+  });
+
+  group('the section list', () {
+    // `createAppRouter` takes the list it builds branches from and hands
+    // that same list to the shell, so these tests can watch a section
+    // appear and disappear without waiting for its slice to ship — and
+    // without a second list that could quietly disagree with the first.
+    Future<GoRouter> pumpWith(
+      WidgetTester tester,
+      List<NavSection> sections, {
+      String? at,
+    }) async {
+      useView(tester, TestView.tallTablet);
+
+      final router = createAppRouter(sections: sections, initialLocation: at);
+      addTearDown(router.dispose);
+
+      await pumpRouterApp(tester, router: router);
+      await tester.pumpAndSettle();
+      return router;
+    }
+
+    List<NavigationRailDestination> destinations(WidgetTester tester) =>
+        tester.widget<NavigationRail>(find.byType(NavigationRail)).destinations;
+
+    testWidgets('a section outside it has no destination and no route', (
+      tester,
+    ) async {
+      final router = await pumpWith(tester, const [
+        NavSection.price,
+        NavSection.market,
+      ]);
+
+      expect(destinations(tester), hasLength(2));
+      expect(
+        find.text(NavSection.network.label(l10n).toUpperCase()),
+        findsNothing,
+      );
+
+      router.go(NavSection.network.location);
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, NavSection.price.location);
+      expect(find.byType(NetworkScreen), findsNothing);
+    });
+
+    testWidgets('the same section inside it is a destination that opens', (
+      tester,
+    ) async {
+      final router = await pumpWith(tester, const [
+        NavSection.price,
+        NavSection.market,
+        NavSection.network,
+      ]);
+
+      expect(destinations(tester), hasLength(3));
+
+      router.go(NavSection.network.location);
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, NavSection.network.location);
+      expect(find.byType(NetworkScreen), findsOneWidget);
+      // The list is one list: position 2 in it is destination 2 and branch 2.
+      expect(_selectedIndex(tester), 2);
+    });
+
+    testWidgets('the home section follows the list rather than the enum', (
+      tester,
+    ) async {
+      // Everything above keeps Price first, which is also what
+      // `NavSection.visible()` says — so nothing there would notice if the
+      // router still read the enum behind the parameter's back.
+      final router = await pumpWith(tester, const [
+        NavSection.market,
+        NavSection.network,
+      ]);
+
+      expect(router.state.uri.path, NavSection.market.location);
+
+      router.go(NavSection.price.location);
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, NavSection.market.location);
+      expect(_selectedIndex(tester), 0);
     });
   });
 
@@ -116,7 +216,7 @@ void main() {
       // Settings is pushed on top of the section rather than replacing it,
       // so the system back gesture has something to pop before it can
       // leave the app.
-      final router = await pumpAt(tester, NavSection.news.location);
+      final router = await pumpAt(tester, NavSection.market.location);
 
       router.push(settingsLocation);
       await tester.pumpAndSettle();
@@ -127,7 +227,7 @@ void main() {
 
       expect(handled, isTrue);
       expect(find.byType(SettingsScreen), findsNothing);
-      expect(router.state.uri.path, NavSection.news.location);
+      expect(router.state.uri.path, NavSection.market.location);
     });
   });
 }

@@ -4,14 +4,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/navigation/domain/nav_section.dart';
 import '../../features/navigation/presentation/app_shell.dart';
-import '../../features/navigation/presentation/coming_soon_screen.dart';
 import '../../features/market/presentation/market_screen.dart';
 import '../../features/network/presentation/network_screen.dart';
 import '../../features/price/presentation/price_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 
-/// Location of the section the app opens on, and the target for any request
-/// that does not match a route.
+/// Location of the section the shipped app opens on.
+///
+/// For widgets that need the way home without a router in hand — the header
+/// gear, when settings was opened by deep link and there is nothing to pop.
+/// The router derives its own home from the section list it was built with,
+/// which is the same list here and a test's list in a test.
 String get homeLocation => NavSection.visible().first.location;
 
 /// Settings sits outside the shell: it covers the whole screen, navigation
@@ -24,38 +27,44 @@ const String settingsLocation = '/settings';
 
 /// Builds the app's routing table.
 ///
-/// **One branch per *reachable* section.** The branch list follows
-/// [NavSection.visible], so `/forecast` and `/miner` — which render nothing
-/// but a placeholder and cannot be opened from the UI — get no route. Giving
-/// them one would make placeholder surface deep-linkable, which CLAUDE.md §5
-/// rules out. When `isVisibleInPhase3` becomes `hasShippedSlice`, the branches
-/// follow that flag without a change here.
+/// **One branch per section with a shipped slice.** [sections] is that list
+/// — [NavSection.visible] in the app — and it is the only list in play: the
+/// branches are built from it in order, and [AppShell] is handed the same
+/// list for its destinations, so a destination index *is* a branch index.
+/// A section that has not shipped gets no route at all, because a route
+/// would make surface that renders nothing deep-linkable, which CLAUDE.md §5
+/// rules out. Passing [sections] is what lets a test watch a section lose
+/// and gain its destination without a second list to keep in step.
 ///
 /// [StatefulShellRoute.indexedStack] (rather than a plain `ShellRoute`) gives
 /// every section its own [Navigator]: its own back stack, and scroll and load
-/// state that survive leaving the section. It is also what `AppNavigation`
-/// attaches to: a destination index is a branch index.
-GoRouter createAppRouter({String? initialLocation}) {
-  final sections = NavSection.visible();
+/// state that survive leaving the section.
+GoRouter createAppRouter({
+  String? initialLocation,
+  List<NavSection>? sections,
+}) {
+  final branches = sections ?? NavSection.visible();
+  final home = branches.first.location;
 
   return GoRouter(
-    initialLocation: initialLocation ?? homeLocation,
+    initialLocation: initialLocation ?? home,
     // Makes the router's navigators restorable, so a branch can bring its own
     // stack back after the platform kills the app. The location itself is
     // restored through `restorationScopeId` on MaterialApp.router.
     restorationScopeId: 'app_router',
-    redirect: (context, state) => state.uri.path == '/' ? homeLocation : null,
+    redirect: (context, state) => state.uri.path == '/' ? home : null,
     // No error screen ships in this PR: an unknown deep link lands on the
     // home section instead of a page we have neither a design nor
-    // translations for.
-    onException: (context, state, router) => router.go(homeLocation),
+    // translations for. `/news`, `/forecast` and `/miner` arrive here for as
+    // long as they have no slice.
+    onException: (context, state, router) => router.go(home),
     routes: [
       StatefulShellRoute.indexedStack(
         restorationScopeId: 'app_shell',
         builder: (context, state, navigationShell) =>
-            AppShell(navigationShell: navigationShell),
+            AppShell(navigationShell: navigationShell, sections: branches),
         branches: [
-          for (final section in sections)
+          for (final section in branches)
             StatefulShellBranch(
               restorationScopeId: 'branch_${section.id}',
               routes: [
@@ -87,11 +96,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return router;
 });
 
+/// The body of a section.
+///
+/// Only sections with a shipped slice reach this: [createAppRouter] builds
+/// no branch for the others, so the last case cannot be hit by the app. It
+/// throws rather than rendering a placeholder, which is the difference this
+/// change is about — a section without a slice is absent, not empty.
+///
+/// The two ways that can go wrong are both caught before a user sees them.
+/// A seventh section added to the enum is an analyzer error here, because
+/// the switch is exhaustive over [NavSection]. A flag flipped to
+/// `hasShippedSlice: true` without a screen to go with it fails
+/// `test/core/router/app_router_test.dart`, which opens every section
+/// [NavSection.visible] returns.
 Widget _screenFor(NavSection section) => switch (section) {
   NavSection.price => const PriceScreen(),
   NavSection.market => const MarketScreen(),
   NavSection.network => const NetworkScreen(),
   NavSection.forecast ||
   NavSection.miner ||
-  NavSection.news => ComingSoonScreen(section: section),
+  NavSection.news => throw StateError(
+    'Section ${section.id} has no shipped slice and therefore no branch; '
+    'createAppRouter must not have been given it.',
+  ),
 };
