@@ -20,7 +20,7 @@ Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news 
 - **Price History** — Charts for 1D / 1W / 1M / 3M / 1Y timeframes
 - **Market Snapshot** — How far below its all-time high the price stands, and how
   much of the crypto market Bitcoin holds, each with the sentence that reads it
-- **Multilingual News** — RSS-based news; EN and DE available today, 13 more languages planned (ES, PT-BR, FR, IT, JA, KO, ZH, TR, …)
+- **Multilingual News** — RSS-based news; the EN and DE feeds are produced and published, the section that reads them is *(roadmap)*, with 13 more languages planned (ES, PT-BR, FR, IT, JA, KO, ZH, TR, …)
 - **Currency Conversion** — ~30 fiat currencies via daily ECB reference rates,
   applied on the device; where a rate is unavailable amounts stay in the currency
   the source publishes and the screen says so

@@ -84,11 +84,11 @@ void main() {
     await pumpAppRoot(tester);
     await tester.pumpAndSettle();
 
-    await tester.tap(_destination('News'));
+    await tester.tap(_destination('Market'));
     await tester.pumpAndSettle();
     expect(
       _selectedIndex(tester),
-      NavSection.visible().indexOf(NavSection.news),
+      NavSection.visible().indexOf(NavSection.market),
     );
 
     // Tears the tree down, restores the platform restoration data, and pumps
@@ -98,7 +98,7 @@ void main() {
 
     expect(
       _selectedIndex(tester),
-      NavSection.visible().indexOf(NavSection.news),
+      NavSection.visible().indexOf(NavSection.market),
     );
     expect(find.byType(PriceScreen), findsNothing);
   });

@@ -10,19 +10,27 @@ import 'app_navigation.dart';
 ///
 /// The shell does not own the active section: it is the builder of the
 /// router's [StatefulShellRoute], and the section is read from
-/// [StatefulNavigationShell.currentIndex]. Section order is
-/// [NavSection.visible] on both sides — the router builds one branch per
-/// entry, in that order, and [AppNavigation] lists its destinations in the
-/// same order, so a destination index *is* a branch index.
+/// [StatefulNavigationShell.currentIndex]. It does not own the section
+/// list either — [sections] arrives from the router that built the
+/// branches, so the destinations and the branches are one list rather than
+/// two lookups that have to agree, and a destination index *is* a branch
+/// index.
 ///
 /// The navigation is chrome, never an overlay: on a narrow window the bar
 /// is the scaffold's `bottomNavigationBar` and the body ends above it; on
 /// a wide one the rail or drawer takes its width out of the row. Neither
 /// covers the content — which is what the floating pill this replaces did.
 class AppShell extends StatelessWidget {
-  const AppShell({super.key, required this.navigationShell});
+  const AppShell({
+    super.key,
+    required this.navigationShell,
+    required this.sections,
+  });
 
   final StatefulNavigationShell navigationShell;
+
+  /// The sections the router built branches for, in branch order.
+  final List<NavSection> sections;
 
   /// Switches to the branch at [index].
   ///
@@ -44,7 +52,7 @@ class AppShell extends StatelessWidget {
 
     final navigation = AppNavigation(
       layout: layout,
-      sections: NavSection.visible(),
+      sections: sections,
       selectedIndex: navigationShell.currentIndex,
       onSelect: _select,
     );

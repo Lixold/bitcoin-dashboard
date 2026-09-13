@@ -237,11 +237,6 @@
     }
   },
 
-  "comingSoon": "Coming soon",
-  "@comingSoon": {
-    "description": "Placeholder for screens that are not yet implemented."
-  },
-
   "settingsTitle": "Settings",
   "@settingsTitle": {
     "description": "Settings screen title, and the label of the header gear."
