@@ -298,3 +298,24 @@ jobs:
 
       - name: Run tests
         run: npm --prefix workers test
+
+  # -------------------------------------------------------------------------
+  # 9. CDN watchdog unit tests (#43)
+  #    The watchdog is not a Worker — it runs on a schedule from Actions and
+  #    reads what the Workers published — so it carries its own package and
+  #    its own job rather than riding along with `npm --prefix workers test`.
+  #    Same Node-native runner, no dependencies to install.
+  # -------------------------------------------------------------------------
+  watchdog-test:
+    name: Watchdog Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Run tests
+        run: npm --prefix tools/cdn-watchdog test
