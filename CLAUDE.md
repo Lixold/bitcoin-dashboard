@@ -121,7 +121,7 @@ bitcoin-dashboard/
 │   ├── cron-fx-rates/          # ECB XML → fx-rates.json (daily)
 │   ├── cron-news-en/           # RSS EN → news-en.json
 │   ├── cron-news-de/           # RSS DE → news-de.json
-│   ├── cron-network-stats/     # Bitnodes + mempool.space → network-stats.json
+│   ├── cron-network-stats/     # BTC Nodes + mempool.space → network-health.json
 │   └── package.json            # Shared deps + `npm test` for all Workers
 ├── docs/adr/                   # Architecture Decision Records (English mirror)
 ├── .github/workflows/          # ci.yml, deploy_workers.yml

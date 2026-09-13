@@ -5,7 +5,7 @@
 // Replaces scripts/fetch_network_stats.py. Pulls two free, no-key public
 // sources and writes a single JSON snapshot to R2:
 //
-//   Bitnodes.io      — reachable full-node count + 24h trend
+//   BTCNodes.io      — reachable full-node count + 24h trend
 //   Mempool.space    — mining-pool block share over the last 24 h
 //
 // The aggregated `aggregatedHealth` label combines both signals into a
@@ -14,23 +14,35 @@
 //   good      stable/growing node count AND no pool > 30 %
 //   warning   shrinking node count (<5 %)  OR  largest pool 30–40 %
 //   critical  shrinking node count >5 %    OR  largest pool > 40 %
+//   unknown   one dimension has no reading and the other sees nothing
+//             wrong — "good" would claim more than we know
 //
-// Per-source isolation: if Bitnodes fails we still ship mining-pool data
-// (and vice versa). The Worker only throws when both upstreams fail —
-// the previous network-health.json on R2 then remains as fallback.
+// Per-source isolation: if one source fails we still ship the other's
+// data. The Worker only throws when both upstreams fail — the previous
+// network-health.json on R2 then remains as fallback. What isolation must
+// not do is let half a picture read as a clean bill of health; that is
+// what `unknown` is for.
 
-import { getJson, isoUtcSeconds, putJson } from "../../_shared/lib.js";
+import { getJson, isoUtcSeconds, putJson, roundTo } from "../../_shared/lib.js";
 
-const BITNODES_SNAPSHOTS_URL = "https://bitnodes.io/api/v1/snapshots/";
+// The node census moved in September 2026: bitnodes.io answers 302 to
+// btcnodes.io, which ignores the old `page_size` parameter in favour of
+// `limit` and returns `next` as a path rather than an absolute URL. We
+// address the new host directly — following a redirect would make the
+// pipeline quietly dependent on someone else's routing, and the host has
+// to be named for the privacy note (#38) either way.
+const BTCNODES_SNAPSHOTS_URL = "https://btcnodes.io/api/v1/snapshots/";
 const MEMPOOL_POOLS_24H_URL = "https://mempool.space/api/v1/mining/pools/24h";
 
-// === Tunables — kept in sync with scripts/fetch_network_stats.py ===========
+// === Tunables =============================================================
 
-// Bitnodes snapshots are typically ~10 min apart; 100 entries cover ~16 h.
-// To reach back ~24 h we paginate up to MAX_PAGES, with an early-stop once
-// we've crossed the 24h-ago target.
-const BITNODES_PAGE_SIZE = 100;
-const BITNODES_MAX_PAGES = 5;
+// Snapshots are ~25 min apart: measured 2026-09-13, 100 entries spanned
+// 44.3 h. One request therefore covers the 24 h this function needs with
+// ~1.8x headroom and there is no pagination to do. Should that headroom
+// fall below ~1.3x, the 24h reference drifts out of the tolerance below
+// and the trend degrades to "unknown" with the count intact — the honest
+// failure, and the signal to page again after all.
+const BTCNODES_LIMIT = 100;
 
 // How far the historical snapshot may sit from the exact 24h-ago target
 // before we treat the trend as unknown rather than report a misleading
@@ -65,49 +77,40 @@ export function trendLabel(pct) {
   return "stable";
 }
 
-// === Bitnodes: full-node count + 24h trend ================================
+// === BTC Nodes: full-node count + 24h trend ===============================
 
-async function fetchFullNodes() {
-  // Walk pages until we've crossed the 24h-ago timestamp or hit MAX_PAGES.
-  // Bitnodes' `next` URL already encodes page_size, so after the first
-  // request we hand control to that URL verbatim.
-  const snapshots = [];
-  let url = `${BITNODES_SNAPSHOTS_URL}?page_size=${BITNODES_PAGE_SIZE}`;
-  let pagesFetched = 0;
+/**
+ * Derive the full-node reading from one page of BTC Nodes snapshots.
+ *
+ * Pure on purpose: the fetch is what CI cannot exercise, the arithmetic
+ * here is where the reading is decided. `snapshots` may arrive in any
+ * order — the upstream serves newest first, but that is its convention
+ * rather than a promise, and an unwritten convention of this upstream is
+ * exactly what broke in #29.
+ */
+export function fullNodesFromSnapshots(snapshots) {
+  const ordered = snapshots
+    .filter((s) => s && s.timestamp != null && s.total_nodes != null)
+    .sort((a, b) => b.timestamp - a.timestamp);
 
-  const targetTsInitial = Math.floor(Date.now() / 1000) - 24 * 3600;
-
-  while (url && pagesFetched < BITNODES_MAX_PAGES) {
-    const raw = await getJson(url);
-    const results = Array.isArray(raw.results) ? raw.results : [];
-    for (const r of results) snapshots.push(r);
-    pagesFetched += 1;
-
-    const last = results[results.length - 1];
-    if (last && (last.timestamp || 0) <= targetTsInitial) break;
-
-    url = raw.next || null;
+  if (ordered.length === 0) {
+    throw new Error("BTC Nodes returned no usable snapshots");
   }
 
-  if (snapshots.length === 0) {
-    throw new Error("Bitnodes returned no snapshots");
-  }
-
-  const latest = snapshots[0];
+  const latest = ordered[0];
   const latestCount = latest.total_nodes;
   const latestTs = latest.timestamp;
-  if (latestCount == null || latestTs == null) {
-    throw new Error(
-      `Bitnodes latest snapshot missing fields: ${JSON.stringify(latest)}`,
-    );
-  }
+  const spanHours = roundTo(
+    (latestTs - ordered[ordered.length - 1].timestamp) / 3600,
+    1,
+  );
 
   console.log(
-    `Bitnodes: ${snapshots.length} snapshots over ${pagesFetched} page(s), ` +
+    `BTC Nodes: ${ordered.length} snapshots spanning ${spanHours} h, ` +
       `latest count=${latestCount}`,
   );
 
-  if (snapshots.length < 2) {
+  if (ordered.length < 2) {
     return { count: latestCount, percentChange24h: null, trend: "unknown" };
   }
 
@@ -115,30 +118,37 @@ async function fetchFullNodes() {
   // than wall clock — the latest may itself be a few minutes in the past,
   // and we want a consistent 24h window relative to it.
   const targetTs = latestTs - 24 * 3600;
-  let closest = snapshots[1];
-  let closestDelta = Math.abs((closest.timestamp || 0) - targetTs);
-  for (let i = 2; i < snapshots.length; i++) {
-    const d = Math.abs((snapshots[i].timestamp || 0) - targetTs);
+  let closest = ordered[1];
+  let closestDelta = Math.abs(closest.timestamp - targetTs);
+  for (let i = 2; i < ordered.length; i++) {
+    const d = Math.abs(ordered[i].timestamp - targetTs);
     if (d < closestDelta) {
-      closest = snapshots[i];
+      closest = ordered[i];
       closestDelta = d;
     }
   }
 
   if (closestDelta > TREND_TARGET_TOLERANCE_SECONDS) {
     console.warn(
-      `Bitnodes 24h reference is ${closestDelta} s off target — trend=unknown`,
+      `BTC Nodes 24h reference is ${closestDelta} s off target — trend=unknown`,
     );
     return { count: latestCount, percentChange24h: null, trend: "unknown" };
   }
 
   const prevCount = closest.total_nodes;
-  if (!prevCount || prevCount <= 0) {
+  if (prevCount <= 0) {
     return { count: latestCount, percentChange24h: null, trend: "unknown" };
   }
 
-  const pct = Math.round(((latestCount - prevCount) / prevCount) * 100 * 100) / 100;
+  const pct = roundTo(((latestCount - prevCount) / prevCount) * 100, 2);
   return { count: latestCount, percentChange24h: pct, trend: trendLabel(pct) };
+}
+
+async function fetchFullNodes() {
+  const raw = await getJson(
+    `${BTCNODES_SNAPSHOTS_URL}?limit=${BTCNODES_LIMIT}`,
+  );
+  return fullNodesFromSnapshots(Array.isArray(raw.results) ? raw.results : []);
 }
 
 // === Mempool.space: mining-pool concentration =============================
@@ -187,22 +197,37 @@ async function fetchMiningPools() {
 
 // === Aggregated health signal =============================================
 
+/**
+ * Combine both dimensions into the one label the payload carries.
+ *
+ * A null argument means that dimension has no reading — its source failed,
+ * or it answered but the 24h reference sat outside tolerance. Only "good"
+ * is a claim about the whole picture, so only "good" gives way to
+ * "unknown": a pool share over the line stays "critical" whether or not
+ * the node count arrived. "unknown" is therefore not a fourth severity
+ * between "warning" and "good" — it means the question cannot be
+ * answered, and the first consumer (#34) has to render it that way.
+ */
 export function aggregateHealth(nodesPctChange, maxPoolPct) {
+  const hasNodes = nodesPctChange !== null && nodesPctChange !== undefined;
+  const hasPools = maxPoolPct !== null && maxPoolPct !== undefined;
+
   let critical = false;
   let warning = false;
 
-  if (nodesPctChange !== null && nodesPctChange !== undefined) {
+  if (hasNodes) {
     if (nodesPctChange < NODE_CRITICAL_DROP_PCT) critical = true;
     else if (nodesPctChange < 0) warning = true;
   }
 
-  if (maxPoolPct !== null && maxPoolPct !== undefined) {
+  if (hasPools) {
     if (maxPoolPct > POOL_ALERT_PCT) critical = true;
     else if (maxPoolPct >= POOL_WARNING_PCT) warning = true;
   }
 
   if (critical) return "critical";
   if (warning) return "warning";
+  if (!hasNodes || !hasPools) return "unknown";
   return "good";
 }
 
@@ -216,10 +241,10 @@ async function runAll(env) {
   let miningPools = null;
 
   try {
-    console.log("Fetching Bitnodes snapshots");
+    console.log("Fetching BTC Nodes snapshots");
     fullNodes = await fetchFullNodes();
   } catch (exc) {
-    console.error("Bitnodes fetch failed:", exc);
+    console.error("BTC Nodes fetch failed:", exc);
   }
 
   try {
@@ -264,7 +289,7 @@ async function runAll(env) {
     _meta: {
       fetchedAt: isoUtcSeconds(now),
       date: now.toISOString().slice(0, 10),
-      sources: ["Bitnodes.io", "Mempool.space"],
+      sources: ["BTCNodes.io", "Mempool.space"],
     },
     fullNodes: fullNodesPayload,
     miningPools: poolsPayload,

@@ -2,7 +2,8 @@
 
 - **Date:** 2026-05-06
 - **Status:** Accepted (updated 2026-05-10 to reflect Cloudflare Workers;
-  2026-09-06 to record the CDN as an app-side host)
+  2026-09-06 to record the CDN as an app-side host; 2026-09-13 to follow the
+  node census from bitnodes.io to btcnodes.io)
 - **Decider:** Daniel Nagel
 - **Depends on:** [ADR-0003](0003-backend-cloudflare-workers-r2.md)
 
@@ -65,7 +66,7 @@ the staleness rule that goes with it.
 | Market snapshot | `cron-history` (every 15 min) | CoinGecko Demo API | `data/market.json` |
 | FX rates (~30 currencies) | `cron-fx-rates` (daily) | ECB XML feed | `data/fx-rates.json` |
 | News (EN / DE; more languages planned) | `cron-news-en`, `cron-news-de` (every 15 min) | RSS feeds | `data/news-{lang}.json` |
-| Network health | `cron-network-stats` (daily) | Bitnodes.io, mempool.space | `data/network-health.json` |
+| Network health | `cron-network-stats` (daily) | BTCNodes.io, mempool.space | `data/network-health.json` |
 | Prognosis models *(Phase 4)* | TBD | CoinGecko + computed | `data/prognosis-{model}.json` |
 
 ### News feeds (MVP and planned)

@@ -13,7 +13,7 @@ Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news 
 - **Live Price** — Real-time BTC price via Binance public API, in the currency
   you picked, with what one unit of it buys in sats
 - **On-Chain Metrics** — Mempool, fees, hashrate, difficulty via mempool.space
-- **Network Health** — Reachable node count (Bitnodes) and chain tip status (mempool.space)
+- **Network Health** — Reachable node count (BTC Nodes) and chain tip status (mempool.space)
 - **Fear & Greed Index** — Which of the five sentiment bands today's score
   falls in and how the last 30 days ran, with the sentence that reads it, via
   alternative.me
@@ -158,7 +158,7 @@ bitcoin-dashboard/
 │   ├── cron-fx-rates/         # ECB → fx-rates.json (daily)
 │   ├── cron-news-en/          # RSS EN → news-en.json
 │   ├── cron-news-de/          # RSS DE → news-de.json
-│   └── cron-network-stats/    # Bitnodes + mempool.space → network-stats.json
+│   └── cron-network-stats/    # BTC Nodes + mempool.space → network-health.json
 ├── docs/adr/                  # Architecture Decision Records
 ├── .github/workflows/         # CI (format, analyze, test, builds, workers)
 │                              # + manual Worker deploys
@@ -181,7 +181,7 @@ checks a PR has to pass — live in [CLAUDE.md](CLAUDE.md).
 | Market Snapshot | CDN `/data/market.json` | Cloudflare Worker → CoinGecko |
 | FX Rates (~30 currencies) | CDN `/data/fx-rates.json` | Cloudflare Worker → ECB XML |
 | News (EN, DE today) | CDN `/data/news-{lang}.json` | Cloudflare Worker → RSS |
-| Network Stats | CDN `/data/network-stats.json` | Cloudflare Worker → Bitnodes + mempool.space |
+| Network Health | CDN `/data/network-health.json` | Cloudflare Worker → BTC Nodes + mempool.space |
 | Prognosis Models *(roadmap)* | CDN `/data/prognosis-{model}.json` | Cloudflare Worker |
 
 Currency conversion is performed **client-side**:
