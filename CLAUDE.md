@@ -123,6 +123,8 @@ bitcoin-dashboard/
 │   ├── cron-news-de/           # RSS DE → news-de.json
 │   ├── cron-network-stats/     # BTC Nodes + mempool.space → network-health.json
 │   └── package.json            # Shared deps + `npm test` for all Workers
+├── tools/                      # Repository tooling that is not the app
+│   └── cdn-watchdog/           # Scheduled check of the published payloads
 ├── docs/adr/                   # Architecture Decision Records (English mirror)
 ├── .github/workflows/          # ci.yml, deploy_workers.yml
 └── android/ ios/ macos/ windows/ linux/ web/   # Platform projects
@@ -149,6 +151,10 @@ Conventions:
   and resolves shared deps through the root `workers/package.json`.
   Put new cross-Worker logic in `_shared/` with a `*.test.js` next to
   it — never copy-paste it between Workers.
+- **`tools/`** is for code that serves the repository rather than the
+  product: it ships to nobody, and nothing under `lib/` or `workers/`
+  may import from it. `tools/cdn-watchdog/` watches what the Workers
+  publish, so it deliberately does not live among them — see §6.
 - **Localisation:** `lib/l10n/app_en.arb` is the template; every
   user-facing string goes into both `app_en.arb` and `app_de.arb`.
   `lib/l10n/generated/` is produced by `flutter gen-l10n` (runs
@@ -271,7 +277,8 @@ them is its own issue.
   copy.
 - Tests for the new code exist and pass.
 - `dart format .`, `flutter analyze`, and `flutter test` are clean
-  locally; Worker changes additionally pass `npm --prefix workers test`.
+  locally; Worker changes additionally pass `npm --prefix workers test`,
+  watchdog changes `npm --prefix tools/cdn-watchdog test`.
 - No new outbound host, dependency, or stored field that is not
   covered by §1 and documented.
 
@@ -282,7 +289,7 @@ them is its own issue.
 - **Never push directly to `main`.** `main` is protected. Work on a
   branch (`feat/…`, `fix/…`, `docs/…`, `chore/…`, `ci/…`) and open a
   PR.
-- **All 15 required checks must be green before merge.** From
+- **All 16 required checks must be green before merge.** From
   [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
   | # | Check |
@@ -294,6 +301,7 @@ them is its own issue.
   | 9 | Dependency Review |
   | 10–14 | Workers Lint — cron-history, cron-fx-rates, cron-network-stats, cron-news-en, cron-news-de |
   | 15 | Workers Tests |
+  | 16 | Watchdog Tests |
 
   The Flutter jobs are chained (`format` → `analyze` → `test`/`build`),
   so an unformatted file skips every downstream job. Run
@@ -318,13 +326,34 @@ them is its own issue.
 - Worker deploys are manual via the `Deploy Cloudflare Workers`
   workflow — merging a Worker change does not deploy it.
 
+### The CDN watchdog
+
+`CDN Watchdog` runs hourly from Actions and is the one scheduled workflow
+that is not CI. It reads the published payloads, checks each against the
+cadence and the volume floor declared for it, and opens **one** issue when
+either goes wrong. It is not on Cloudflare on purpose: a watchdog that
+lives in the infrastructure it watches goes quiet exactly when that
+infrastructure is the problem. ADR-0003's finding that Actions `schedule:`
+fires unreliably stands and does not overturn that — a missed producer run
+loses data, a missed watchdog run only delays a verdict the payload's own
+timestamp still carries.
+
+- **`tools/cdn-watchdog/payloads.js` is the canonical list of published
+  payloads.** A new Worker output is unwatched until it has a row there:
+  where its timestamp sits, how old it may get, and what volume proves it
+  is not empty. Add the row in the PR that adds the output.
+- The watchdog only ever opens an issue. No mail, no push, no chat, and it
+  never closes what it opened — recovery is a comment, because someone
+  should look at why it broke.
+
 ### Local pre-flight
 
 ```bash
 dart format .
 flutter analyze
 flutter test
-npm --prefix workers test     # only when workers/ changed
+npm --prefix workers test              # only when workers/ changed
+npm --prefix tools/cdn-watchdog test   # only when tools/ changed
 ```
 
 ---
@@ -343,6 +372,11 @@ and no tests is incomplete.
   `*.test.js` next to the code they cover. Extract pure functions
   (parsers, aggregators, formatters) so they are testable without a
   `fetch` or an R2 binding; test those directly.
+- **`tools/`:** the same runner and the same split. In
+  `tools/cdn-watchdog/` the judgement is pure and takes `now` as an
+  argument, so both of #43's failure modes — a timestamp aged past its
+  threshold, an emptied payload with a current timestamp — are tested
+  against the committed capture rather than against the live CDN.
 - Tests must be deterministic and offline: no live API calls, no
   reliance on wall-clock time or on ordering of real feeds.
 - Coverage is reported in the CI job log only — never wire up an

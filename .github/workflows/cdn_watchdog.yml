@@ -1,0 +1,91 @@
+name: CDN Watchdog
+
+# Checks the published payloads against their cadence and their expected
+# volume, and opens one GitHub issue when either goes wrong (#43). Reads
+# only; it never touches R2, the Workers, or the app.
+#
+# Why this runs on Actions and not as a sixth Cloudflare Worker:
+#
+#   A watchdog must not live in the infrastructure it watches. Everything
+#   it checks is produced by Cloudflare Workers and served from Cloudflare
+#   R2; a Worker asking whether the Workers are healthy goes quiet exactly
+#   when Cloudflare is the problem. Opening an issue also needs nothing
+#   but the built-in GITHUB_TOKEN here, where on the Cloudflare side it
+#   would mean a second stored credential.
+#
+#   The cost is honest and worth naming: ADR-0003 moved the data pipeline
+#   off Actions `schedule:` precisely because it fires unreliably — a
+#   measured 2-4 % hit rate over a 12.5 h window. That argument does not
+#   carry over, because a producer and a watchdog fail differently. A
+#   producer that misses its slot loses that slot's data for good. This
+#   job is stateless and judges the payload's own timestamp, so a run that
+#   fires two hours late still sees — and still reports — the same stale
+#   file. Unreliable scheduling costs detection latency here, not
+#   detections. When latency matters, the job can be run by hand.
+#
+# Uses only actions/checkout and actions/setup-node, both already on the
+# repository's "Allow select actions" list (CLAUDE.md §6). Issues are
+# opened with the pre-installed `gh` CLI rather than a marketplace action,
+# so this workflow needs no settings change to run.
+
+on:
+  schedule:
+    # Hourly at :17. Not on the hour: GitHub's own guidance is that the
+    # top of the hour is the most congested slot and the most delayed.
+    #
+    # GitHub disables a schedule after 60 days without repository
+    # activity. This one watches a pipeline that keeps running whether or
+    # not anyone commits, so a quiet quarter would switch the watchdog off
+    # silently — check the Actions tab after a long break.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Where to read the payloads from"
+        type: choice
+        required: true
+        default: live
+        options:
+          - live
+          # Reads the committed capture with one payload aged past its
+          # threshold and one emptied. This is how the issue path is
+          # proven to fire without waiting for a real outage; the report
+          # it writes says on its face that it is not a real alarm.
+          - fixture-broken
+
+permissions:
+  contents: read
+  issues: write
+
+# Never two at once: a second run could open a second issue between the
+# first run's lookup and its create. Queue rather than cancel — a skipped
+# check is a blind hour.
+concurrency:
+  group: cdn-watchdog
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    name: Check published payloads
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Matches the Node the Workers and their tests are pinned to.
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # No `npm ci`: the watchdog has no dependencies on purpose, so that
+      # it can still run when an install cannot.
+      - name: Run the watchdog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # `github.event.inputs.source` is empty on a scheduled run.
+          WATCHDOG_SOURCE: ${{ github.event.inputs.source || 'live' }}
+        # Exit 0 is the normal outcome even when payloads are failing —
+        # the issue is the channel, and a permanently red schedule is a
+        # signal nobody reads. A red run here means the watchdog itself
+        # broke.
+        run: node tools/cdn-watchdog/run.js --source="$WATCHDOG_SOURCE"
