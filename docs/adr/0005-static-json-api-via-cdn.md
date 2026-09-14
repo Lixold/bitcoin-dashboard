@@ -222,6 +222,13 @@ honestly be given. The verdict of the dimension that did arrive still
 wins: a pool share above 40 % reads `critical` whether or not the node
 count came in. A consumer must never render `unknown` as "not bad".
 
+The first consumer discharges that by rendering `aggregatedHealth` not at
+all: the network screen states both dimensions as their own statements,
+so a third verdict over them would only be a fourth place for the same
+reading to disagree. It is not a proxy for "the node comparison is
+missing" either — `unknown` follows from **either** dimension being
+absent, so the screen hangs that hint on `fullNodes.percentChange24h`.
+
 ## Direct live calls
 
 ```

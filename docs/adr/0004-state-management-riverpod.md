@@ -88,9 +88,9 @@ backoff — that one is unaffected by the default because it reports
 failures into a `StreamController` rather than throwing out of the
 provider body, so it never enters the framework's retry path.
 
-`networkPoolsProvider` is the first `FutureProvider` in the app and
+`networkHealthProvider` is the first `FutureProvider` in the app and
 declines retries: its fallback is the cache, and a reader who is offline
-is better served by yesterday's shares plus an age hint than by half a
+is better served by yesterday's figures plus an age hint than by half a
 minute of spinner.
 
 ## Provider hierarchy
@@ -108,7 +108,7 @@ currenciesProvider                CDN fx-rates.json, one-shot + 24 h cache
 newsProvider(langs)               CDN news-{lang}.json
                                    ↳ depends on settingsProvider.languages,
                                      re-fetches on change via ref.invalidate
-networkPoolsProvider              CDN network-health.json, 60 min cache,
+networkHealthProvider             CDN network-health.json, 60 min cache,
                                    stale past 26 h, no retries
 prognosisProvider(model)          CDN prognosis-{model}.json, daily (Phase 4)
 ```

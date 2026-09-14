@@ -1,76 +1,76 @@
 {
   "_meta": {
-    "fetchedAt": "2026-09-08T01:01:18+00:00",
-    "date": "2026-09-08",
+    "fetchedAt": "2026-09-14T01:00:03+00:00",
+    "date": "2026-09-14",
     "sources": [
-      "Bitnodes.io",
+      "BTCNodes.io",
       "Mempool.space"
     ]
   },
   "fullNodes": {
-    "count": null,
-    "percentChange24h": null,
-    "trend": "unknown"
+    "count": 26579,
+    "percentChange24h": 0.3,
+    "trend": "stable"
   },
   "miningPools": [
     {
-      "name": "AntPool",
-      "hashratePercent": 22.96,
-      "blockCount": 31,
+      "name": "Foundry USA",
+      "hashratePercent": 25.34,
+      "blockCount": 37,
       "alert": false
     },
     {
-      "name": "Foundry USA",
-      "hashratePercent": 21.48,
-      "blockCount": 29,
+      "name": "AntPool",
+      "hashratePercent": 21.92,
+      "blockCount": 32,
       "alert": false
     },
     {
       "name": "F2Pool",
-      "hashratePercent": 16.3,
-      "blockCount": 22,
-      "alert": false
-    },
-    {
-      "name": "SpiderPool",
-      "hashratePercent": 9.63,
-      "blockCount": 13,
+      "hashratePercent": 13.7,
+      "blockCount": 20,
       "alert": false
     },
     {
       "name": "ViaBTC",
-      "hashratePercent": 6.67,
-      "blockCount": 9,
+      "hashratePercent": 13.01,
+      "blockCount": 19,
       "alert": false
     },
     {
-      "name": "SECPOOL",
-      "hashratePercent": 5.93,
+      "name": "SpiderPool",
+      "hashratePercent": 5.48,
       "blockCount": 8,
       "alert": false
     },
     {
       "name": "MARA Pool",
-      "hashratePercent": 5.93,
-      "blockCount": 8,
+      "hashratePercent": 4.11,
+      "blockCount": 6,
       "alert": false
     },
     {
-      "name": "Luxor",
-      "hashratePercent": 3.7,
+      "name": "Binance Pool",
+      "hashratePercent": 3.42,
       "blockCount": 5,
       "alert": false
     },
     {
-      "name": "OCEAN",
-      "hashratePercent": 2.22,
-      "blockCount": 3,
+      "name": "Luxor",
+      "hashratePercent": 2.74,
+      "blockCount": 4,
       "alert": false
     },
     {
       "name": "Braiins Pool",
-      "hashratePercent": 2.22,
-      "blockCount": 3,
+      "hashratePercent": 2.74,
+      "blockCount": 4,
+      "alert": false
+    },
+    {
+      "name": "SECPOOL",
+      "hashratePercent": 2.74,
+      "blockCount": 4,
       "alert": false
     }
   ],
