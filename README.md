@@ -13,7 +13,9 @@ Bitcoin Dashboard reads market data, mempool state, sentiment, and curated news 
 - **Live Price** — Real-time BTC price via Binance public API, in the currency
   you picked, with what one unit of it buys in sats
 - **On-Chain Metrics** — Mempool, fees, hashrate, difficulty via mempool.space
-- **Network Health** — Reachable node count (BTC Nodes) and chain tip status (mempool.space)
+- **Network Health** — How many reachable full nodes carry the network and how
+  concentrated mining is, each with the sentence that reads it, via BTC Nodes
+  and mempool.space
 - **Fear & Greed Index** — Which of the five sentiment bands today's score
   falls in and how the last 30 days ran, with the sentence that reads it, via
   alternative.me

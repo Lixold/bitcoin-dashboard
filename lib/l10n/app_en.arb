@@ -298,6 +298,58 @@
     "description": "Screen-reader hint on the About rows that hand their address to the platform browser. The row leaves the app; nothing opens inside it."
   },
 
+  "networkNodesCategory": "Full nodes",
+  "@networkNodesCategory": {
+    "description": "Eyebrow above the full-node statement, the first of the two statements in the network section."
+  },
+  "networkNodesAsOf": "As of {timestamp}",
+  "@networkNodesAsOf": {
+    "description": "Qualifier after the category, naming when the producer gathered the data. The producer runs once a day, so this statement carries no live dot.",
+    "placeholders": { "timestamp": { "type": "String" } }
+  },
+  "networkNodesVerdictSecure": "Secure",
+  "@networkNodesVerdictSecure": {
+    "description": "The verdict word. It hangs on the figure, not on its movement: a count of this size is what \"no single actor can control the network\" rests on, so it stands whenever a count arrives."
+  },
+  "networkNodesInfoTrigger": "What is a full node?",
+  "networkNodesFigureLabel": "Reachable full nodes",
+  "@networkNodesFigureLabel": {
+    "description": "Label above the node count. \"Reachable\" is not decoration — the figure counts nodes that accept connections and is therefore a lower bound."
+  },
+  "networkNodesChange24h": "{change} in 24 h",
+  "@networkNodesChange24h": {
+    "description": "Context line under the node count. Carries no verdict: a count rising 0.3 % says nothing about controllability. The change arrives formatted, with its sign and unit.",
+    "placeholders": { "change": { "type": "String" } }
+  },
+  "networkNodesChangeUnavailable": "24 h change not available",
+  "@networkNodesChangeUnavailable": {
+    "description": "Takes the place of the context line when the producer had no usable 24 h reference. The count itself is unaffected and stays on screen."
+  },
+  "networkNodesTrendUnknownNotice": "24 h comparison figure missing · the node count itself is current",
+  "@networkNodesTrendUnknownNotice": {
+    "description": "Notice in the node statement when the comparison is missing. It says what is missing and what is not, so the figure above it is not read as stale."
+  },
+  "networkNodesInsightCategory": "Security",
+  "@networkNodesInsightCategory": {
+    "description": "Insight category, the opener of the sentence. This statement has one reading, so unlike the pool statement it has one category."
+  },
+  "networkNodesInsight": "{count} reachable nodes worldwide — no single actor can control the network.",
+  "@networkNodesInsight": {
+    "description": "The sentence that reads the figure. The count arrives formatted for the locale.",
+    "placeholders": { "count": { "type": "String" } }
+  },
+  "networkNodesSourcesTitle": "Sources",
+  "@networkNodesSourcesTitle": {
+    "description": "Label before the source names from _meta.sources — the whole evidence this statement offers."
+  },
+  "networkNodesUnavailableTitle": "Node count not available",
+  "networkNodesUnavailableBody": "BTCNodes.io returned no figure for this fetch. The pool distribution below is not affected.",
+  "@networkNodesUnavailableBody": {
+    "description": "Empty state when the payload carries no count. It names what still works: this is not a section failure, and the statement below it is untouched."
+  },
+  "networkNodesInfoTitle": "Full node",
+  "networkNodesInfoBody": "A full node verifies the entire blockchain itself and validates transactions and blocks independently. Reachable means the node accepts connections from other nodes and can therefore be counted. Nodes behind Tor or without open ports belong to the network but do not appear in this figure — it is a lower bound, not a total.",
+
   "networkPoolsCategory": "Mining pool concentration",
   "@networkPoolsCategory": {
     "description": "Eyebrow above the mining pool concentration statement on the network screen."
@@ -306,22 +358,6 @@
   "@networkPoolsAsOf": {
     "description": "Qualifier after the category, naming when the producer gathered the data — not when the app fetched it.",
     "placeholders": { "timestamp": { "type": "String" } }
-  },
-  "networkPoolsLoadingLabel": "Loading the distribution…",
-  "@networkPoolsLoadingLabel": { "description": "Qualifier after the category while the payload is being read." },
-
-  "networkPoolsStaleNotice": "Data {age} old · no update since {timestamp}",
-  "@networkPoolsStaleNotice": {
-    "description": "Age hint shown when the payload is older than 26 hours. The figures stay on screen; this says how far behind they are.",
-    "placeholders": {
-      "age": { "type": "String" },
-      "timestamp": { "type": "String" }
-    }
-  },
-  "networkPoolsStaleAge": "{hours} hours",
-  "@networkPoolsStaleAge": {
-    "description": "The age itself, in whole hours, as used inside networkPoolsStaleNotice.",
-    "placeholders": { "hours": { "type": "int" } }
   },
 
   "networkPoolsVerdictOk": "Uncritical",
@@ -424,16 +460,33 @@
     "placeholders": { "count": { "type": "int" } }
   },
 
-  "networkPoolsErrorTitle": "Pool distribution unavailable",
-  "networkPoolsErrorBody": "The published network data could not be reached. The live price is unaffected — it comes straight from Binance.",
-  "@networkPoolsErrorBody": {
-    "description": "The error names what still works. The app reads pool data from the CDN and the price directly from Binance, so a CDN outage leaves the price intact."
-  },
-  "networkPoolsRetry": "Try again",
-
   "networkPoolsInfoTrigger": "What is a mining pool?",
   "networkPoolsInfoTitle": "Mining pool",
   "networkPoolsInfoBody": "A mining pool is a group of miners that combine their computing power and split the block reward between them. The operator assembles the blocks and therefore decides which transactions go into them. What matters is not the number of miners, but how much hashrate sits with a single operator.",
+
+  "networkSectionStaleNotice": "Network data {age} old · no update since {timestamp}",
+  "@networkSectionStaleNotice": {
+    "description": "Age hint for the whole section. Both statements come from one document and one fetch, so the hint is shown once under the header rather than inside each statement.",
+    "placeholders": {
+      "age": { "type": "String" },
+      "timestamp": { "type": "String" }
+    }
+  },
+  "networkSectionStaleAge": "{hours} hours",
+  "@networkSectionStaleAge": {
+    "description": "The age itself, in whole hours, as used inside networkSectionStaleNotice.",
+    "placeholders": { "hours": { "type": "int" } }
+  },
+  "networkSectionErrorTitle": "Network data unavailable",
+  "networkSectionErrorMessage": "The network statistics did not respond. The live price is not affected.",
+  "@networkSectionErrorMessage": {
+    "description": "The error names what still works. The document feeds both statements, so its failure empties the section — but the price comes straight from Binance and is unaffected."
+  },
+  "networkSectionRetry": "Try again",
+  "networkSectionLoading": "Loading network data…",
+  "@networkSectionLoading": {
+    "description": "Eyebrow of the section skeleton. One skeleton for the section, not one per statement: there is one fetch to wait for."
+  },
 
   "marketSentimentCategory": "Sentiment",
   "@marketSentimentCategory": {

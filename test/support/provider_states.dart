@@ -9,7 +9,7 @@
 /// await pumpApp(
 ///   tester,
 ///   child: const NetworkScreen(),
-///   overrides: [networkPoolsProvider.overrideWith(asyncLoading())],
+///   overrides: [networkHealthProvider.overrideWith(asyncLoading())],
 /// );
 /// ```
 ///

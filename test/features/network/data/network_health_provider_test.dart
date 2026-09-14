@@ -1,7 +1,7 @@
 import 'package:bitcoin_dashboard/core/http/cdn_client.dart';
 import 'package:bitcoin_dashboard/core/time/clock.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_health_cache.dart';
-import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
+import 'package:bitcoin_dashboard/features/network/data/network_health_provider.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,8 +63,8 @@ Future<NetworkHealthSnapshot> _read(ProviderContainer container) {
   // The provider is `autoDispose`. Reading only its future leaves it
   // without a listener, so it is disposed while still loading and the
   // future never completes. Hold a subscription for the container's life.
-  container.listen(networkPoolsProvider, (_, _) {}, onError: (_, _) {});
-  return container.read(networkPoolsProvider.future);
+  container.listen(networkHealthProvider, (_, _) {}, onError: (_, _) {});
+  return container.read(networkHealthProvider.future);
 }
 
 ProviderContainer _container({

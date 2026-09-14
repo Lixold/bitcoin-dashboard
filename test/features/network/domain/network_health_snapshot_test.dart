@@ -1,8 +1,8 @@
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
+import 'package:bitcoin_dashboard/features/network/domain/node_count.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// A payload shaped like the live document of 2026-09-06, trimmed to the
-/// two fields this slice reads plus the ones it deliberately ignores.
+/// A payload shaped like the live document, trimmed to three pools.
 Map<String, dynamic> _payload({
   String fetchedAt = '2026-09-06T01:00:32+00:00',
 }) {
@@ -10,9 +10,9 @@ Map<String, dynamic> _payload({
     '_meta': {
       'fetchedAt': fetchedAt,
       'date': '2026-09-06',
-      'sources': ['Bitnodes.io', 'Mempool.space'],
+      'sources': ['BTCNodes.io', 'Mempool.space'],
     },
-    'fullNodes': {'count': 26748, 'percentChange24h': null, 'trend': 'unknown'},
+    'fullNodes': {'count': 26579, 'percentChange24h': 0.3, 'trend': 'stable'},
     'miningPools': [
       {
         'name': 'Foundry USA',
@@ -48,6 +48,58 @@ void main() {
       expect(snapshot.pools.length, 3);
       expect(snapshot.pools.first.name, 'Foundry USA');
       expect(snapshot.pools.first.hashratePercent, 22.37);
+    });
+
+    test('reads _meta.sources in payload order', () {
+      final snapshot = NetworkHealthSnapshot.fromJson(_payload());
+
+      expect(snapshot.sources, ['BTCNodes.io', 'Mempool.space']);
+    });
+
+    test('reads fullNodes and aggregatedHealth', () {
+      final snapshot = NetworkHealthSnapshot.fromJson(_payload());
+
+      expect(snapshot.fullNodes?.count, 26579);
+      expect(snapshot.fullNodes?.percentChange24h, 0.3);
+      expect(snapshot.fullNodes?.trend, NodeTrend.stable);
+      expect(snapshot.aggregatedHealth, 'good');
+    });
+
+    test('the fixed-shape object with nothing in it reads as no count', () {
+      // The producer writes the wrapper even when its source failed, so
+      // the parser meets `{count: null, …}` rather than a missing key.
+      final payload = _payload();
+      payload['fullNodes'] = <String, dynamic>{
+        'count': null,
+        'percentChange24h': null,
+        'trend': 'unknown',
+      };
+      payload['aggregatedHealth'] = 'unknown';
+
+      final snapshot = NetworkHealthSnapshot.fromJson(payload);
+
+      expect(snapshot.fullNodes, isNull);
+      expect(snapshot.aggregatedHealth, 'unknown');
+      // The other statement's subject is untouched by it.
+      expect(snapshot.pools.length, 3);
+    });
+
+    test('aggregatedHealth "unknown" does not empty the node figure', () {
+      // The worker reports `unknown` as soon as either dimension is
+      // missing, so it says nothing about the node count on its own.
+      final payload = _payload()..['aggregatedHealth'] = 'unknown';
+
+      final snapshot = NetworkHealthSnapshot.fromJson(payload);
+
+      expect(snapshot.aggregatedHealth, 'unknown');
+      expect(snapshot.fullNodes?.count, 26579);
+      expect(snapshot.fullNodes?.hasChange, isTrue);
+    });
+
+    test('a payload without fullNodes is read as no count', () {
+      final payload = _payload()..remove('fullNodes');
+
+      expect(NetworkHealthSnapshot.fromJson(payload).fullNodes, isNull);
     });
 
     test('accepts a whole-percent share serialised as an int', () {

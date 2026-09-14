@@ -1,4 +1,5 @@
 import 'mining_pool.dart';
+import 'node_count.dart';
 
 /// Age at which a `network-health.json` payload counts as stale.
 ///
@@ -17,13 +18,21 @@ import 'mining_pool.dart';
 /// from each producer's cadence.
 const Duration stalePayloadAge = Duration(hours: 26);
 
-/// The part of `network-health.json` this slice reads: when the producer
-/// gathered the data, and the pool shares it found.
+/// `network-health.json` as the two statements on the network screen
+/// read it: when the producer gathered the data, which sources it named,
+/// how many full nodes it counted, and the pool shares it found.
 ///
-/// `fullNodes` and `aggregatedHealth` are in the payload and belong to
-/// #34; they are not parsed here.
+/// One document, one fetch, one staleness threshold — which is why the
+/// age hint, the error and the loading state belong to the section
+/// rather than to either statement.
 class NetworkHealthSnapshot {
-  const NetworkHealthSnapshot({required this.fetchedAt, required this.pools});
+  const NetworkHealthSnapshot({
+    required this.fetchedAt,
+    required this.sources,
+    required this.fullNodes,
+    required this.aggregatedHealth,
+    required this.pools,
+  });
 
   /// Reads the document published at `data/network-health.json`.
   factory NetworkHealthSnapshot.fromJson(Map<String, dynamic> json) {
@@ -40,12 +49,23 @@ class NetworkHealthSnapshot {
       throw const FormatException('network-health.json is missing miningPools');
     }
 
+    final nodes = json['fullNodes'] as Map<String, dynamic>?;
+
     return NetworkHealthSnapshot(
       // The producer writes an explicit `+00:00` offset, so the parse
       // already yields UTC. `toUtc()` makes that independent of the
       // serialisation: an offset the producer changes must not silently
       // shift every age this screen reports.
       fetchedAt: DateTime.parse(fetchedAt).toUtc(),
+      sources: List.unmodifiable(
+        (meta?['sources'] as List<dynamic>? ?? const <dynamic>[])
+            .whereType<String>(),
+      ),
+      // The producer writes the object even when it has nothing to put
+      // in it, so a missing one is a payload this app has never seen —
+      // treated as "no count", not as a broken document.
+      fullNodes: nodes == null ? null : NodeCount.from(nodes),
+      aggregatedHealth: json['aggregatedHealth'] as String?,
       pools: List.unmodifiable(
         pools.map((pool) => MiningPool.fromJson(pool as Map<String, dynamic>)),
       ),
@@ -55,6 +75,35 @@ class NetworkHealthSnapshot {
   /// `_meta.fetchedAt` — when the producer read its sources, not when the
   /// app fetched the file.
   final DateTime fetchedAt;
+
+  /// `_meta.sources` — the names the producer read, in payload order.
+  ///
+  /// This is the evidence the node statement offers: who says so. The
+  /// names travel as the producer spells them; the app neither maps them
+  /// to URLs nor translates them.
+  final List<String> sources;
+
+  /// `fullNodes`, or `null` when the producer had no count — see
+  /// `NodeCount.from`.
+  final NodeCount? fullNodes;
+
+  /// `aggregatedHealth` — the producer's verdict over both dimensions.
+  ///
+  /// **Held, never rendered.** `good / warning / critical` would be a
+  /// third judgement next to two statements that already make their own,
+  /// and the worker judges pool concentration on a different matrix than
+  /// this app does (it warns from 30 %, `PoolConcentration` from 40 %),
+  /// so the two would disagree in public from 30 % upwards.
+  ///
+  /// It is not the trigger for the missing-comparison hint either, and
+  /// that is measured rather than assumed: `aggregateHealth()` returns
+  /// `unknown` as soon as **either** dimension is missing, so a failed
+  /// pool source with an intact node count reads `unknown` while the
+  /// 24 h comparison is present — and a missing node comparison next to
+  /// a pool share over its line reads `warning`, not `unknown`. The
+  /// coupling fails in both directions; the hint hangs on
+  /// `NodeCount.hasChange`.
+  final String? aggregatedHealth;
 
   /// `miningPools[]` in payload order. Sorting happens where the
   /// statement is derived, in `PoolConcentration.from`.

@@ -8,7 +8,12 @@ import 'network_health_cache.dart';
 /// Path of the document under [CdnClient.host].
 const String networkHealthPath = 'data/network-health.json';
 
-/// The mining-pool shares behind the concentration statement.
+/// The document both statements of the network section read: the
+/// full-node count and the mining-pool shares.
+///
+/// One provider, because it is one document and one fetch. That is also
+/// why the age hint, the error and the loading state are rendered once
+/// for the section rather than once per statement.
 ///
 /// Reads `network-health.json` through [CdnClient], cached on device by
 /// [NetworkHealthCache]. Three outcomes, in order of preference:
@@ -41,28 +46,29 @@ const String networkHealthPath = 'data/network-health.json';
 /// cadence rather than inheriting one.
 Duration? _neverRetry(int retryCount, Object error) => null;
 
-final networkPoolsProvider = FutureProvider.autoDispose<NetworkHealthSnapshot>((
-  ref,
-) async {
-  final cdn = ref.watch(cdnClientProvider);
-  final cache = ref.watch(networkHealthCacheProvider);
-  final now = ref.watch(clockProvider)().toUtc();
+final networkHealthProvider = FutureProvider.autoDispose<NetworkHealthSnapshot>(
+  (ref) async {
+    final cdn = ref.watch(cdnClientProvider);
+    final cache = ref.watch(networkHealthCacheProvider);
+    final now = ref.watch(clockProvider)().toUtc();
 
-  final cached = await cache.read();
-  if (cached != null &&
-      now.difference(cached.cachedAt) < NetworkHealthCache.ttl) {
-    return NetworkHealthSnapshot.fromJson(cached.payload);
-  }
+    final cached = await cache.read();
+    if (cached != null &&
+        now.difference(cached.cachedAt) < NetworkHealthCache.ttl) {
+      return NetworkHealthSnapshot.fromJson(cached.payload);
+    }
 
-  try {
-    final payload = await cdn.fetchJson(networkHealthPath);
-    final snapshot = NetworkHealthSnapshot.fromJson(payload);
-    // Cache only what parsed: storing a document the app cannot read
-    // would serve the same failure back for the next hour.
-    await cache.write(payload, now);
-    return snapshot;
-  } on Object {
-    if (cached != null) return NetworkHealthSnapshot.fromJson(cached.payload);
-    rethrow;
-  }
-}, retry: _neverRetry);
+    try {
+      final payload = await cdn.fetchJson(networkHealthPath);
+      final snapshot = NetworkHealthSnapshot.fromJson(payload);
+      // Cache only what parsed: storing a document the app cannot read
+      // would serve the same failure back for the next hour.
+      await cache.write(payload, now);
+      return snapshot;
+    } on Object {
+      if (cached != null) return NetworkHealthSnapshot.fromJson(cached.payload);
+      rethrow;
+    }
+  },
+  retry: _neverRetry,
+);

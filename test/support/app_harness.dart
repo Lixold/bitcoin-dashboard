@@ -7,7 +7,7 @@ import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/core/time/clock.dart';
 import 'package:bitcoin_dashboard/features/market/data/sentiment_provider.dart';
 import 'package:bitcoin_dashboard/features/market/domain/sentiment_index.dart';
-import 'package:bitcoin_dashboard/features/network/data/network_pools_provider.dart';
+import 'package:bitcoin_dashboard/features/network/data/network_health_provider.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:bitcoin_dashboard/features/price/data/history_provider.dart';
 import 'package:bitcoin_dashboard/features/price/data/market_provider.dart';
@@ -37,7 +37,7 @@ export 'package:flutter_riverpod/misc.dart' show Override;
 /// await pumpApp(
 ///   tester,
 ///   child: const NetworkScreen(),
-///   overrides: [networkPoolsProvider.overrideWith(asyncData(snapshot))],
+///   overrides: [networkHealthProvider.overrideWith(asyncData(snapshot))],
 /// );
 /// ```
 ///
@@ -166,7 +166,7 @@ Widget _app({
 /// the honest default — a test that wants a different state says so.
 List<Override> _offlineDefaults() => [
   priceLiveProvider.overrideWith(_silentPriceStream),
-  networkPoolsProvider.overrideWith(
+  networkHealthProvider.overrideWith(
     (ref) => Completer<NetworkHealthSnapshot>().future,
   ),
   marketProvider.overrideWith((ref) => Completer<MarketSnapshot>().future),
@@ -193,7 +193,7 @@ Stream<PriceTick> _silentPriceStream(Ref ref) {
 ///
 /// The two lists cannot simply be concatenated: Riverpod 3 asserts when
 /// one container is handed two overrides of the same provider, so a test
-/// that supplies its own `networkPoolsProvider` would fail before it
+/// that supplies its own `networkHealthProvider` would fail before it
 /// rendered a frame. `Override.origin` says what each entry overrides —
 /// it is `@visibleForTesting`, which is exactly where this file lives.
 List<Override> _merge(List<Override> defaults, List<Override> overrides) {
