@@ -3,7 +3,7 @@
 - **Date:** 2026-05-06
 - **Updated:** 2026-09-13 — v4: `aggregatedHealth` gains `unknown`
 - **Status:** Accepted (v4 — aligned with [ADR-0003](0003-backend-cloudflare-workers-r2.md))
-- **Decider:** Daniel Nagel
+- **Decider:** Lixold
 
 ## Version history
 

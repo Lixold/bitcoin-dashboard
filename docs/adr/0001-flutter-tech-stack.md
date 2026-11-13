@@ -2,7 +2,7 @@
 
 - **Date:** 2026-05-06
 - **Status:** Accepted
-- **Decider:** Daniel Nagel
+- **Decider:** Lixold
 
 ## Context
 
