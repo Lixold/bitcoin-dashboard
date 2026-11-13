@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // Unit tests for the ECB feed parser. These cover the shapes we have
 // historically seen from ECB (single-quoted vs. double-quoted attrs;

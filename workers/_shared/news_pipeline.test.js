@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // Unit tests for the news-pipeline XML parser. Exercises the RSS / Atom
 // branches plus the malformed-input fallback. The classifier and the R2

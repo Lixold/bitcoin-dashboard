@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // Unit tests for the watchdog's judgement. Offline by construction: every
 // case is either a hand-built payload or the committed capture from
