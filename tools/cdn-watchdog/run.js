@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // The watchdog's entry point: fetch what is published, run the table over
 // it, and report. Everything that touches the network, the clock, the

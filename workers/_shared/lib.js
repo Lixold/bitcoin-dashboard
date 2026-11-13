@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // Shared helpers for all bitcoin-dashboard Cloudflare Workers.
 //

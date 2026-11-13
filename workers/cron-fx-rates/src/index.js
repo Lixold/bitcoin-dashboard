@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // Cloudflare Worker: ECB daily foreign-exchange reference rates.
 //

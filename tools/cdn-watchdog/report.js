@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // Turning findings into the one thing the watchdog is allowed to emit: a
 // GitHub issue. Pure — composing the text is separate from posting it, so

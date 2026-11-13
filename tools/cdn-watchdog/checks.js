@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // The watchdog's judgement, as pure functions. Nothing in this file
 // fetches, writes, reads the clock or talks to GitHub — a payload and a

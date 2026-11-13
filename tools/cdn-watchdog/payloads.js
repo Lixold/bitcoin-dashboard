@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // The watchdog's configuration table: every file published to the CDN,
 // where its timestamp lives, how old it may get, and how much content it

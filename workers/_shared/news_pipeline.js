@@ -1,4 +1,4 @@
-// MIT License — Copyright (c) 2026 Daniel Nagel
+// MIT License — Copyright (c) 2026 Lixold
 //
 // Reusable news pipeline used by the per-language news Workers
 // (cron-news-en, cron-news-de, …).
