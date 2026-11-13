@@ -1,11 +1,11 @@
 # ADR-0003 — Backend: Cloudflare Workers + R2 + CDN
 
 - **Date:** 2026-05-06
-- **Updated:** 2026-05-10 — v4: migration to Cloudflare Workers
-- **Status:** Accepted (v4, deployed 2026-05-10)
-- **Decider:** Daniel Nagel
+- **Updated:** 2026-11-13 — v5: records the deployed state
+- **Status:** Accepted (v5; Workers deployed 2026-05-10)
+- **Decider:** Lixold
 - **Supersedes:** v1–v3 (GitHub Actions cron jobs)
-- **Related:** [ADR-0005](0005-static-json-api-via-cdn.md)
+- **Related:** [ADR-0002](0002-data-sources-and-apis.md), [ADR-0005](0005-static-json-api-via-cdn.md)
 
 ## Version history
 
@@ -15,11 +15,12 @@
 | v2 | 2026-05-07 | Re-evaluation, scaling path |
 | v3 | 2026-05-09 | Off-beat cron schedule, `fetch_network_stats.py` |
 | v4 | 2026-05-10 | Migration to Cloudflare Workers (JS); GitHub Actions removed; deployed |
+| v5 | 2026-11-13 | Text brought in line with what is deployed: Python scripts removed, shared helpers in `workers/_shared/`, `fast-xml-parser` for RSS, the cron schedules as configured, BTC Nodes as the node source, the `Cache-Control` values the Workers write, Worker settings (no public URLs, observability), the manual deploy workflow on Node 24 and Wrangler 4, and the CDN watchdog |
 
 ## Context
 
 The backend aggregates Bitcoin data from several sources (CoinGecko,
-ECB, multilingual RSS feeds, Bitnodes, mempool.space) and exposes them
+ECB, multilingual RSS feeds, BTC Nodes, mempool.space) and exposes them
 to the Flutter app as static JSON files. Constraints: minimal cost
 (~0 EUR/month), maintainable by a single developer, reliable.
 
@@ -42,14 +43,16 @@ Two data categories, two retrieval paths:
 
 | Worker | Cron (UTC) | Output | Secret |
 |---|---|---|---|
-| `cron-history` | `7,22,37,52 * * * *` | `data/history-*.json`, `data/market.json` | `COINGECKO_API_KEY` (optional) |
-| `cron-news-en` | `7,22,37,52 * * * *` | `data/news-en.json` | — |
-| `cron-news-de` | `7,22,37,52 * * * *` | `data/news-de.json` | — |
-| `cron-fx-rates` | `23 16 * * *` | `data/fx-rates.json` | — |
-| `cron-network-stats` | `13 1 * * *` | `data/network-health.json` | — |
+| `cron-history` | `*/15 * * * *` | `data/history-*.json`, `data/market.json` | `COINGECKO_API_KEY` (optional) |
+| `cron-news-en` | `*/15 * * * *` | `data/news-en.json` | — |
+| `cron-news-de` | `*/15 * * * *` | `data/news-de.json` | — |
+| `cron-fx-rates` | `15 16 * * *` | `data/fx-rates.json` | — |
+| `cron-network-stats` | `0 1 * * *` | `data/network-health.json` | — |
 
-Off-beat minutes (7, 22, 37, 52 instead of round quarters) spread the
-load and avoid the herd-of-cron-jobs effect on Cloudflare's scheduler.
+The schedules above are the ones in each Worker's `wrangler.toml`. The v4
+text planned off-beat minutes (7, 22, 37, 52); the deployed Workers use
+the plain quarter-hour schedule. `cron-fx-rates` runs at 16:15 UTC, after
+the ECB publication window in both summer and winter time.
 
 ### Architecture
 
@@ -70,21 +73,48 @@ alternative.me                ▼
                           ├─ cron-fx-rates       daily
                           └─ cron-network-stats  daily
                               │
-                          Public APIs (CoinGecko, ECB, RSS, Bitnodes, mempool)
+                          Public APIs (CoinGecko, ECB, RSS, BTC Nodes, mempool)
 ```
 
 ### Technology choices
 
-- **Language:** JavaScript (ES modules). No Python rewrite needed —
-  business logic was lifted from the archived Python reference scripts
-  under `scripts/`.
+- **Language:** JavaScript (ES modules). The Python reference scripts
+  that preceded the Workers were deleted on 2026-05-15; the Git history
+  keeps them.
+- **Shared code:** everything used by more than one Worker lives in
+  `workers/_shared/` (R2 writes, fetch with retry, logging, the RSS/news
+  pipeline) with its tests next to it. Each Worker is `src/index.js` plus
+  `wrangler.toml`; dependencies resolve through the root
+  `workers/package.json` (Node ≥ 24).
 - **R2 access:** native R2 binding (`env.BUCKET.put(...)`). No boto3,
   no S3 credentials, no signing keys.
-- **XML parsing (ECB feed):** regex-based — the feed is tightly
-  structured and DOMParser is not available in the workerd runtime.
+- **XML parsing:** RSS feeds go through `fast-xml-parser` (v5 line), the
+  only direct dependency. The ECB feed is parsed with regular
+  expressions — its structure is fixed and DOMParser is not available in
+  the workerd runtime.
 - **Deduplication (news):** Web Crypto API (`crypto.subtle.digest`).
 - **Secrets:** only `COINGECKO_API_KEY` for `cron-history` (optional),
   managed via `wrangler secret put`.
+- **Exposure:** every Worker sets `workers_dev = false` and
+  `preview_urls = false`. They expose only a `scheduled` handler, so a
+  public URL would serve nothing and only leak the cron topology.
+- **Observability:** Workers Observability is on with 100 % sampling.
+  The volume is tiny (about 96 invocations a day per 15-minute Worker),
+  and the per-source isolation logs are only useful if they can be read.
+
+### Deploy and monitoring
+
+- **Deploy:** the manual workflow `.github/workflows/deploy_workers.yml`
+  (`workflow_dispatch`) deploys one Worker or all five through
+  `wrangler-action` (Wrangler 4 on Node 24). Its credentials are the
+  repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`;
+  Worker-side secrets are set once with `wrangler secret put` and survive
+  later deploys.
+- **Monitoring:** `tools/cdn-watchdog/` runs hourly on GitHub Actions
+  and opens one issue when a published payload goes stale or empty. It
+  deliberately does not run on Cloudflare — a watchdog that lives in the
+  infrastructure it watches goes quiet exactly when that infrastructure
+  fails. See [CLAUDE.md §6](../../CLAUDE.md).
 
 ### R2 file layout
 
@@ -100,18 +130,20 @@ bitcoin-dashboard-data/data/
 
 ### Cache-Control policy
 
-| File | `max-age` |
+The Workers write these values as the object's `Cache-Control` header:
+
+| File | `Cache-Control` |
 |---|---|
-| `market.json`, `history-1D.json`, `news-*.json` | 900 s (15 min) |
-| `history-1W.json`, `history-1M.json` … `history-1Y.json` | 900–3600 s |
-| `fx-rates.json` | 86 400 s (1 d) |
-| `network-health.json` | 86 400 s (1 d) |
+| `market.json`, `history-*.json` | `public, max-age=900` (15 min) |
+| `news-*.json` | `public, max-age=900` (15 min) |
+| `fx-rates.json` | `public, max-age=86400` (1 d) |
+| `network-health.json` | `public, max-age=86400` (1 d) |
 
 ## Cost
 
 | Service | Free tier | Expected use | Cost |
 |---|---|---|---|
-| Cloudflare Workers | 100 000 requests/day | ~200/day across 5 Workers | 0 EUR |
+| Cloudflare Workers | 100 000 requests/day | ~290/day across 5 Workers | 0 EUR |
 | Cloudflare R2 storage | 10 GB | <5 MB | 0 EUR |
 | Cloudflare R2 writes | 1 M ops/month | ~23 000/month | 0 EUR |
 | Cloudflare CDN | unlimited | global | 0 EUR |
@@ -146,21 +178,8 @@ options — no client change is forced by a scale-up.
 - Free-tier CPU limit per invocation is 10 ms (async `fetch()` does not
   count, post-processing does). Exceeding it terminates the worker
   (Cloudflare error 1102), but does not auto-bill.
-- JavaScript instead of Python — the archived Python scripts remain in
-  `scripts/` as functional reference.
-- `COINGECKO_API_KEY` rotation is now a Cloudflare-side concern, not
-  GitHub Actions.
-
-## Archived Python scripts
-
-The original Python scripts under `scripts/` are kept as reference
-material (MIT-licensed, open source). They are no longer part of the
-active data pipeline. Each script header carries
-`# ARCHIVED: replaced by Cloudflare Worker in workers/cron-<name>/`.
-
-| Script | Replaced by |
-|---|---|
-| `scripts/fetch_history.py` | `workers/cron-history/` |
-| `scripts/fetch_news.py` | `workers/cron-news-en/` + `workers/cron-news-de/` |
-| `scripts/fetch_fx_rates.py` | `workers/cron-fx-rates/` |
-| `scripts/fetch_network_stats.py` | `workers/cron-network-stats/` |
+- `COINGECKO_API_KEY` rotation is a Cloudflare-side concern, not a
+  GitHub Actions one.
+- The watchdog depends on GitHub's `schedule:` trigger, which is
+  best-effort. That costs detection latency, not detections: the check is
+  stateless and judges each payload's own timestamp.
