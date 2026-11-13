@@ -21,6 +21,8 @@ lives.
 | [ADR-0003](0003-backend-cloudflare-workers-r2.md) | Backend: Cloudflare Workers + R2 + CDN | Accepted (v5) |
 | [ADR-0004](0004-state-management-riverpod.md) | Riverpod for state management | Accepted |
 | [ADR-0005](0005-static-json-api-via-cdn.md) | Client ↔ CDN API: static JSON objects | Accepted (v4) |
+| [ADR-0006](0006-news-filtering-and-lexicon-tagging.md) | News: Bitcoin keyword filter, lexicon tagging, one Worker per language | Accepted |
+| [ADR-0007](0007-information-architecture-and-navigation.md) | Information architecture: six sections, adaptive navigation, where preferences live | Accepted (v2) |
 
 ## Format
 
@@ -44,6 +46,7 @@ decider is the maintainer's GitHub handle.
 
 ## Contributing
 
-New ADRs should be proposed via a pull request. The filename uses the
-next free four-digit ID and a short kebab-case slug
-(`NNNN-short-title.md`). Update the index table above in the same PR.
+New ADRs should be proposed via a pull request. Start from
+[template.md](template.md). The filename uses the next free four-digit ID and a
+short kebab-case slug (`NNNN-short-title.md`). Update the index table above in
+the same PR.

@@ -4,7 +4,8 @@ Working notes for contributors and coding agents. Read this before
 touching the repository — it describes how this project is built, not
 what it is marketed as. For the user-facing overview see
 [README.md](README.md); for architecture decisions see
-[docs/adr/](docs/adr/).
+[docs/adr/](docs/adr/); for requirements, feature notes and the roadmap
+see [docs/](docs/README.md).
 
 ---
 
@@ -125,7 +126,13 @@ bitcoin-dashboard/
 │   └── package.json            # Shared deps + `npm test` for all Workers
 ├── tools/                      # Repository tooling that is not the app
 │   └── cdn-watchdog/           # Scheduled check of the published payloads
-├── docs/adr/                   # Architecture Decision Records (canonical)
+├── docs/                       # Project documentation, in English (docs/README.md)
+│   ├── adr/                    # Architecture Decision Records (canonical)
+│   ├── product/                # Overview, roadmap, requirements
+│   ├── architecture/           # System overview
+│   ├── features/               # One note per module
+│   ├── research/               # Source and language research
+│   └── deployment/             # Distribution
 ├── .github/workflows/          # ci.yml, deploy_workers.yml
 └── android/ ios/ macos/ windows/ linux/ web/   # Platform projects
 ```
@@ -445,15 +452,22 @@ One subject, one canonical place. Everything else links to it.
 | Subject | Canonical location |
 |---|---|
 | Architecture decisions | `docs/adr/` |
+| Product requirements, feature notes, system overview | `docs/product/`, `docs/features/`, `docs/architecture/` |
+| What each phase covers (the roadmap) | `docs/product/roadmap.md` |
 | Working rules, Definition of Done, conventions | this file |
 | Executable step sequences for agents | `.claude/skills/` |
 | Backlog, tasks, status | GitHub Issues and the project board |
-| Product strategy and roadmap | maintained outside this repository |
+| Commercial topics (pricing, positioning, other products) | maintained outside this repository (§12) |
 | Glyphs, logos and design tokens | the design-system project in Claude Design |
 
 **Precedence.** This repository is authoritative for how the project is built. If an
 external note, an earlier session, or a private document says otherwise, this file
 wins. Private local notes may add context; they never override anything here.
+
+**`docs/` describes intent, not status.** A requirement or a feature note says what the
+product is meant to do; whether it has shipped is answered by the code, the issues and the
+board. Where a note and the code disagree, the code is the fact and the note is fixed in a
+pull request.
 
 **Architecture decisions have no second copy.** `docs/adr/` is where an ADR is written
 and amended, in English, through a pull request. No internal original, mirror or note
