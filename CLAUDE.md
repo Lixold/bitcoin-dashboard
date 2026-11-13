@@ -21,7 +21,7 @@ that violates them does not get merged:
 - **No login, no accounts.** There is no auth layer, no session, no
   user identity anywhere in the codebase.
 - **No tracking, no analytics, no telemetry.** Nothing is reported to
-  third parties, to the maintainer, or to FinHood. Do not add crash
+  third parties or to the maintainer. Do not add crash
   reporters, analytics SDKs, ad SDKs, remote logging, or "anonymous
   usage statistics". Test coverage is printed into the CI job log
   precisely so it does not have to be uploaded to an external service.
@@ -125,7 +125,7 @@ bitcoin-dashboard/
 │   └── package.json            # Shared deps + `npm test` for all Workers
 ├── tools/                      # Repository tooling that is not the app
 │   └── cdn-watchdog/           # Scheduled check of the published payloads
-├── docs/adr/                   # Architecture Decision Records (English mirror)
+├── docs/adr/                   # Architecture Decision Records (canonical)
 ├── .github/workflows/          # ci.yml, deploy_workers.yml
 └── android/ ios/ macos/ windows/ linux/ web/   # Platform projects
 ```
@@ -454,6 +454,10 @@ One subject, one canonical place. Everything else links to it.
 **Precedence.** This repository is authoritative for how the project is built. If an
 external note, an earlier session, or a private document says otherwise, this file
 wins. Private local notes may add context; they never override anything here.
+
+**Architecture decisions have no second copy.** `docs/adr/` is where an ADR is written
+and amended, in English, through a pull request. No internal original, mirror or note
+outranks it, and none has to be kept in sync with it.
 
 **Design-system sync.** The design system is the one store outside this repository that
 is canonical for files inside it, so its boundary is fixed here rather than decided per
