@@ -4,7 +4,7 @@
 - **Status:** Accepted (updated 2026-05-10 to reflect Cloudflare Workers;
   2026-09-06 to record the CDN as an app-side host; 2026-09-13 to follow the
   node census from bitnodes.io to btcnodes.io)
-- **Decider:** Daniel Nagel
+- **Decider:** Lixold
 - **Depends on:** [ADR-0003](0003-backend-cloudflare-workers-r2.md)
 
 ## Context

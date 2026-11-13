@@ -2,7 +2,7 @@
 
 - **Date:** 2026-05-06
 - **Status:** Accepted (amended 2026-09-06 with the retry policy)
-- **Decider:** Daniel Nagel
+- **Decider:** Lixold
 
 ## Context
 
