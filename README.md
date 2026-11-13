@@ -161,14 +161,19 @@ bitcoin-dashboard/
 │   ├── cron-news-en/          # RSS EN → news-en.json
 │   ├── cron-news-de/          # RSS DE → news-de.json
 │   └── cron-network-stats/    # BTC Nodes + mempool.space → network-health.json
-├── docs/adr/                  # Architecture Decision Records
+├── docs/                      # Requirements, feature notes, roadmap, ADRs
 ├── .github/workflows/         # CI (format, analyze, test, builds, workers)
 │                              # + manual Worker deploys
 └── test/                      # Unit & widget tests, mirroring lib/
 ```
 
 Contributor and coding-agent notes — conventions, workflow, and the
-checks a PR has to pass — live in [CLAUDE.md](CLAUDE.md).
+checks a PR has to pass — live in [CLAUDE.md](CLAUDE.md). What the product
+is meant to do, how it is built and what comes next is in [docs/](docs/README.md):
+the [product overview](docs/product/overview.md), the
+[requirements](docs/product/functional-requirements.md), the
+[system overview](docs/architecture/system-overview.md), the
+[roadmap](docs/product/roadmap.md) and the [ADRs](docs/adr/README.md).
 
 ---
 
