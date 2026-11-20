@@ -1,20 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../http/cdn_cache.dart';
+import '../http/payload_cache.dart';
 
-export '../http/cdn_cache.dart' show CachedPayload;
+export '../http/payload_cache.dart' show CachedPayload;
 
 /// On-device copy of the last `fx-rates.json` the app fetched.
 ///
-/// Storage, envelope and failure behaviour are [CdnCache]'s; what stays
+/// Storage, envelope and failure behaviour are [PayloadCache]'s; what stays
 /// here are the two numbers belonging to *this* document.
 class FxCache {
   const FxCache();
 
-  /// Hive box for cached CDN documents — [CdnCache.boxName], restated so
+  /// Hive box for cached payloads — [PayloadCache.boxName], restated so
   /// a caller that knows this cache does not have to know what it is
   /// built on.
-  static const String boxName = CdnCache.boxName;
+  static const String boxName = PayloadCache.boxName;
 
   /// How long a stored copy is reused before the CDN is asked again.
   ///
@@ -34,7 +34,7 @@ class FxCache {
   /// and lives with the rate as `fxStaleAge`, where it is measured in days.
   static const Duration ttl = Duration(hours: 3);
 
-  static const CdnCache _cache = CdnCache(key: 'fx-rates', ttl: ttl);
+  static const PayloadCache _cache = PayloadCache(key: 'fx-rates', ttl: ttl);
 
   Future<CachedPayload?> read() => _cache.read();
 

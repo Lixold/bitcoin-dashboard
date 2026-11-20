@@ -1,28 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/http/cdn_cache.dart';
+import '../../../core/http/payload_cache.dart';
 import '../domain/price_range.dart';
 
-export '../../../core/http/cdn_cache.dart' show CachedPayload;
+export '../../../core/http/payload_cache.dart' show CachedPayload;
 
 /// On-device copies of the five `history-{range}.json` documents.
 ///
-/// Storage, envelope and failure behaviour are [CdnCache]'s. What stays
+/// Storage, envelope and failure behaviour are [PayloadCache]'s. What stays
 /// here are the numbers belonging to these documents — and, unlike
 /// `MarketCache`, the fact that there are five of them.
 ///
 /// **Five entries, one cache object, no new construct.** Each range gets
-/// its own key in the box every cached CDN document already shares, so
+/// its own key in the box every cached payload already shares, so
 /// switching to `1W` and back to `1M` costs no second request and no
 /// second box to open and migrate. The five are told apart by
 /// [PriceRange.cacheKey].
 class HistoryCache {
   const HistoryCache();
 
-  /// Hive box for cached CDN documents — [CdnCache.boxName], restated so
+  /// Hive box for cached payloads — [PayloadCache.boxName], restated so
   /// a caller that knows this cache does not have to know what it is
   /// built on.
-  static const String boxName = CdnCache.boxName;
+  static const String boxName = PayloadCache.boxName;
 
   /// How long a stored copy is reused before the CDN is asked again.
   ///
@@ -46,8 +46,8 @@ class HistoryCache {
     DateTime now,
   ) => _cacheFor(range).write(payload, now);
 
-  CdnCache _cacheFor(PriceRange range) =>
-      CdnCache(key: range.cacheKey, ttl: ttl);
+  PayloadCache _cacheFor(PriceRange range) =>
+      PayloadCache(key: range.cacheKey, ttl: ttl);
 }
 
 final historyCacheProvider = Provider<HistoryCache>((ref) {

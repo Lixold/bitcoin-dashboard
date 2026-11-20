@@ -1,20 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/http/cdn_cache.dart';
+import '../../../core/http/payload_cache.dart';
 
-export '../../../core/http/cdn_cache.dart' show CachedPayload;
+export '../../../core/http/payload_cache.dart' show CachedPayload;
 
 /// On-device copy of the last `market.json` the app fetched.
 ///
-/// Storage, envelope and failure behaviour are [CdnCache]'s; what stays
+/// Storage, envelope and failure behaviour are [PayloadCache]'s; what stays
 /// here are the two numbers belonging to *this* document.
 class MarketCache {
   MarketCache();
 
-  /// Hive box for cached CDN documents — [CdnCache.boxName], restated so
+  /// Hive box for cached payloads — [PayloadCache.boxName], restated so
   /// a caller that knows this cache does not have to know what it is
   /// built on.
-  static const String boxName = CdnCache.boxName;
+  static const String boxName = PayloadCache.boxName;
 
   /// How long a stored copy is reused before the CDN is asked again.
   ///
@@ -25,7 +25,7 @@ class MarketCache {
   /// that one lives with the snapshot and is three times longer.
   static const Duration ttl = Duration(minutes: 15);
 
-  static const CdnCache _cache = CdnCache(key: 'market', ttl: ttl);
+  static const PayloadCache _cache = PayloadCache(key: 'market', ttl: ttl);
 
   Future<CachedPayload?> read() => _cache.read();
 

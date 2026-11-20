@@ -1,30 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/http/cdn_cache.dart';
+import '../../../core/http/payload_cache.dart';
 
-export '../../../core/http/cdn_cache.dart' show CachedPayload;
+export '../../../core/http/payload_cache.dart' show CachedPayload;
 
 /// On-device copy of the last Fear & Greed payload the app fetched.
 ///
-/// Storage, envelope and failure behaviour are [CdnCache]'s; what stays
+/// Storage, envelope and failure behaviour are [PayloadCache]'s; what stays
 /// here is the number belonging to *this* document.
 ///
-/// **The storage is [CdnCache]'s, the source is not a CDN.** This is the
-/// first cached document the app fetches straight from a public API, and
-/// the class it reuses is named after where the other four come from. The
-/// mechanism fits exactly — one JSON document, one TTL, offline-first,
-/// one Hive entry per key — so the choice was between renaming the class
-/// in this PR and reusing it under a name that no longer covers all its
-/// callers. The rename touches six files across four cache wrappers,
-/// which is a second topic in a PR that already carries a slice and the
-/// #52 mechanism, so it is its own issue and the name is left alone here.
+/// This is the one cached document the app fetches straight from a public
+/// API rather than from the CDN; the storage is the same either way.
 class SentimentCache {
   SentimentCache();
 
-  /// Hive box for cached payloads — [CdnCache.boxName], restated so a
+  /// Hive box for cached payloads — [PayloadCache.boxName], restated so a
   /// caller that knows this cache does not have to know what it is built
   /// on.
-  static const String boxName = CdnCache.boxName;
+  static const String boxName = PayloadCache.boxName;
 
   /// How long a stored copy is reused before the source is asked again.
   ///
@@ -38,7 +31,7 @@ class SentimentCache {
   /// carries its own calendar day, and that date is the age display.
   static const Duration ttl = Duration(hours: 1);
 
-  static const CdnCache _cache = CdnCache(key: 'sentiment', ttl: ttl);
+  static const PayloadCache _cache = PayloadCache(key: 'sentiment', ttl: ttl);
 
   Future<CachedPayload?> read() => _cache.read();
 

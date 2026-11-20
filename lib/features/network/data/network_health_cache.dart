@@ -1,17 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/http/cdn_cache.dart';
+import '../../../core/http/payload_cache.dart';
 
-export '../../../core/http/cdn_cache.dart' show CachedPayload;
+export '../../../core/http/payload_cache.dart' show CachedPayload;
 
 /// On-device copy of the last `network-health.json` the app fetched.
 ///
-/// Storage, envelope and failure behaviour are [CdnCache]'s. What stays
+/// Storage, envelope and failure behaviour are [PayloadCache]'s. What stays
 /// here are the two numbers that belong to *this* document, so a caller
 /// asks for "the network-health cache" rather than restating the key and
 /// the TTL at every call site.
 ///
-/// It wraps [CdnCache] rather than extending it. A subclass would put
+/// It wraps [PayloadCache] rather than extending it. A subclass would put
 /// `key` and `ttl` into this class's interface, and every test double
 /// standing in for this cache would then have to implement two fields it
 /// has no use for.
@@ -22,10 +22,10 @@ export '../../../core/http/cdn_cache.dart' show CachedPayload;
 class NetworkHealthCache {
   NetworkHealthCache();
 
-  /// Hive box for cached CDN documents — [CdnCache.boxName], restated so
+  /// Hive box for cached payloads — [PayloadCache.boxName], restated so
   /// a caller that knows this cache does not have to know what it is
   /// built on.
-  static const String boxName = CdnCache.boxName;
+  static const String boxName = PayloadCache.boxName;
 
   /// How long a stored copy is reused before the CDN is asked again.
   ///
@@ -35,7 +35,10 @@ class NetworkHealthCache {
   /// lives with the snapshot and is six times longer.
   static const Duration ttl = Duration(minutes: 60);
 
-  static const CdnCache _cache = CdnCache(key: 'network-health', ttl: ttl);
+  static const PayloadCache _cache = PayloadCache(
+    key: 'network-health',
+    ttl: ttl,
+  );
 
   Future<CachedPayload?> read() => _cache.read();
 

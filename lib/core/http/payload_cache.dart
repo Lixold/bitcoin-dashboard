@@ -15,7 +15,8 @@ class CachedPayload {
   final Map<String, dynamic> payload;
 }
 
-/// On-device copy of one document the CDN publishes.
+/// On-device copy of one JSON document the app fetched, kept under one key
+/// with its own TTL.
 ///
 /// Two jobs, both of them offline-first:
 ///
@@ -24,28 +25,35 @@ class CachedPayload {
 ///    reader on a train sees yesterday's figures with an age hint rather
 ///    than an error.
 ///
-/// Nothing personal is written here — the files are the same
-/// world-readable documents the CDN serves everyone.
+/// Where the document came from is the caller's business, not this
+/// class's: most entries are files the CDN publishes, the sentiment index
+/// comes straight from its public API, and the storage is the same for
+/// both. Nothing personal is written here — every entry is a
+/// world-readable document the source serves everyone.
 ///
 /// **[key] and [ttl] are per document, the box is not.** Every cached
 /// document shares one Hive box and is told apart by its key, so adding
-/// the next CDN-backed slice costs a constructor call rather than another
+/// the next cached document costs a constructor call rather than another
 /// box to open, migrate and close. The TTL belongs to the document
 /// because it follows that document's producer: `network-health.json` is
 /// written once a day, `market.json` every fifteen minutes, and a single
 /// number for both would either waste requests on the one or serve the
 /// other stale.
-class CdnCache {
-  const CdnCache({required this.key, required this.ttl});
+class PayloadCache {
+  const PayloadCache({required this.key, required this.ttl});
 
-  /// Hive box for cached CDN documents. Versioned in the name so a
-  /// payload change can retire the old copies by opening a new box.
+  /// Hive box for cached payloads. Versioned in the name so a payload
+  /// change can retire the old copies by opening a new box.
+  ///
+  /// The `cdn_` prefix predates the class name and stays: this is a
+  /// storage key, and renaming it would drop every cached payload on the
+  /// next update.
   static const String boxName = 'cdn_cache_v1';
 
-  /// Entry name inside [boxName]. One per published document.
+  /// Entry name inside [boxName]. One per cached document.
   final String key;
 
-  /// How long a stored copy is reused before the CDN is asked again.
+  /// How long a stored copy is reused before the source is asked again.
   ///
   /// It is not the staleness threshold. That one asks whether the
   /// *producer* is still current and lives with the document's snapshot;
