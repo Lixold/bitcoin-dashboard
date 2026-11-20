@@ -233,6 +233,7 @@ absent, so the screen hangs that hint on `fullNodes.percentChange24h`.
 
 ```
 GET https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT
+GET https://mempool.space/api/mempool
 GET https://mempool.space/api/v1/fees/recommended
 GET https://mempool.space/api/v1/mining/hashrate/3d
 GET https://mempool.space/api/v1/difficulty-adjustment

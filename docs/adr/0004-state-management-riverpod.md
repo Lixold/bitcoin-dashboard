@@ -93,13 +93,22 @@ declines retries: its fallback is the cache, and a reader who is offline
 is better served by yesterday's figures plus an age hint than by half a
 minute of spinner.
 
+`mempoolProvider` declines them as well, for the opposite reason: it has
+no cache to fall back on, because a fee estimate minutes old is a wrong
+estimate. Its retry is its own cadence — the next fetch a minute later —
+and a failed fetch puts the statement in its error state rather than
+leaving the previous reading on screen.
+
 ## Provider hierarchy
 
 ```
 settingsProvider                  Hive-persisted: language, currency, theme
 
 priceLiveProvider                 Binance direct, 60 s polling
-onChainProvider                   mempool.space direct, 5 min polling
+mempoolProvider                   mempool.space direct (mempool + fees), 60 s polling,
+                                   no cache, no retries
+onChainProvider                   mempool.space direct (hashrate, difficulty),
+                                   5 min polling
 fearGreedProvider                 alternative.me direct, 1 h polling
 
 marketProvider                    CDN market.json, 15 min
