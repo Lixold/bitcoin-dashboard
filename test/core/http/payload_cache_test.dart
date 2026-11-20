@@ -1,4 +1,4 @@
-import 'package:bitcoin_dashboard/core/http/cdn_cache.dart';
+import 'package:bitcoin_dashboard/core/http/payload_cache.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/harness.dart';
@@ -11,10 +11,20 @@ import '../../support/harness.dart';
 /// was written against. This file only asks the question that could not
 /// be asked before there were two keys.
 void main() {
-  setUpTestHive(boxes: const [CdnCache.boxName], clearBetweenTests: true);
+  setUpTestHive(boxes: const [PayloadCache.boxName], clearBetweenTests: true);
 
-  const market = CdnCache(key: 'market', ttl: Duration(minutes: 15));
-  const health = CdnCache(key: 'network-health', ttl: Duration(minutes: 60));
+  const market = PayloadCache(key: 'market', ttl: Duration(minutes: 15));
+  const health = PayloadCache(
+    key: 'network-health',
+    ttl: Duration(minutes: 60),
+  );
+
+  // The box name is a storage key on every installed copy of the app. The
+  // class was renamed in #98; the box was deliberately not, because
+  // a new name would drop every cached payload on the next update.
+  test('the box keeps the name it had before the class was renamed', () {
+    expect(PayloadCache.boxName, 'cdn_cache_v1');
+  });
 
   test('two documents share the box without reading each other', () async {
     await market.write(const {
