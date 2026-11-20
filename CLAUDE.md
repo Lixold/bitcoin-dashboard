@@ -499,17 +499,20 @@ pull:
 - A slice may start only when all five are true. Otherwise stop and open the
   prerequisite issue (`needs-data`, `needs-design`) instead of improvising:
   1. the data contract is verified against the live CDN, not assumed;
-  2. a design for this slice is linked in the issue;
+  2. a design for this slice is linked in the issue, or the issue is labelled
+     `needs-design` and the run creates it (slice skill, Step 2);
   3. the statement the slice makes is written in one sentence;
   4. the evidence is named — which figure backs which part of the statement;
   5. the issue carries the Definition of Done checklist.
-- Branch `slice/<issue-number>-<short-topic>`; the PR body closes the issue.
+- Branch `slice/<issue-number>-<short-topic>` (`chore/…`, `fix/…` for those); the PR
+  body closes the issue. This name wins over any branch name a session was started with.
 - `.claude/skills/slice/SKILL.md` is the enforced implementation sequence and
   `.claude/skills/review/SKILL.md` the pre-merge check. Follow them rather than
   improvising an order.
 - **Acceptance is human.** Someone runs the app and looks at the change. When you
   finish, summarise in two sentences what is now visible and what to look at when
-  running it.
+  running it. In an autonomous run (below) the maintainer does this on the PR, with the
+  screenshots the run sent.
 - **The target is part of the acceptance.** Which one counts follows from what changed:
   - **Chrome is enough** for layout, navigation, interaction, and the loading, empty and
     error states.
@@ -527,6 +530,30 @@ pull:
   run on a target that could not have shown the change does not clear it. A claim from
   such a target fails the review gate. `README.md` covers how to run each target; this
   rule only says which one counts.
+
+### Autonomous runs
+
+An agent takes an issue from "taken" to an open PR with green checks in one run; the
+maintainer reads the PR and merges it. The sequence is `.claude/skills/slice/SKILL.md`
+(slices, chores and bugs alike). The rules that make a run complete:
+
+- **A run stops only at a stop condition.** They are listed in the skill: a failed gate, a
+  threshold the issue leaves open, a check the change did not break, a scope that outgrew
+  the slice, something only the maintainer can give. Every other open question is decided
+  and recorded in the PR, not asked.
+- **Status is GitHub's own.** The run sets no status, label or board field for "in
+  progress": the issue's status moves with GitHub's automation when a branch or PR is
+  linked and when it is merged. The one label the run touches is `needs-design`, removed
+  when the design is linked.
+- **Everything the run decided is in the PR:** *Decisions taken*, *Deviations* from the
+  skill or the issue, and *Follow-ups* to open after the merge.
+- **The merge is the approval** of the code, the design link and the follow-up list. After
+  it the run closes what is left of the issue and opens exactly the listed follow-ups.
+- **A run never merges, never deploys Workers, never changes repository settings, and
+  never adds an outbound host or a secret.** Those stay with the maintainer.
+- **An issue is written to be run.** It carries the decisions the run must not have to
+  guess and its stop criteria, in the unit of the measure — see the *Decisions* field of
+  the slice template.
 
 ---
 

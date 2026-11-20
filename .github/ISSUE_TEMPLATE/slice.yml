@@ -39,7 +39,27 @@ body:
     id: design
     attributes:
       label: Design reference
-      description: Link to the design for this slice — mockup, spec, or a comment on this issue. Must exist before UI work starts.
+      description: Link to the design for this slice — mockup, spec, or a comment on this issue. Must exist before UI work starts. Leave empty and add the label `needs-design` if the run should create it; it then links the design here in a comment.
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Decisions
+      description: |
+        What the run must not have to guess, and when it should stop instead. Thresholds and
+        the base they are measured on (or "the run proposes them from measurements and stops
+        for approval"), where the statement sits on the screen, whether anything is cached,
+        the acceptance target if it is not Chrome. Write each stop criterion in the unit of
+        the measure, e.g. "stop and report if the reading is in the same band at every
+        measurement". Whatever is not decided here, the run decides and records in the PR.
+      placeholder: |
+        1. Bands are measured on total pool vsize, in blocks' worth; proposed from live
+           measurements, approved at the design.
+        2. No on-device cache: a stale estimate is a wrong estimate.
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: What this slice does not do, so the run does not grow it.
   - type: dropdown
     id: size
     attributes:
