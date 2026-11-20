@@ -1,6 +1,8 @@
 import 'package:bitcoin_dashboard/core/widgets/progress_meter.dart';
 import 'package:bitcoin_dashboard/core/widgets/statement.dart';
+import 'package:bitcoin_dashboard/features/network/data/mempool_provider.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_health_provider.dart';
+import 'package:bitcoin_dashboard/features/network/domain/mempool_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/domain/mining_pool.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/domain/node_count.dart';
@@ -63,12 +65,13 @@ Future<void> _pumpNetwork(
   Size view = TestView.tallTablet,
   Locale locale = const Locale('en'),
   DateTime? now,
+  List<Override> extra = const [],
 }) async {
   useView(tester, view);
   await pumpApp(
     tester,
     child: const NetworkScreen(),
-    overrides: [health],
+    overrides: [health, ...extra],
     locale: locale,
     now: now ?? _now,
   );
@@ -120,6 +123,38 @@ void main() {
       expect(find.text('TRY AGAIN'), findsOneWidget);
       // One error for the document, not one per statement.
       expect(find.text('Pool distribution unavailable'), findsNothing);
+    });
+
+    testWidgets('leaves the mempool statement standing on its own', (
+      tester,
+    ) async {
+      // It reads mempool.space, not the CDN document, so the section's
+      // failure is not its failure (#112).
+      await _pumpNetwork(
+        tester,
+        networkHealthProvider.overrideWith(
+          asyncError(Exception('unreachable')),
+        ),
+        extra: [
+          mempoolProvider.overrideWith(
+            asyncData(
+              MempoolSnapshot(
+                count: 80000,
+                vsize: 35000000,
+                fastestFee: 7,
+                hourFee: 5,
+                economyFee: 2,
+                observedAt: _now,
+              ),
+            ),
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Network data unavailable'), findsOneWidget);
+      expect(find.text('MEMPOOL AND FEES'), findsOneWidget);
+      expect(find.text('Busy'), findsOneWidget);
     });
 
     testWidgets('shows no figures it cannot back', (tester) async {
