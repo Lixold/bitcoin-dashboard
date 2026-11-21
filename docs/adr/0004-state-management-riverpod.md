@@ -99,6 +99,11 @@ estimate. Its retry is its own cadence — the next fetch a minute later —
 and a failed fetch puts the statement in its error state rather than
 leaving the previous reading on screen.
 
+`difficultyProvider` follows the same reasoning at its own cadence: a
+countdown minutes old is a wrong countdown, so it keeps no cache, declines
+retries, and answers a failure with the error state and the next fetch five
+minutes later (#46).
+
 ## Provider hierarchy
 
 ```
@@ -107,8 +112,9 @@ settingsProvider                  Hive-persisted: language, currency, theme
 priceLiveProvider                 Binance direct, 60 s polling
 mempoolProvider                   mempool.space direct (mempool + fees), 60 s polling,
                                    no cache, no retries
-onChainProvider                   mempool.space direct (hashrate, difficulty),
-                                   5 min polling
+difficultyProvider                mempool.space direct (difficulty adjustment),
+                                   5 min polling, no cache, no retries
+onChainProvider                   mempool.space direct (hashrate), 5 min polling
 fearGreedProvider                 alternative.me direct, 1 h polling
 
 marketProvider                    CDN market.json, 15 min

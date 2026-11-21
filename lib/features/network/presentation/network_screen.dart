@@ -14,23 +14,26 @@ import '../../../core/widgets/progress_meter.dart';
 import '../../../core/widgets/statement.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../navigation/domain/nav_section.dart';
+import '../data/difficulty_provider.dart';
 import '../data/mempool_provider.dart';
 import '../data/network_health_provider.dart';
 import '../domain/mining_pool.dart';
 import '../domain/network_health_snapshot.dart';
 import '../domain/node_count.dart';
 import '../domain/pool_concentration.dart';
+import 'difficulty_statement.dart';
 import 'mempool_statement.dart';
 import 'node_count_format.dart';
 import 'pool_share_list.dart';
 import 'share_format.dart';
 
-/// Network section — three statements: how many full nodes carry the
-/// network, how concentrated mining is, and how full the mempool is.
+/// Network section — four statements: how many full nodes carry the
+/// network, how concentrated mining is, how full the mempool is, and when
+/// the difficulty next adjusts and which way.
 ///
-/// The mempool statement below them reads its own source on its own
-/// cadence (#112). The remaining network figures (hashrate, difficulty)
-/// are their own slice and are not stubbed here.
+/// The mempool and difficulty statements below the first two read their
+/// own sources on their own cadences (#112, #46). The hashrate is its own
+/// slice (#116) and is not stubbed here.
 ///
 /// **Age, error and loading belong to the section, not to a statement.**
 /// Both statements read the same document through the same fetch and the
@@ -48,7 +51,8 @@ class NetworkScreen extends ConsumerWidget {
         onRefresh: () async {
           ref
             ..invalidate(networkHealthProvider)
-            ..invalidate(mempoolProvider);
+            ..invalidate(mempoolProvider)
+            ..invalidate(difficultyProvider);
         },
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -86,6 +90,10 @@ class NetworkScreen extends ConsumerWidget {
                       // loads and fails on its own (#112).
                       const SizedBox(height: AppSpacing.s7),
                       const MempoolStatement(),
+                      // Its own states too: mempool.space again, but a
+                      // different endpoint on a five-minute cadence (#46).
+                      const SizedBox(height: AppSpacing.s7),
+                      const DifficultyStatement(),
                     ],
                   ),
                 ),

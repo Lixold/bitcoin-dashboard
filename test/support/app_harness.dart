@@ -7,8 +7,10 @@ import 'package:bitcoin_dashboard/core/theme/app_theme.dart';
 import 'package:bitcoin_dashboard/core/time/clock.dart';
 import 'package:bitcoin_dashboard/features/market/data/sentiment_provider.dart';
 import 'package:bitcoin_dashboard/features/market/domain/sentiment_index.dart';
+import 'package:bitcoin_dashboard/features/network/data/difficulty_provider.dart';
 import 'package:bitcoin_dashboard/features/network/data/mempool_provider.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_health_provider.dart';
+import 'package:bitcoin_dashboard/features/network/domain/difficulty_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/domain/mempool_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
 import 'package:bitcoin_dashboard/features/price/data/history_provider.dart';
@@ -172,6 +174,9 @@ List<Override> _offlineDefaults() => [
     (ref) => Completer<NetworkHealthSnapshot>().future,
   ),
   mempoolProvider.overrideWith((ref) => Completer<MempoolSnapshot>().future),
+  difficultyProvider.overrideWith(
+    (ref) => Completer<DifficultySnapshot>().future,
+  ),
   marketProvider.overrideWith((ref) => Completer<MarketSnapshot>().future),
   sentimentProvider.overrideWith((ref) => Completer<SentimentIndex>().future),
   fxRatesProvider.overrideWith((ref) => Completer<FxRates>().future),
