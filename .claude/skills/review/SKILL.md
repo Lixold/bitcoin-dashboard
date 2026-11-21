@@ -11,7 +11,7 @@ findings.
 
 ## 1. Product values (blocking)
 
-- No new network host outside the allowlist in `PRIVACY.md`.
+- No new network host beyond those documented in ADR-0002 (`docs/adr/`).
 - No analytics, telemetry, crash-reporting or advertising dependency added to
   `pubspec.yaml` / `pubspec.lock` or to `workers/package.json`.
 - No new persistence beyond the local settings box; nothing user-specific leaves the
@@ -41,8 +41,9 @@ A finding here blocks the merge regardless of everything else.
   the target it is waiting for. A deferral recorded that way passes — an unavailable
   target is not a defect. A claim the target could not support blocks the merge. This
   check fails on its own — a diff that is otherwise clean does not pass it.
-- PR body states the Statement the slice makes and the evidence behind it, and closes
-  the issue.
+- PR body states the Statement the slice makes and the evidence behind it, closes the
+  issue, and fills *Decisions taken*, *Deviations* and *Follow-ups* ("None" is an answer;
+  an empty section is not).
 
 ## 3. Consistency
 
