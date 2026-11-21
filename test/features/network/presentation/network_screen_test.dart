@@ -1,7 +1,9 @@
 import 'package:bitcoin_dashboard/core/widgets/progress_meter.dart';
 import 'package:bitcoin_dashboard/core/widgets/statement.dart';
+import 'package:bitcoin_dashboard/features/network/data/difficulty_provider.dart';
 import 'package:bitcoin_dashboard/features/network/data/mempool_provider.dart';
 import 'package:bitcoin_dashboard/features/network/data/network_health_provider.dart';
+import 'package:bitcoin_dashboard/features/network/domain/difficulty_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/domain/mempool_snapshot.dart';
 import 'package:bitcoin_dashboard/features/network/domain/mining_pool.dart';
 import 'package:bitcoin_dashboard/features/network/domain/network_health_snapshot.dart';
@@ -155,6 +157,38 @@ void main() {
       expect(find.text('Network data unavailable'), findsOneWidget);
       expect(find.text('MEMPOOL AND FEES'), findsOneWidget);
       expect(find.text('Busy'), findsOneWidget);
+    });
+
+    testWidgets('leaves the difficulty statement standing on its own', (
+      tester,
+    ) async {
+      // It reads its own mempool.space endpoint on its own cadence, so the
+      // section's failure is not its failure (#46).
+      await _pumpNetwork(
+        tester,
+        networkHealthProvider.overrideWith(
+          asyncError(Exception('unreachable')),
+        ),
+        extra: [
+          difficultyProvider.overrideWith(
+            asyncData(
+              DifficultySnapshot(
+                changePercent: 10.2,
+                remaining: const Duration(days: 5, hours: 9),
+                progressPercent: 57.5,
+                remainingBlocks: 857,
+                averageBlockTime: const Duration(minutes: 9),
+                observedAt: _now,
+              ),
+            ),
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Network data unavailable'), findsOneWidget);
+      expect(find.text('DIFFICULTY ADJUSTMENT'), findsOneWidget);
+      expect(find.text('Harder'), findsOneWidget);
     });
 
     testWidgets('shows no figures it cannot back', (tester) async {
